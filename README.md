@@ -18,13 +18,21 @@
 
 ##  Integrating Mist SDK
 
+Add following in your build.gradle
+
+```
+compile 'com.mist:core-sdk:1.4.1'
+```
+Note: The above can be used only for 1.4.1 and above 
+
+
+  Or 
+  
 - Download Mist SDK aar
 
-**Adding SDK AAR in App project**
+- Add downloaded aar to libs folder of app module
 
--Add downloaded aar to libs folder of app module
-
--Add following in build.gradle of app module.
+- Add following in build.gradle of app module.
 
 ```
 repositories {
@@ -33,7 +41,7 @@ dirs 'libs'
 }
 }
 ```
--Add the following in dependencies of build.gradle of app module
+- Add the following in dependencies of build.gradle of app module
 ```
 compile(name:'sdk_framework', ext:'aar')
 ```
