@@ -3,6 +3,7 @@
 
 
 # Releases:
+- 02/15/17 - Released MistSDK v1.5.0
 - 11/29/17 - Released MistSDK v1.4.1
 - 11/21/17 - Released MistSDK v1.4.0
 - 10/10/17 - Released MistSDK v1.3.1
@@ -21,7 +22,7 @@
 Add following in your build.gradle
 
 ```
-compile 'com.mist:core-sdk:1.4.1'
+compile 'com.mist:core-sdk:1.5.0'
 ```
 Note: The above can be used only for 1.4.1 and above 
 
