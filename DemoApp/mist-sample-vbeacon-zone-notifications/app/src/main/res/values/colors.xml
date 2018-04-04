@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#00133F</color>
+    <color name="colorPrimaryDark">#00133F</color>
+    <color name="colorAccent">#00133F</color>
+
+    <color name="black">#000000</color>
+    <color name="zone_color">#F1DF73</color>
+    <color name="vb_color">#5DBCD2</color>
+</resources>

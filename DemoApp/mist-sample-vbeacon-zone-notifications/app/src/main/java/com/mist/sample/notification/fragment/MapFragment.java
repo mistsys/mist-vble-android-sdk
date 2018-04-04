@@ -1,4 +1,4 @@
-package com.mist.sample.indoor_location.fragment;
+package com.mist.sample.notification.fragment;
 
 
 import android.Manifest;
@@ -11,8 +11,10 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,11 +24,12 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
-import com.mist.sample.indoor_location.R;
-import com.mist.sample.indoor_location.app.MainApplication;
-import com.mist.sample.indoor_location.utils.MistManager;
-import com.mist.sample.indoor_location.utils.Utils;
+import com.mist.sample.notification.R;
+import com.mist.sample.notification.app.MainApplication;
+import com.mist.sample.notification.utils.MistManager;
+import com.mist.sample.notification.utils.Utils;
 import com.mist.android.AppMode;
 import com.mist.android.MSTAsset;
 import com.mist.android.MSTBeacon;
@@ -42,10 +45,13 @@ import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.Date;
 import java.util.HashMap;
 
+import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
@@ -59,7 +65,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     public static final String TAG = "MAPFRAGMENTTAG";
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
     private MainApplication mainApplication;
-    private static final String sdkToken = "PwfJSo9WSCzombnJq-9wEWZEjgyjxGDh";
+    private static final String sdkToken = "S1Q6gVj1b9XA6qkZ3yVZQYFpYpRAvmZA";
     private String floorPlanImageUrl = "";
     private MSTPoint mstPoint = null;
     private MSTMap mstMap = null;
@@ -69,6 +75,8 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     private boolean scaleFactorCalled;
     private float floorImageLeftMargin;
     private float floorImageTopMargin;
+
+    public HashMap<String, MSTVirtualBeacon> mstVirtualBeaconMap = new HashMap<>();
 
     public enum AlertType {
         bluetooth,
@@ -84,6 +92,13 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     ImageView floorPlanImage;
     @BindView(R.id.progress_bar)
     ProgressBar progressBar;
+
+    @BindColor(R.color.black)
+    int blackColor;
+    @BindColor(R.color.zone_color)
+    int zoneColor;
+    @BindColor(R.color.vb_color)
+    int vbColor;
 
     private Unbinder unbinder;
 
@@ -183,7 +198,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
             if (!Utils.isLocationServiceEnabled(getContext())) {
                 showSettingsAlert(AlertType.location);
             }
-            if (mBluetoothAdapter !=null && !mBluetoothAdapter.isEnabled()) {
+            if (mBluetoothAdapter != null && !mBluetoothAdapter.isEnabled()) {
                 showSettingsAlert(AlertType.bluetooth);
             }
         }
@@ -222,7 +237,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                                 } else if (alertType == AlertType.location) {
                                     intentOpenBluetoothSettings.setAction(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
                                 }
-                                //mainActivity.removeWayFindingFragment();
                                 startActivity(intentOpenBluetoothSettings);
                             }
                         });
@@ -238,7 +252,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                         builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                             @Override
                             public void onDismiss(DialogInterface dialog) {
-                                //mainActivity.removeWayFindingFragment();
                             }
                         });
                         builder.show();
@@ -266,8 +279,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     @Override
     public void onRelativeLocationUpdated(MSTPoint relativeLocation, MSTMap[] maps, Date dateUpdated) {
-        if(relativeLocation!=null && maps!=null) {
-
+        if (relativeLocation != null && maps != null) {
             mstMap = maps[0];
             mstPoint = relativeLocation;
             updateRelativeLocation();
@@ -313,12 +325,10 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
             this.floorplanBluedotView.setX(leftMargin);
             this.floorplanBluedotView.setY(topMargin);
+        } else if (this.floorPlanImage != null &&
+                this.floorPlanImage.getDrawable() == null &&
+                mstMap != null) {
         }
-
-        else if (this.floorPlanImage != null &&
-                    this.floorPlanImage.getDrawable() == null &&
-                    mstMap != null) {
-            }
     }
 
 
@@ -339,12 +349,12 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         });
     }
 
-    private float convertCloudPointToFloorplanXScale(double meter){
-        return (float)(meter*this.scaleXFactor*mstMap.getPpm());
+    private float convertCloudPointToFloorplanXScale(double meter) {
+        return (float) (meter * this.scaleXFactor * mstMap.getPpm());
     }
 
-    private float convertCloudPointToFloorplanYScale(double meter){
-        return (float)(meter*this.scaleYFactor*mstMap.getPpm());
+    private float convertCloudPointToFloorplanYScale(double meter) {
+        return (float) (meter * this.scaleYFactor * mstMap.getPpm());
     }
 
     @Override
@@ -425,12 +435,108 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     @Override
     public void onVirtualBeaconListUpdated(MSTVirtualBeacon[] virtualBeacons, Date dateUpdated) {
-
+        mstVirtualBeaconMap.clear();
+        for (MSTVirtualBeacon vb : virtualBeacons) {
+            mstVirtualBeaconMap.put(vb.getVbid(), vb);
+        }
     }
 
     @Override
     public void onNotificationReceived(Date dateReceived, String message) {
+        Log.d(TAG, "notification recieved!!");
+        if (!Utils.isEmptyString(message)) {
+            try {
+                JSONObject notificationJSONObject = new JSONObject(message);
+                String type = notificationJSONObject.getString("type");
+                if (type.equalsIgnoreCase("zone-event-vb")) {
+                    JSONObject messageObject = notificationJSONObject.optJSONObject("message");
+                    if (messageObject != null) {
+                        String proximity = messageObject.getString("proximity");
+                        if (proximity.equals("near") || proximity.equals("immediate")) {
+                            String messageToBeDisplayed = "";
+                            String extra = messageObject.getString("Extra");
+                            String vbID = messageObject.optString("vbID");
+                            if (mstVirtualBeaconMap.containsKey(vbID)) {
+                                MSTVirtualBeacon vb = mstVirtualBeaconMap.get(vbID);
+                                messageToBeDisplayed = vb.getMessage();
+                            }
+                            if (TextUtils.isEmpty(messageToBeDisplayed)) {
+                                if (TextUtils.isEmpty(extra)) {
+                                    messageToBeDisplayed = "You're near the Anonymous VB";
+                                } else {
+                                    messageToBeDisplayed = String.format("You're %1$s %2$s" , proximity, extra);
+                                }
+                            }
+                            showNotification(false, messageToBeDisplayed);
+                        } else if (proximity.equals("far")) {
+                            String messageToBeDisplayed = "";
+                            String extra = messageObject.getString("Extra");
+                            String vbID = messageObject.optString("vbID");
+                            if (mstVirtualBeaconMap.containsKey(vbID)) {
+                                MSTVirtualBeacon vb = mstVirtualBeaconMap.get(vbID);
+                                messageToBeDisplayed = vb.getMessage();
+                            }
+                            if (TextUtils.isEmpty(messageToBeDisplayed)) {
+                                if (TextUtils.isEmpty(extra)) {
+                                    messageToBeDisplayed = "You're far from the Anonymous VB";
+                                } else {
+                                    messageToBeDisplayed = String.format("You're %1$s %2$s" , proximity, extra);
+                                }
+                            }
+                            //action can be taken according to the need in case of far beacon
+                        }
+                    }
 
+                } else if (type.equalsIgnoreCase("zones-events")) {
+                    JSONObject messageObject = notificationJSONObject.optJSONObject("message");
+                    if (messageObject != null) {
+                        String trigger = messageObject.getString("Trigger");
+                        if (trigger.equalsIgnoreCase("in")) {
+                            String messageToBeDisplayed = "";
+                            String extra = messageObject.getString("Extra");
+                            if (TextUtils.isEmpty(extra)) {
+                                messageToBeDisplayed = "You're in the Anonymous Zone";
+                            } else {
+                                messageToBeDisplayed = String.format("You're %1$s %2$s", trigger, extra);
+                            }
+                            showNotification(true, messageToBeDisplayed);
+                        }
+                        if (trigger.equalsIgnoreCase("out")) {
+                            String messageToBeDisplayed = "";
+                            String extra = messageObject.getString("Extra");
+                            if (TextUtils.isEmpty(extra)) {
+                                messageToBeDisplayed = "You left the Anonymous Zone";
+                            } else {
+                                messageToBeDisplayed = String.format("You left the %1$s", extra);
+                            }
+                            showNotification(true, messageToBeDisplayed);
+                        }
+                    }
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void showNotification(boolean isZone, String message) {
+        final Snackbar snackBar = Snackbar.make(getActivity().findViewById(android.R.id.content),
+                message, Snackbar.LENGTH_LONG);
+        snackBar.setAction("Dismiss", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                snackBar.dismiss();
+            }
+        });
+        View snackBarView = snackBar.getView();
+        TextView textView = snackBarView.findViewById(android.support.design.R.id.snackbar_text);
+        textView.setTextColor(blackColor);
+        if (isZone) {
+            snackBarView.setBackgroundColor(zoneColor);
+        } else {
+            snackBarView.setBackgroundColor(vbColor);
+        }
+        snackBar.show();
     }
 
     @Override
