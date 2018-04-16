@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -26,10 +28,6 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.mist.sample.notification.R;
-import com.mist.sample.notification.app.MainApplication;
-import com.mist.sample.notification.utils.MistManager;
-import com.mist.sample.notification.utils.Utils;
 import com.mist.android.AppMode;
 import com.mist.android.MSTAsset;
 import com.mist.android.MSTBeacon;
@@ -40,6 +38,10 @@ import com.mist.android.MSTMap;
 import com.mist.android.MSTPoint;
 import com.mist.android.MSTVirtualBeacon;
 import com.mist.android.MSTZone;
+import com.mist.sample.notification.R;
+import com.mist.sample.notification.app.MainApplication;
+import com.mist.sample.notification.utils.MistManager;
+import com.mist.sample.notification.utils.Utils;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
@@ -62,10 +64,10 @@ import butterknife.Unbinder;
 
 public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnlyListener {
 
-    public static final String TAG = "MAPFRAGMENTTAG";
+    public static final String TAG = MapFragment.class.getSimpleName();
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
     private MainApplication mainApplication;
-    private static final String sdkToken = "S1Q6gVj1b9XA6qkZ3yVZQYFpYpRAvmZA";
+    private static String sdkToken;
     private String floorPlanImageUrl = "";
     private MSTPoint mstPoint = null;
     private MSTMap mstMap = null;
@@ -75,6 +77,8 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     private boolean scaleFactorCalled;
     private float floorImageLeftMargin;
     private float floorImageTopMargin;
+    private HandlerThread sdkHandlerThread;
+    private Handler sdkHandler;
 
     public HashMap<String, MSTVirtualBeacon> mstVirtualBeaconMap = new HashMap<>();
 
@@ -92,6 +96,8 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     ImageView floorPlanImage;
     @BindView(R.id.progress_bar)
     ProgressBar progressBar;
+    @BindView(R.id.txt_error)
+    TextView txtError;
 
     @BindColor(R.color.black)
     int blackColor;
@@ -102,7 +108,8 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     private Unbinder unbinder;
 
-    public static MapFragment newInstance() {
+    public static MapFragment newInstance(String sdkToken) {
+        MapFragment.sdkToken = sdkToken;
         return new MapFragment();
     }
 
@@ -123,6 +130,14 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     }
 
     @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        sdkHandlerThread = new HandlerThread("SDKHandler");
+        sdkHandlerThread.start();
+        sdkHandler = new Handler(sdkHandlerThread.getLooper());
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         if (!Utils.isEmptyString(floorPlanImageUrl)) {
@@ -133,7 +148,12 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     @Override
     public void onStart() {
         super.onStart();
-        initMISTSDK();
+        sdkHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                initMISTSDK();
+            }
+        }, 500);
     }
 
     private void initMISTSDK() {
@@ -146,6 +166,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
+    //permission dialogs
     private void showLocationPermissionDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("This app needs location access");
@@ -204,6 +225,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
+    //initializing the Mist sdk with sdkToken
     private void runMISTSDK() {
         MistManager mistManager = MistManager.newInstance(mainApplication);
         mistManager.init(sdkToken, this, AppMode.FOREGROUND);
@@ -276,7 +298,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     }
 
-
+    //called when new location is received
     @Override
     public void onRelativeLocationUpdated(MSTPoint relativeLocation, MSTMap[] maps, Date dateUpdated) {
         if (relativeLocation != null && maps != null) {
@@ -298,8 +320,8 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         });
     }
 
+    //logic to show the blue dot for the location
     public void renderBlueDot(MSTPoint mstPoint) {
-
         if (this.floorPlanImage != null &&
                 this.floorPlanImage.getDrawable() != null &&
                 mstMap != null && mstPoint != null
@@ -325,34 +347,38 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
             this.floorplanBluedotView.setX(leftMargin);
             this.floorplanBluedotView.setY(topMargin);
-        } else if (this.floorPlanImage != null &&
-                this.floorPlanImage.getDrawable() == null &&
-                mstMap != null) {
         }
     }
 
 
+    //calculating the scale factors
     private void setupScaleFactorForFloorplan() {
 
-        ViewTreeObserver vto = floorPlanImage.getViewTreeObserver();
-        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                floorImageLeftMargin = floorPlanImage.getLeft();
-                floorImageTopMargin = floorPlanImage.getTop();
-                scaleFactorCalled = false;
-                if (floorPlanImage.getDrawable() != null) {
-                    scaleXFactor = (floorPlanImage.getWidth() / (double) floorPlanImage.getDrawable().getIntrinsicWidth());
-                    scaleYFactor = (floorPlanImage.getHeight() / (double) floorPlanImage.getDrawable().getIntrinsicHeight());
+        if (floorPlanImage != null) {
+            ViewTreeObserver vto = floorPlanImage.getViewTreeObserver();
+            vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    if (floorPlanImage != null) {
+                        floorImageLeftMargin = floorPlanImage.getLeft();
+                        floorImageTopMargin = floorPlanImage.getTop();
+                        scaleFactorCalled = false;
+                        if (floorPlanImage.getDrawable() != null) {
+                            scaleXFactor = (floorPlanImage.getWidth() / (double) floorPlanImage.getDrawable().getIntrinsicWidth());
+                            scaleYFactor = (floorPlanImage.getHeight() / (double) floorPlanImage.getDrawable().getIntrinsicHeight());
+                        }
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
+    //converting the x point from meter's to pixel with the present scaling
     private float convertCloudPointToFloorplanXScale(double meter) {
         return (float) (meter * this.scaleXFactor * mstMap.getPpm());
     }
 
+    //converting the y point from meter's to pixel with the present scaling
     private float convertCloudPointToFloorplanYScale(double meter) {
         return (float) (meter * this.scaleYFactor * mstMap.getPpm());
     }
@@ -377,7 +403,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     }
 
-    //called only once
+    //called when new map is received
     @Override
     public void onMapUpdated(MSTMap map, Date dateUpdated) {
         floorPlanImageUrl = map.getMapImageUrl();
@@ -390,6 +416,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         });
     }
 
+    //map image rendering
     private void renderImage(final String floorPlanImageUrl) {
         Log.d(TAG, "in picasso");
         addedMap = false;
@@ -433,6 +460,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                 });
     }
 
+    //provides the list of vBeacons atatched to your floor plan
     @Override
     public void onVirtualBeaconListUpdated(MSTVirtualBeacon[] virtualBeacons, Date dateUpdated) {
         mstVirtualBeaconMap.clear();
@@ -441,6 +469,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
+    //called when notifications are received on entering a zone or passing by a vBecaon
     @Override
     public void onNotificationReceived(Date dateReceived, String message) {
         Log.d(TAG, "notification recieved!!");
@@ -464,7 +493,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                                 if (TextUtils.isEmpty(extra)) {
                                     messageToBeDisplayed = "You're near the Anonymous VB";
                                 } else {
-                                    messageToBeDisplayed = String.format("You're %1$s %2$s" , proximity, extra);
+                                    messageToBeDisplayed = String.format("You're %1$s %2$s", proximity, extra);
                                 }
                             }
                             showNotification(false, messageToBeDisplayed);
@@ -480,7 +509,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                                 if (TextUtils.isEmpty(extra)) {
                                     messageToBeDisplayed = "You're far from the Anonymous VB";
                                 } else {
-                                    messageToBeDisplayed = String.format("You're %1$s %2$s" , proximity, extra);
+                                    messageToBeDisplayed = String.format("You're %1$s %2$s", proximity, extra);
                                 }
                             }
                             //action can be taken according to the need in case of far beacon
@@ -519,6 +548,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
+    //showing the notifications
     private void showNotification(boolean isZone, String message) {
         final Snackbar snackBar = Snackbar.make(getActivity().findViewById(android.R.id.content),
                 message, Snackbar.LENGTH_LONG);
@@ -551,34 +581,42 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     @Override
     public void receivedLogMessageForCode(String message, MSTCentralManagerStatusCode code) {
-        Log.d(TAG, "receivedLogMessageForCode" + message);
     }
 
     @Override
     public void receivedVerboseLogMessage(String message) {
-        Log.d(TAG, "receivedVerboseLogMessage" + message);
     }
 
+    //called when successfully registration fails
     @Override
     public void onMistErrorReceived(String message, Date date) {
-
+        progressBar.setVisibility(View.GONE);
+        txtError.setVisibility(View.VISIBLE);
+        txtError.setText(message);
     }
 
     @Override
     public void onMistRecommendedAction(String message) {
-
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         unbinder.unbind();
-        MistManager.newInstance(mainApplication).disconnect();
+
+        sdkHandler = null;
+        if (sdkHandlerThread != null) {
+            sdkHandlerThread.quitSafely();
+            sdkHandlerThread = null;
+        }
+
+        MistManager.newInstance(mainApplication).destory();
     }
 
     @Override
     public void onStop() {
         super.onStop();
+        //disconnecting the Mist SDK
         MistManager.newInstance(mainApplication).disconnect();
     }
 }

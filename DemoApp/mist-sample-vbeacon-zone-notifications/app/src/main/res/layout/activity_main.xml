@@ -6,7 +6,7 @@
     tools:context="com.mist.sample.notification.activity.MainActivity">
 
     <FrameLayout
-        android:id="@+id/frame_map"
+        android:id="@+id/frame_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

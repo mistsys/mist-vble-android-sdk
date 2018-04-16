@@ -3,9 +3,9 @@ package com.mist.sample.notification.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.google.gson.Gson;
 import com.mist.sample.notification.R;
 import com.mist.sample.notification.model.OrgData;
-import com.google.gson.Gson;
 
 /**
  * Created by anubhava on 26/03/18.
@@ -52,27 +52,12 @@ public class SharedPrefUtils {
 
     }
 
-    public static boolean getvBeaconState(Context context) {
-        return readBoolean(context, context.getString(R.string.pref_vbeacon), false);
+    //saving sdktoken to sp
+    public static void saveSdkToken(Context context, String key, String value) {
+        getEditor(context).putString(key, value).apply();
     }
 
-    public static void setvBeaconState(Context context, boolean state) {
-        writeBoolean(context, context.getString(R.string.pref_vbeacon), state);
-    }
-
-    public static boolean getZoneState(Context context) {
-        return readBoolean(context, context.getString(R.string.pref_zone), false);
-    }
-
-    public static void setZoneState(Context context, boolean state) {
-        writeBoolean(context, context.getString(R.string.pref_zone), state);
-    }
-
-    public static void writeBoolean(Context context, String key, boolean value) {
-        getEditor(context).putBoolean(key, value).apply();
-    }
-
-    public static boolean readBoolean(Context context, String key, boolean defValue) {
-        return getPreferences(context).getBoolean(key, defValue);
+    public static String readSdkToken(Context context, String key) {
+        return getPreferences(context).getString(key, null);
     }
 }

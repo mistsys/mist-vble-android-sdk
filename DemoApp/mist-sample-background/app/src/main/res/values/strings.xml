@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Background</string>
+
+    <string name="pref_vbeacon">vBeacon</string>
+    <string name="pref_zone">zone</string>
+    <string name="pref_app_state">appState</string>
+    <string name="pref_should_welcome">shouldWelcome</string>
+    <string name="floorplan_image">floorplan image</string>
+    <string name="load_map">Load Map</string>
+    <string name="valid_sdk_token">Please enter a valid sdk Token</string>
+    <string name="enter_sdk_token">Please enter a sdk Token</string>
+    <string name="add_sdk_token">Add SDK Token</string>
+    <string name="enter">Enter</string>
+    <string name="cancel">Cancel</string>
+    <string name="enter_sdk_token_dialog_string">Enter the sdk token here</string>
+    <string name="sdk_token">SDK Token</string>
+    <string name="sdk_token_saved">SDK Token Saved to Shared Preferences</string>
+    <string name="app_title_bar_name">Mist Background</string>
+</resources>

@@ -3,7 +3,6 @@ package com.mist.sample.notification.app;
 import android.app.Application;
 
 import com.jakewharton.picasso.OkHttp3Downloader;
-
 import com.squareup.picasso.Picasso;
 
 /**

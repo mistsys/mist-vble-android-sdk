@@ -3,11 +3,9 @@ package com.mist.sample.indoor_location.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.google.gson.Gson;
 import com.mist.sample.indoor_location.R;
 import com.mist.sample.indoor_location.model.OrgData;
-import com.google.gson.Gson;
-
-import java.util.Set;
 
 /**
  * Created by anubhava on 26/03/18.
@@ -51,8 +49,16 @@ public class SharedPrefUtils {
             return gson.fromJson(orgDataString, OrgData.class);
         } else
             return null;
-
     }
 
+
+    //saving sdktoken to sp
+    public static void saveSdkToken(Context context, String key, String value) {
+        getEditor(context).putString(key, value).apply();
+    }
+
+    public static String readSdkToken(Context context, String key) {
+        return getPreferences(context).getString(key, null);
+    }
 
 }

@@ -4,8 +4,6 @@ import android.app.Application;
 import android.text.TextUtils;
 import android.widget.Toast;
 
-import com.mist.sample.indoor_location.app.MainApplication;
-import com.mist.sample.indoor_location.model.OrgData;
 import com.mist.android.AppMode;
 import com.mist.android.BatteryUsage;
 import com.mist.android.MSTCentralManager;
@@ -13,8 +11,11 @@ import com.mist.android.MSTCentralManagerIndoorOnlyListener;
 import com.mist.android.MSTOrgCredentialsCallback;
 import com.mist.android.MSTOrgCredentialsManager;
 import com.mist.android.model.AppModeParams;
+import com.mist.sample.indoor_location.app.MainApplication;
+import com.mist.sample.indoor_location.model.OrgData;
 
 import java.lang.ref.WeakReference;
+import java.util.Date;
 
 /**
  * Created by anubhava on 26/03/18.
@@ -30,7 +31,7 @@ public class MistManager implements MSTOrgCredentialsCallback {
     private AppMode appMode = AppMode.FOREGROUND;
     private OrgData orgData;
     private MSTOrgCredentialsManager mstOrgCredentialsManager;
-    private MSTCentralManager mstCentralManager;
+    private volatile MSTCentralManager mstCentralManager;
 
     public MistManager() {
     }
@@ -94,8 +95,11 @@ public class MistManager implements MSTOrgCredentialsCallback {
             saveConfig(orgName, orgID, sdkSecret, envType);
             connect(indoorOnlyListener, appMode);
         } else {
-            if (!Utils.isEmptyString(error))
-                Toast.makeText(mApp.get(), error, Toast.LENGTH_SHORT).show();
+            if (!Utils.isEmptyString(error)) {
+                if (indoorOnlyListener != null) {
+                    indoorOnlyListener.onMistErrorReceived(error, new Date());
+                }
+            }
         }
     }
 
@@ -115,6 +119,13 @@ public class MistManager implements MSTOrgCredentialsCallback {
             disconnect();
             mstCentralManager.setMSTCentralManagerIndoorOnlyListener(indoorOnlyListener);
             mstCentralManager.start();
+        }
+    }
+
+    public synchronized void destory(){
+        if (mstCentralManager != null) {
+            mstCentralManager.stop();
+            mstCentralManager = null;
         }
     }
 }
