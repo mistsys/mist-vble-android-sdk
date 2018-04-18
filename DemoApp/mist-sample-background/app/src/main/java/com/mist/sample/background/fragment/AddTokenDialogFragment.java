@@ -74,7 +74,8 @@ public class AddTokenDialogFragment extends DialogFragment {
         sdkToken = edtToken.getText().toString();
         if (!Utils.isEmptyString(sdkToken)) {
             SharedPrefUtils.saveSdkToken(getActivity(), Utils.TOKEN_PREF_KEY_NAME, edtToken.getText().toString());
-            Snackbar.make(getActivity().findViewById(android.R.id.content), R.string.sdk_token_saved, Snackbar.LENGTH_LONG).show();
+            Snackbar.make(getActivity().findViewById(android.R.id.content), R.string.sdk_token_saved,
+                    Snackbar.LENGTH_LONG).show();
             sdkTokenSavedListener.onSdkTokenSaved(edtToken.getText().toString());
             alertDialog.dismiss();
         }

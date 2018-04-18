@@ -75,9 +75,11 @@ public class MistManager implements MSTOrgCredentialsCallback {
                     orgData.getOrgId(), orgData.getSdkSecret(), indoorOnlyListener);
             mstCentralManager.setEnvironment(Utils.getEnvironment(envType));
             if (appMode.equals(AppMode.FOREGROUND)) {
-                setAppMode(new AppModeParams(AppMode.FOREGROUND, BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY, true, 0.5, 1));
+                setAppMode(new AppModeParams(AppMode.FOREGROUND, BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY,
+                        true, 0.5, 1));
             } else {
-                setAppMode(new AppModeParams(AppMode.BACKGROUND, BatteryUsage.LOW_BATTERY_USAGE_LOW_ACCURACY, true, 0.5, 1));
+                setAppMode(new AppModeParams(AppMode.BACKGROUND, BatteryUsage.LOW_BATTERY_USAGE_LOW_ACCURACY,
+                        true, 0.5, 1));
             }
             mstCentralManager.start();
         } else {
