@@ -13,5 +13,5 @@ To integrate Mist vBLE Android SDK in your app, please follow the instructions a
 
 To check Release Notes please visit our [Wiki Section](https://github.com/mistsys/mist-vble-android-sdk/wiki/Release-Notes)
 
-# Contact Us
+## Contact Us
 For more information, please visit [www.mist.com](https://www.mist.com/). For questions or assistance, please email us at support@mist.com.
