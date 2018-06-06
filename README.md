@@ -3,6 +3,7 @@
 
 
 # Releases:
+- 04/06/18 - Released MistSDK v1.6.0
 - 02/15/17 - Released MistSDK v1.5.0
 - 11/29/17 - Released MistSDK v1.4.1
 - 11/21/17 - Released MistSDK v1.4.0
