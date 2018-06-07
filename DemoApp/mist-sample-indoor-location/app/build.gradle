@@ -28,12 +28,17 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     implementation 'com.android.support:design:27.0.2'
     //mist sdk
-    implementation 'com.mist:core-sdk:1.5.0'
+    implementation(name:'mist-mobile-sdk', ext:'aar')
+    implementation(name:'mist-mobile', ext:'aar')
+    //implementation 'com.mist:core-sdk:1.5.0'
+    implementation 'com.google.android.gms:play-services-location:11.6.0'
+    implementation 'com.google.android.gms:play-services-maps:11.6.0'
     //butterknife
     implementation 'com.jakewharton:butterknife:8.8.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
     implementation 'com.google.code.gson:gson:2.8.2'
 
+    implementation 'com.google.guava:guava:23.3-android'
     //picasso
     implementation 'com.squareup.picasso:picasso:2.5.2'
     implementation 'com.squareup.okhttp3:okhttp:3.10.0'
