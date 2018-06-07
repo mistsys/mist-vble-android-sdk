@@ -38,6 +38,7 @@ import com.mist.android.MSTMap;
 import com.mist.android.MSTPoint;
 import com.mist.android.MSTVirtualBeacon;
 import com.mist.android.MSTZone;
+import com.mist.android.MistLocationAdvanceListener;
 import com.mist.sample.notification.R;
 import com.mist.sample.notification.app.MainApplication;
 import com.mist.sample.notification.utils.MistManager;
@@ -62,7 +63,7 @@ import butterknife.Unbinder;
  * Created by anubhava on 26/03/18.
  */
 
-public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnlyListener {
+public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnlyListener, MistLocationAdvanceListener {
 
     public static final String TAG = MapFragment.class.getSimpleName();
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
@@ -598,6 +599,27 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     @Override
     public void onMistRecommendedAction(String message) {
     }
+
+    @Override
+    public void onDRSnappedLocationUpdated(MSTPoint mstPoint, MSTMap mstMap, Date date) {
+        Log.d(TAG, "DR Snapped Location Updated.");
+    }
+
+    @Override
+    public void onDRRawLocationUpdated(MSTPoint mstPoint, MSTMap mstMap, Date date) {
+        Log.d(TAG, "DR Raw Location Updated.");
+    }
+
+    @Override
+    public void onLESnappedLocationUpdated(MSTPoint mstPoint, MSTMap mstMap, Date date) {
+        Log.d(TAG, "LE Snapped Location Updated.");
+    }
+
+    @Override
+    public void onLERawLocationUpdated(MSTPoint mstPoint, MSTMap mstMap, Date date) {
+        Log.d(TAG, "LE Raw Location Updated.");
+    }
+
 
     @Override
     public void onDestroyView() {
