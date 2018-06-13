@@ -253,8 +253,7 @@ public class MSTWayFinder {
                 pathArrayList.add(mstPath1);
             }
 
-            if (preferenceHelper.getBooleanValue(PreferenceConstants.KEY_ENABLE_WAYFINDING) &&
-                    !preferenceHelper.getBooleanValue(PreferenceConstants.KEY_SNAP_TO_PATH) &&
+            if (true &&
                     pathArr != null && pathArr.size() > 0 && startingPoint != null) {
                 String key1 = pathArr.get(pathArr.size() - 1);
                 Path path1 = null;

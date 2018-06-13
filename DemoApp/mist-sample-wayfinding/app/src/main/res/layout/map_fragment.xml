@@ -1,56 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/floorplan_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white">
 
-    <ImageView
-        android:id="@+id/floorplan_image"
+    <com.mist.sample.wayfinding.util.ZoomLayout
+        android:id="@+id/floorplan_zoomlayout"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:adjustViewBounds="true"
-        android:scaleType="fitCenter" />
-
-    <ProgressBar
-        android:id="@+id/progress_bar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:visibility="gone" />
-
-    <TextView
-        android:id="@+id/txt_error"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        style="@style/Base.TextAppearance.AppCompat.Medium"
-        android:gravity="center"
-        android:visibility="gone"/>
-
-    <FrameLayout
-        android:id="@+id/floorplan_bluedot"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:alpha="0"
-        android:clipChildren="false">
-
+        android:layout_height="wrap_content">
 
         <RelativeLayout
-            android:id="@+id/bluedot_layout"
-            android:layout_width="48dp"
-            android:layout_height="48dp">
+            android:id="@+id/floorplan_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/white">
 
             <ImageView
-                android:id="@+id/bluedot_flashlight_image"
-                android:layout_width="12dp"
-                android:layout_height="12dp"
+                android:id="@+id/floorplan_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:background="@drawable/bluedot"
-                android:backgroundTint="#0085c3" />
-        </RelativeLayout>
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter" />
 
-    </FrameLayout>
+            <ProgressBar
+                android:id="@+id/progress_bar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/txt_error"
+                style="@style/Base.TextAppearance.AppCompat.Medium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:visibility="gone" />
+
+            <FrameLayout
+                android:id="@+id/floorplan_bluedot"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:alpha="0"
+                android:clipChildren="false">
+
+
+                <RelativeLayout
+                    android:id="@+id/bluedot_layout"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp">
+
+                    <ImageView
+                        android:id="@+id/bluedot_flashlight_image"
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:layout_centerInParent="true"
+                        android:background="@drawable/bluedot"
+                        android:backgroundTint="#0085c3" />
+                </RelativeLayout>
+
+            </FrameLayout>
+
+        </RelativeLayout>
+    </com.mist.sample.wayfinding.util.ZoomLayout>
 
 </RelativeLayout>
