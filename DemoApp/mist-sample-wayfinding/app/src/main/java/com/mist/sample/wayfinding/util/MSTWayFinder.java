@@ -151,7 +151,8 @@ public class MSTWayFinder {
         return null;
     }
 
-    public ArrayList<MSTPath> getShowPathList(HashMap<String, Object> nodes, double scaleXFactor, double scaleYFactor, MSTMap mstMap) {
+    public ArrayList<MSTPath> getShowPathList(HashMap<String, Object> nodes,
+                                              double scaleXFactor, double scaleYFactor, MSTMap mstMap) {
 
         showPathArrayList.clear();
         edgesPointArrayList.clear();
@@ -188,8 +189,10 @@ public class MSTWayFinder {
                                 if (edges1 != null && mstPoint1 != null) {
 
                                     Path path = new Path();
-                                    path.moveTo((float) (mstPoint.getX() * scaleXFactor), (float) (mstPoint.getY() * scaleYFactor));
-                                    path.lineTo((float) (mstPoint1.getX() * scaleXFactor), (float) (mstPoint1.getY() * scaleYFactor));
+                                    path.moveTo((float) (mstPoint.getX() * scaleXFactor),
+                                            (float) (mstPoint.getY() * scaleYFactor));
+                                    path.lineTo((float) (mstPoint1.getX() * scaleXFactor),
+                                            (float) (mstPoint1.getY() * scaleYFactor));
 
                                     if (!checkDuplicatePath(nodeName, key, showPathArrayList)) {
                                         MSTPath mstPath = new MSTPath();
@@ -305,7 +308,6 @@ public class MSTWayFinder {
         edgesPointArrayList.clear();
         pathArrayList.clear();
         try {
-
             if (!isActualData) {
                 scaleXFactor = scaleXFactor * mstMap.getPpm();
                 scaleYFactor = scaleYFactor * mstMap.getPpm();

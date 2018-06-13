@@ -6,12 +6,15 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PointF;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -101,7 +104,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     private HandlerThread sdkHandlerThread;
     private Handler sdkHandler;
     private MSTMap currentMap;
-
+    private Handler blueDotHandler;
     private ArrayList<CharSequence> surveyNames;
     private HashMap<Integer, JSONObject> multiSurveyPath;
     private boolean isNewPath = false;
@@ -112,7 +115,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     private boolean hasAddedWayfinding;
     private MSTWayFinder wayfinder;
     private HashMap<String, Object> nodes;
-    private MSTPoint currentMstPoint = null;
+    //private MSTPoint currentMstPoint = null;
     private MSTGraph graph;
     private boolean isActualData = false;
     private MSTPoint startingPoint;
@@ -159,6 +162,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         View view = inflater.inflate(R.layout.map_fragment, container, false);
         unbinder = ButterKnife.bind(this, view);
         progressBar.setVisibility(View.VISIBLE);
+        blueDotHandler = new Handler(Looper.getMainLooper());
         return view;
     }
 
@@ -201,6 +205,12 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                 initMistSdk();
             }
         }, 500);
+        if (blueDotHandler != null) {
+            blueDotHandler.post(sendingTask);
+        } else {
+            blueDotHandler = new Handler(Looper.getMainLooper());
+            blueDotHandler.post(sendingTask);
+        }
     }
 
     @Override
@@ -223,6 +233,8 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                 }
             }
         }, 500);
+        blueDotHandler.removeCallbacks(sendingTask);
+        blueDotHandler = null;
     }
 
     private void initMistSdk() {
@@ -372,6 +384,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         if (relativeLocation != null && maps != null) {
             mstMap = maps[0];
             mstPoint = relativeLocation;
+
             updateRelativeLocation();
         }
     }
@@ -562,6 +575,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                 } else {
                     scale = (int) dscale;
                 }
+
                 Picasso.with(getActivity()).load(currentMap.getMapImageUrl()).resize((int)
                         (currentMap.getMapWidth() * currentMap.getPpm() / scale), (int)
                         (currentMap.getMapHeight() * currentMap.getPpm() / scale)).into(floorPlanImage);
@@ -753,6 +767,15 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         //disconnecting the Mist sdk, to make sure there is no prior active instance
         MistManager.newInstance(mainApplication).destory();
     }
+    private Runnable sendingTask = new Runnable() {
+        @Override
+        public void run() {
+            blueDotHandler.postDelayed(this, 1000);
+            renderBluedot1(mstPoint);
+        }
+    };
+
+
 
     private class WayfinerAsyncTask extends AsyncTask<String, Void, String> {
         @Override
@@ -770,7 +793,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         // onPostExecute displays the results of the AsyncTask.
         @Override
         protected void onPostExecute(String result) {
-            renderBluedot(mstPoint);
+            renderBluedot1(mstPoint);
             //addVirtualBeacon();
         }
     }
@@ -802,7 +825,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
      * @param mstPoint
      */
     public void renderBluedot(MSTPoint mstPoint) {
-        this.currentMstPoint = mstPoint;
+       // this.currentMstPoint = mstPoint;
     }
 
     private void loadWayfindingData(JSONObject mapJSON) {
@@ -907,6 +930,8 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
 
                 renderShowPath();
+                visibleView("show_path_view");
+                visibleView("edgesPointLayout");
 
 //                    if (!preferenceHelper.getBooleanValue(PreferenceConstants.KEY_SHOW_PATHS, false)) {
 //                        //hideView("show_path_view");
@@ -957,6 +982,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 //                            removeViewByTagname("motionLayout");
 //                        }
 //                    }
+               // renderWayfinding();
 
                 if (true && this.hasAddedWayfinding && this.endingPoint != null) {
                     renderWayfinding();
@@ -989,6 +1015,13 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 //                packetIntervalLayout.setVisibility(View.GONE);
 //                drInfoLayout.setVisibility(View.GONE);
         }
+    }
+
+    private void visibleView(String sTagName) {
+
+        View wayfindingLineView = floorplanLayout.findViewWithTag(sTagName);
+        if (wayfindingLineView != null)
+            wayfindingLineView.setVisibility(View.VISIBLE);
     }
 
     private void renderShowPath() {
@@ -1152,17 +1185,13 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
             _previousPathArr = pathArr;
 //            removeViewByTagname("wayfindingpath");
 //            removeViewByTagname("snapPathDestinationView");
-
-            /*if (nearestMstPoint != null) {
-                renderNearestBluedot(nearestMstPoint);
-            } else
-                removeViewByTagname("renderNearestBluedot");*/
-
             DrawLine drawLine = new DrawLine(getActivity(),
                     pathArrayList, pathArr, nearestMstPoint, scaleXFactor, scaleYFactor, currentMap, isActualData);
             if (drawLine != null) {
                 drawLine.setTag("wayfindingpath");
-                RelativeLayout.LayoutParams lineParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
+                RelativeLayout.LayoutParams lineParams = new
+                        RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT,
+                        RelativeLayout.LayoutParams.MATCH_PARENT);
                 lineParams.topMargin = (int) floorImageTopMargin;
                 lineParams.leftMargin = (int) floorImageLeftMargin;
                 drawLine.setLayoutParams(lineParams);
@@ -1201,5 +1230,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
             return false;
         }
     }
+
+
 }
 

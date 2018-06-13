@@ -9,8 +9,6 @@ import android.view.View;
 
 import com.mist.android.MSTMap;
 import com.mist.android.MSTPoint;
-import com.mist.android.deadReckoning.path.PreferenceConstants;
-import com.mist.android.deadReckoning.path.PreferenceHelper;
 
 
 import java.util.ArrayList;
@@ -22,7 +20,6 @@ public class DrawLine extends View {
     ArrayList<MSTPath> pathArrayList;
     ArrayList<String> pathArr;
     MSTPoint nearestMstPoint;
-    PreferenceHelper preferenceHelper;
     private double scaleXFactor;
     private double scaleYFactor;
     MSTMap mstMap;
@@ -44,8 +41,6 @@ public class DrawLine extends View {
             this.scaleXFactor =  scaleXFactor * mstMap.getPpm();
             this.scaleYFactor =  scaleYFactor * mstMap.getPpm();
         }
-
-        preferenceHelper = new PreferenceHelper(context);
 
         paint.setColor(Color.parseColor("#d5e4fb"));
         paint.setStrokeWidth(6);
@@ -76,24 +71,24 @@ public class DrawLine extends View {
                             String sName = pathArr.get(pathArr.size() - 2);
                             String eName = pathArr.get(pathArr.size() - 1);
                             if (path.getStartingEdgeName().equals(sName) && path.getEndEdgeName().equals(eName)) {
-                                if (preferenceHelper.getBooleanValue(PreferenceConstants.KEY_SHOW_PATHS, false)) {
+
                                     Path path1 = new Path();
                                     path1.moveTo((float) (nearestMstPoint.getX()), (float) (nearestMstPoint.getY()));
                                     path1.lineTo((float) (path.getStartingPoint().getX() * scaleXFactor), (float) (path.getStartingPoint().getY() * scaleYFactor));
                                     canvas.drawPath(path1, paint1);
-                                }
+
 
                                 Path path2 = new Path();
                                 path2.moveTo((float) (nearestMstPoint.getX()), (float) (nearestMstPoint.getY()));
                                 path2.lineTo((float) (path.getEndPoint().getX() * scaleXFactor), (float) (path.getEndPoint().getY() * scaleYFactor));
                                 canvas.drawPath(path2, paint);
                             } else {
-                                if (preferenceHelper.getBooleanValue(PreferenceConstants.KEY_SHOW_PATHS, false)) {
+
                                     Path path1 = new Path();
                                     path1.moveTo((float) (nearestMstPoint.getX()), (float) (nearestMstPoint.getY()));
                                     path1.lineTo((float) (path.getStartingPoint().getX() * scaleXFactor), (float) (path.getStartingPoint().getY() * scaleYFactor));
                                     canvas.drawPath(path1, paint);
-                                }
+
 
                                 Path path2 = new Path();
                                 path2.moveTo((float) (nearestMstPoint.getX()), (float) (nearestMstPoint.getY()));
@@ -106,7 +101,7 @@ public class DrawLine extends View {
                         }
                     } else
                         canvas.drawPath(path.getPath(), paint1);
-                } else if (preferenceHelper.getBooleanValue(PreferenceConstants.KEY_SHOW_PATHS, false)) {
+                } else   {
                     canvas.drawPath(path.getPath(), paint);
                 }
             }
