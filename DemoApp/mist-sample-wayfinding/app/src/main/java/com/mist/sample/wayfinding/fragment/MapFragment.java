@@ -133,6 +133,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     private ArrayList<String> _previousPathArr;
     ArrayList<MSTPath> pathArrayList;
     MSTPoint nearestMstPoint = null, closestMstPoint;
+    private View snapPathDestinationView;
 
 
     @Override
@@ -1071,9 +1072,9 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                         isWayfindingAdded = false;
                     }
 
-                        removeViewByTagname("wayfindingpath");
-                        hideView("snapPathDestinationView");
-                        removeViewByTagname("renderNearestBluedot");
+                    removeViewByTagname("wayfindingpath");
+                    hideView("snapPathDestinationView");
+                    removeViewByTagname("renderNearestBluedot");
 
                     // renderSnapToPath();
                 }
@@ -1297,10 +1298,9 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
             //setSanptoPath();
 
-            //-----------------------------------------stp2.0------------------------------------------------------------
-//            if (closestMstPoint != null) {
-//                addSnapPathDestinationPoint(closestMstPoint);
-//            }
+            if (closestMstPoint != null) {
+                addSnapPathDestinationPoint(closestMstPoint);
+            }
 
             floorplanBluedotView.bringToFront();
 
@@ -1328,6 +1328,37 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
+    private void addSnapPathDestinationPoint(MSTPoint mstPoint) {
+        if (mstPoint != null && getActivity() != null) {
+
+                snapPathDestinationView = floorplanLayout.findViewWithTag("snapPathDestinationView");
+
+                if (snapPathDestinationView == null) {
+                    snapPathDestinationView = new View(getActivity());
+                    snapPathDestinationView.setTag("snapPathDestinationView");
+                    snapPathDestinationView.setBackgroundResource(R.drawable.snap_destination_pointer);
+                    floorplanLayout.addView(snapPathDestinationView);
+                }
+
+                snapPathDestinationView.setScaleX(this.zoomScaleFactor);
+                snapPathDestinationView.setScaleY(this.zoomScaleFactor);
+
+
+                RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(30, 30);
+
+                if (!isActualData) {
+                    params.leftMargin = (int) (floorImageLeftMargin + (mstPoint.getX() * scaleXFactor * currentMap.getPpm()) - 15);
+                    params.topMargin = (int) (floorImageTopMargin + (mstPoint.getY() * scaleYFactor * currentMap.getPpm()) - 15);
+                } else {
+                    params.leftMargin = (int) (floorImageLeftMargin + (mstPoint.getX() * scaleXFactor) - 15);
+                    params.topMargin = (int) (floorImageTopMargin + (mstPoint.getY() * scaleYFactor) - 15);
+                }
+
+                snapPathDestinationView.setLayoutParams(params);
+                snapPathDestinationView.setVisibility(View.VISIBLE);
+                snapPathDestinationView.invalidate();
+        }
+    }
 
 }
 
