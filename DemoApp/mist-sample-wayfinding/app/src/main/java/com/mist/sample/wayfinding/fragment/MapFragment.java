@@ -6,9 +6,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Path;
-import android.graphics.PointF;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -19,7 +16,6 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
@@ -34,7 +30,6 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.google.android.gms.maps.model.LatLng;
 import com.mist.android.AppMode;
 import com.mist.android.BatteryUsage;
 import com.mist.android.MSTAsset;
@@ -44,7 +39,6 @@ import com.mist.android.MSTCentralManagerStatusCode;
 import com.mist.android.MSTClient;
 import com.mist.android.MSTMap;
 import com.mist.android.MSTPoint;
-import com.mist.android.MSTPointType;
 import com.mist.android.MSTVirtualBeacon;
 import com.mist.android.MSTZone;
 import com.mist.android.MistLocationAdvanceListener;
@@ -55,7 +49,6 @@ import com.mist.android.deadReckoning.path.Utility;
 import com.mist.android.model.AppModeParams;
 import com.mist.sample.wayfinding.R;
 import com.mist.sample.wayfinding.app.MainApplication;
-import com.mist.sample.wayfinding.model.SurveyPoints;
 import com.mist.sample.wayfinding.util.DrawLine;
 import com.mist.sample.wayfinding.util.MSTGraph;
 import com.mist.sample.wayfinding.util.MSTPath;
@@ -64,7 +57,6 @@ import com.mist.sample.wayfinding.util.MistManager;
 import com.mist.sample.wayfinding.util.Utils;
 import com.mist.sample.wayfinding.util.ZoomLayout;
 import com.squareup.picasso.Callback;
-import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -100,7 +92,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     private double scaleXFactor;
     private float zoomScaleFactor = 1;
     private double scaleYFactor;
-    private boolean scaleFactorCalled;
     private float floorImageLeftMargin;
     private float floorImageTopMargin;
     private Unbinder unbinder;
@@ -108,22 +99,17 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     private Handler sdkHandler;
     private MSTMap currentMap;
     private Handler blueDotHandler;
-    private ArrayList<CharSequence> surveyNames;
-    private HashMap<Integer, JSONObject> multiSurveyPath;
     private boolean isNewPath = false;
-    private String mapName = "";
     private boolean isScaleFactorCalculated = false;
     private int scale;
     private WayfinerAsyncTask wayfinerAsyncTask;
     private boolean hasAddedWayfinding;
     private MSTWayFinder wayfinder;
     private HashMap<String, Object> nodes;
-    //private MSTPoint currentMstPoint = null;
     private MSTGraph graph;
     private boolean isActualData = false;
     private MSTPoint startingPoint;
-    private MSTPoint endingPoint, lastEndingPoint;
-    private MSTPoint showXYMstPoint;
+    private MSTPoint endingPoint;
     private MSTPoint preFVPoint;
     private boolean isWayfindingAdded = false;
     private boolean isAsycTaskFinished = true;
@@ -139,7 +125,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     @Override
     public void onTouchZoomView(float x, float y) {
         drawTouchedDot(x, y);
-        //Log.v("onTouchZoomView", ""+x+","+y);
 
     }
 
@@ -147,60 +132,35 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
         if (this.currentMap != null) {
             setDestinationPoint(new MSTPoint(x, y));
-            //renderWayfinding();
         }
     }
 
     @Override
     public void onZoomScaleValue(float scale) {
-//       /* float scale1 = 0;
-// *//*       if (scale <= 1.5)
-//            scale1 = 1;
-//        else {
-//            if (scale > 3)
-//                scale1 = (float) 0.3;
-//            else if (scale >= 1.5)
-//                scale1 = (float) 0.5;
-//            else
-//                scale1 = (float) 0.8;
-//        }*//*
-//        scale1 = 1 / scale;
-//
-//        this.zoomScaleFactor = scale1;
-//
-//        View view1 = floorplanLayout.findViewById(R.id.floorplan_bluedot);
-//        View view2 = floorplanLayout.findViewWithTag("renderNearestBluedot");
-//        View view3 = floorplanLayout.findViewWithTag("wayfindingpath");
-//
-//        setScaleValue(view1, scale1);
-//        setScaleValue(view2, scale1);
-//        setScaleValue(view3, scale1);
-//        setScaleValue(snapPathDestinationView, scale1);
-//
-//
-//        int childcount = floorplanVBLayout.getChildCount();
-//        View v;
-//        for (int i = 0; i < childcount; i++) {
-//            v = floorplanVBLayout.getChildAt(i);
-//            setScaleValue(v, scale1);
-//        }
-//        RelativeLayout breadCrumbLayout = (RelativeLayout) floorplanLayout.findViewWithTag("motionLayout");
-//        if (breadCrumbLayout != null) {
-//            int breadCrumbChildCount = breadCrumbLayout.getChildCount();
-//            View breadCrumbView;
-//            for (int i = 0; i < breadCrumbChildCount; i++) {
-//                breadCrumbView = breadCrumbLayout.getChildAt(i);
-//                setScaleValue(breadCrumbView, scale1);
-//            }
-//        }
-////        if(testPathDotLabelArray.size()>0) {
-////            View label;
-////            for (int i = 0; i < testPathDotLabelArray.size(); i++) {
-////                label = floorplanLayout.findViewWithTag(testPathDotLabelArray.get(i).getTag());
-////                setScaleValue(label, scale1);
-////            }
-////        }
-//*/
+        float scale1 = 0;
+        if (scale <= 1.5)
+            scale1 = 1;
+        else {
+            if (scale > 3)
+                scale1 = (float) 0.3;
+            else if (scale >= 1.5)
+                scale1 = (float) 0.5;
+            else
+                scale1 = (float) 0.8;
+        }
+        scale1 = 1 / scale;
+
+        this.zoomScaleFactor = scale1;
+
+        View view1 = floorplanLayout.findViewById(R.id.floorplan_bluedot);
+        View view2 = floorplanLayout.findViewWithTag("renderNearestBluedot");
+        View view3 = floorplanLayout.findViewWithTag("wayfindingpath");
+
+        setScaleValue(view1, scale1);
+        setScaleValue(view2, scale1);
+        setScaleValue(view3, scale1);
+        setScaleValue(snapPathDestinationView, scale1);
+
     }
 
     private void setScaleValue(View view, float scale) {
@@ -251,14 +211,11 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mainApplication = (MainApplication) getActivity().getApplication();
-        surveyNames = new ArrayList<>();
-        multiSurveyPath = new HashMap<>();
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //handler = new Handler(Looper.getMainLooper());
         sdkHandlerThread = new HandlerThread("SDKHandler");
         sdkHandlerThread.start();
         sdkHandler = new Handler(sdkHandlerThread.getLooper());
@@ -371,16 +328,16 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     private void startMistSdk() {
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() &&
-                Utils.isNetworkAvailable(getContext()) && Utils.isLocationServiceEnabled(getContext())) {
+                Utils.isNetworkAvailable(getActivity()) && Utils.isLocationServiceEnabled(getActivity())) {
             runMISTSDK();
         } else {
-            if (!Utils.isNetworkAvailable(getContext())) {
+            if (!Utils.isNetworkAvailable(getActivity())) {
                 showSettingsAlert(AlertType.network);
             }
-            if (!Utils.isLocationServiceEnabled(getContext())) {
+            if (!Utils.isLocationServiceEnabled(getActivity())) {
                 showSettingsAlert(AlertType.location);
             }
-            if (!mBluetoothAdapter.isEnabled()) {
+            if (mBluetoothAdapter != null && !mBluetoothAdapter.isEnabled()) {
                 showSettingsAlert(AlertType.bluetooth);
             }
         }
@@ -405,7 +362,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
             sButton = "Goto Settings Page To Enable Location";
         }
 
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getContext());
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
         alertDialogBuilder.setMessage(sTitle)
                 .setCancelable(false)
                 .setPositiveButton(sButton,
@@ -428,7 +385,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.cancel();
                         final AlertDialog.Builder builder = new
-                                AlertDialog.Builder(getContext());
+                                AlertDialog.Builder(getActivity());
                         builder.setTitle("Functionality won't work");
                         builder.setMessage(sButton);
                         builder.setPositiveButton(android.R.string.ok, null);
@@ -481,41 +438,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         });
     }
 
-    //logic to show the blue dot for the location
-    public void renderBlueDot(MSTPoint mstPoint) {
-        if (this.floorPlanImage != null &&
-                this.floorPlanImage.getDrawable() != null &&
-                mstMap != null && mstPoint != null
-                ) {
-
-            this.mstPoint = mstPoint;
-
-            float xPos = this.convertCloudPointToFloorplanXScale(mstPoint.getX());
-            float yPos = this.convertCloudPointToFloorplanYScale(mstPoint.getY());
-
-            if (this.scaleXFactor == 0 || this.scaleYFactor == 0) {
-                //Defining the scaleX and scaleY for the map image
-                if (!scaleFactorCalled)
-                    setupScaleFactorForFloorplan();
-            }
-
-            if (this.floorplanBluedotView.getAlpha() == 0.0) {
-                this.floorplanBluedotView.setAlpha((float) 1.0);
-            }
-
-            float leftMargin = floorImageLeftMargin + (xPos - (this.floorplanBluedotView.getWidth() / 2));
-            float topMargin = floorImageTopMargin + (yPos - (this.floorplanBluedotView.getHeight() / 2));
-
-            this.floorplanBluedotView.setX(leftMargin);
-            this.floorplanBluedotView.setY(topMargin);
-
-        }
-//        else if (this.floorPlanImage != null &&
-//                this.floorPlanImage.getDrawable() == null &&
-//                mstMap != null) {
-//        }
-    }
-
     //calculating the scale factors
     private void setupScaleFactorForFloorplan() {
         if (floorPlanImage != null) {
@@ -528,7 +450,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                             floorPlanImage.getViewTreeObserver().addOnGlobalLayoutListener(this);
                             floorImageLeftMargin = floorPlanImage.getLeft();
                             floorImageTopMargin = floorPlanImage.getTop();
-                            scaleFactorCalled = false;
                             if (floorPlanImage.getDrawable() != null) {
                                 scaleXFactor = (floorPlanImage.getWidth() /
                                         (double) floorPlanImage.getDrawable().getIntrinsicWidth());
@@ -578,72 +499,30 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     public void onMapUpdated(final MSTMap map, Date dateUpdated) {
         floorPlanImageUrl = map.getMapImageUrl();
         Log.d(TAG, floorPlanImageUrl);
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                //renderImage(floorPlanImageUrl);
-                addIndoorMap(map);
-            }
-        });
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    addIndoorMap(map);
+                }
+            });
+        }
     }
 
     private void addIndoorMap(MSTMap mstMap) {
         if (mstMap != null) {
             if (this.currentMap == null || !this.currentMap.getMapId().equals(mstMap.getMapId())) {
                 this.currentMap = mstMap;
-                loadSiteSurveyPathReceivedFromServer();
                 isNewPath = true;
-                mapName = mstMap.getMapName();
                 isScaleFactorCalculated = false;
                 scaleXFactor = 0;
                 scaleYFactor = 0;
-                //loadMapFromSDK();
                 loadMap();
             }
         }
     }
 
-    private void loadSiteSurveyPathReceivedFromServer() {
-        try {
-            if (currentMap != null && !TextUtils.isEmpty(this.currentMap.getSiteSurveyPath())) {
-                JSONObject siteSurveyPath = null;
-                JSONArray siteSurveyPathString = new JSONArray(this.currentMap.getSiteSurveyPath());
-                int index = 0;
-                surveyNames.clear();
-                multiSurveyPath.clear();
-                for (int i = 0; i < siteSurveyPathString.length(); i++) {
-                    if (siteSurveyPathString.opt(i) != null) {
-                        siteSurveyPath = new JSONObject(siteSurveyPathString.opt(i).toString());
-                    }
-                    if (siteSurveyPath != null) {
-                        JSONArray nodesFromFile = siteSurveyPath.optJSONArray("nodes");
-                        if (!Utility.isEmpty(nodesFromFile) && nodesFromFile.length() > 0) {
-                            ArrayList<SurveyPoints> tempArray = new ArrayList<>();
-                            for (int j = 0; j < nodesFromFile.length(); j++) {
-                                JSONObject node = (JSONObject) nodesFromFile.get(j);
-                                JSONObject position = node.getJSONObject("position");
-                                String name = node.getString("name");
-
-                                double x = position.getDouble("x");
-                                double y = position.getDouble("y");
-                                PointF point = new PointF((float) (x), (float) (y));
-                                tempArray.add(new SurveyPoints(point, name));
-                            }
-                            //
-                            siteSurveyPath.put("path-data", tempArray);
-                            multiSurveyPath.put(index, siteSurveyPath);
-                            surveyNames.add(siteSurveyPath.optString("name"));
-                            index++;
-                        }
-                    }
-                }
-            }
-        } catch (JSONException e) {
-            Log.e(TAG, "Encountered JSONException while parsing survey path: " + e.getLocalizedMessage());
-        }
-    }
-
-
+    //map loading
     private void loadMap() {
         if (this.currentMap != null) {
             try {
@@ -679,9 +558,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Exception in loadMap " + e.getMessage());
-//                if (preferenceHelper.getBooleanValue(PreferenceConstants.KEY_ENABLE_PACKET_LOGGING)) {
-//                    Utility.saveLogInFile(Utility.APP_SIDE_LOGGING_FILENAME, Utility.getDateString() + "\t" + "Exception in loadMap " + e.getMessage());
-//                }
             }
         }
 
@@ -718,50 +594,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         } else {
             cb.onError();
         }
-    }
-
-    //map image rendering
-    private void renderImage(final String floorPlanImageUrl) {
-        Log.d(TAG, "in picasso");
-        addedMap = false;
-        Picasso.with(getActivity()).
-                load(floorPlanImageUrl).
-                networkPolicy(NetworkPolicy.OFFLINE).
-                into(floorPlanImage, new Callback() {
-                    @Override
-                    public void onSuccess() {
-                        Log.d(TAG, "Image loaded successfully from the cached");
-                        addedMap = true;
-                        progressBar.setVisibility(View.GONE);
-
-                        if (!scaleFactorCalled) {
-                            setupScaleFactorForFloorplan();
-                        }
-                    }
-
-                    @Override
-                    public void onError() {
-                        Picasso.with(getActivity()).
-                                load(floorPlanImageUrl)
-                                .into(floorPlanImage, new Callback() {
-                                    @Override
-                                    public void onSuccess() {
-                                        progressBar.setVisibility(View.GONE);
-                                        addedMap = true;
-                                        if (!scaleFactorCalled) {
-                                            setupScaleFactorForFloorplan();
-                                        }
-                                        Log.d(TAG, "Image downloaded from server successfully !!");
-                                    }
-
-                                    @Override
-                                    public void onError() {
-                                        progressBar.setVisibility(View.GONE);
-                                        Log.d(TAG, "Could not download the image from the server");
-                                    }
-                                });
-                    }
-                });
     }
 
     @Override
@@ -853,11 +685,11 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         @Override
         public void run() {
             blueDotHandler.postDelayed(this, 1000);
-            renderBluedot1(mstPoint);
+            renderBlueDot(mstPoint);
         }
     };
 
-
+    //async task to show path lists and draw paths
     private class WayfinerAsyncTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... urls) {
@@ -867,18 +699,17 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                 wayfinder.getShowPathList(nodes, scaleXFactor, scaleYFactor, currentMap);
                 wayfinder.drawShowPath(nodes, scaleXFactor, scaleYFactor, currentMap);
             }
-            //setMSTVirtualBeacon(this.mstVirtualBeaconArrayList);
             return null;
         }
 
         // onPostExecute displays the results of the AsyncTask.
         @Override
         protected void onPostExecute(String result) {
-            renderBluedot1(mstPoint);
-            //addVirtualBeacon();
+            renderBlueDot(mstPoint);
         }
     }
 
+    //extracting wayfinding path data from current map
     private void getWayFindingData() {
         if (currentMap == null)
             return;
@@ -900,15 +731,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     }
 
-    /**
-     * Render the bluedot based on relative location.
-     *
-     * @param mstPoint
-     */
-    public void renderBluedot(MSTPoint mstPoint) {
-        // this.currentMstPoint = mstPoint;
-    }
-
+    //getting the nodes of the wayfinding paths
     private void loadWayfindingData(JSONObject mapJSON) {
 
         if (this.graph == null) {
@@ -919,7 +742,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
 
         try {
-
             String sCoordinate = mapJSON.optString("coordinate");
             if (!Utility.isEmptyString(sCoordinate) && sCoordinate.equals("actual"))
                 isActualData = true;
@@ -945,7 +767,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                     Map.Entry<String, Object> node = it.next();
                     String nodeName = node.getKey();
                     MSTNode mMSTNode = (MSTNode) node.getValue();
-                    // this.calculateEdgeDistanceForNode(mMSTNode);
                     this.graph.addVertex(nodeName, mMSTNode.getEdges());
                 }
 
@@ -964,7 +785,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
      *
      * @param mstPoint
      */
-    public void renderBluedot1(MSTPoint mstPoint) {
+    public void renderBlueDot(MSTPoint mstPoint) {
 
         if (floorPlanImage != null && this.currentMap != null && mstPoint != null) {
 
@@ -1001,8 +822,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                 this.floorplanBluedotView.setX(leftMargin);
                 this.floorplanBluedotView.setY(topMargin);
 
-                showXYMstPoint = new MSTPoint(leftMargin, topMargin);
-
                 if (preFVPoint == null)
                     preFVPoint = new MSTPoint(0, 0);
 
@@ -1014,58 +833,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                 visibleView("show_path_view");
                 visibleView("edgesPointLayout");
 
-//                    if (!preferenceHelper.getBooleanValue(PreferenceConstants.KEY_SHOW_PATHS, false)) {
-//                        //hideView("show_path_view");
-//                        //hideView("edgesPointLayout");
-//                    } else {
-//                        visibleView("show_path_view");
-//                        visibleView("edgesPointLayout");
-//                    }
-
-
-//                    if (!preferenceHelper.getBooleanValue(PreferenceConstants.KEY_SHOW_BLUEDOT, true)) {
-//                        removeViewByTagname("motionLayout");
-//                        preHasMotionPoint = null;
-//                        this.floorplanBluedotView.setAlpha((float) 0.0);
-//                    } else {
-//                        /**
-//                         * This check for MSTPointType and motion and accordingly set the color for the dot
-//                         * Yellow:  MSTPointType.Cloud and isHasMotion
-//                         * Blue:    MSTPointType.Cloud and !isHasMotion
-//                         * Purple:  MSTPointType.Device
-//                         * Gray :   MSTPointType.LastKnown
-//                         * **/
-//                        this.floorplanBluedotView.setAlpha((float) 1.0);
-//                        if (mstPoint.getLocationType().equals(MSTPointType.Cloud)) {
-//                            if (mstPoint.isHasMotion()) {
-//                                bluedot_flashlight_image.setBackgroundTintList(ContextCompat
-//                                        .getColorStateList(mContext, R.color.yellowDot));
-//                            } else {
-//                                bluedot_flashlight_image.setBackgroundTintList(ContextCompat
-//                                        .getColorStateList(mContext, R.color.blueDot));
-//                            }
-//                        } else if (mstPoint.getLocationType().equals(MSTPointType.Device)) {
-//                            bluedot_flashlight_image.setBackgroundTintList(ContextCompat
-//                                    .getColorStateList(mContext, R.color.purpleDot));
-//                        } else {
-//                            bluedot_flashlight_image.setBackgroundTintList(ContextCompat
-//                                    .getColorStateList(mContext, R.color.grayDot));
-//                        }
-//
-//
-//                        if (preferenceHelper.getIntValue(PreferenceConstants.KEY_BREAD_CRUMB) > 0) {
-//                            if (preHasMotionPoint != null) {
-//                                addMotionViews(preHasMotionPoint);
-//                            }
-//                            floorplanBluedotView.bringToFront();
-//                            preHasMotionPoint = mstPoint;
-//                        } else {
-//                            removeViewByTagname("motionLayout");
-//                        }
-//                    }
-                // renderWayfinding();
-
-                if (true && this.hasAddedWayfinding && this.endingPoint != null) {
+                if (this.hasAddedWayfinding && this.endingPoint != null) {
                     renderWayfinding();
                 } else {
                     if (this.isWayfindingAdded) {
@@ -1076,25 +844,11 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                     hideView("snapPathDestinationView");
                     removeViewByTagname("renderNearestBluedot");
 
-                    // renderSnapToPath();
                 }
 
-//                    if (preferenceHelper.getBooleanValue(PreferenceConstants.KEY_SHOWXY, true) &&
-//                            preferenceHelper.getBooleanValue(PreferenceConstants.KEY_SHOW_BLUEDOT, true)) {
-//                        xyValueTextView.setText("" + mstPoint.getX() + ", " + mstPoint.getY());
-//                        xyValueTextView.setVisibility(View.VISIBLE);
-//                    } else {
-//                        xyValueTextView.setVisibility(View.GONE);
-//                    }
-
             } else {
-                //loadMapFromSDK();
                 loadMap();
             }
-        } else {
-//                spsLayout.setVisibility(View.GONE);
-//                packetIntervalLayout.setVisibility(View.GONE);
-//                drInfoLayout.setVisibility(View.GONE);
         }
     }
 
@@ -1131,10 +885,8 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                 ArrayList<MSTEdges> edgesArrayList = new ArrayList<>();
                 edgesArrayList.addAll(this.wayfinder.getEdges());
 
-                if (edgesArrayList != null && edgesArrayList.size() > 0 && (edgesArrayList.get(0).getMstScreenPoint() == null
+                if (edgesArrayList.size() > 0 && (edgesArrayList.get(0).getMstScreenPoint() == null
                         || isNewPath)) {
-//                    removeViewByTagname("show_path_view");
-//                    removeViewByTagname("edgesPointLayout");
 
                     addEdges(edgesArrayList);
 
@@ -1156,13 +908,10 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     }
 
     private void renderWayfinding() {
-
         // ADD WAYFINDING PATH VIEW
-
         if (getActivity() != null && isAsycTaskFinished) {
             this.wayfinder.setStartingPoint(mstPoint);
             isWayfindingAdded = true;
-            this.lastEndingPoint = this.endingPoint;
             if (renderWayfindingAsyncTask != null && renderWayfindingAsyncTask.getStatus() != AsyncTask.Status.FINISHED) {
                 renderWayfindingAsyncTask.cancel(true);
             }
@@ -1170,12 +919,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
             renderWayfindingAsyncTask = null;
             renderWayfindingAsyncTask = new RenderWayfindingAsyncTask();
             renderWayfindingAsyncTask.execute();
-        }/*else  {
-            removeViewByTagname("wayfindingpath");
-            hideView("edgesPointLayout");
-            hideView("snapPathDestinationView");
-            removeViewByTagname("renderNearestBluedot");
-        }*/
+        }
     }
 
     private void setStartingPoint(MSTPoint mstPoint) {
@@ -1229,14 +973,12 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         floorplanLayout.addView(edges);
     }
 
+    //wayfinding logic
     private class RenderWayfindingAsyncTask extends AsyncTask<String, Void, String> {
-
-
         @Override
         protected String doInBackground(String... urls) {
 
             startingName = wayfinder.getNearestPositionName(startingPoint, currentMap);
-            //endingName   = FloorplanFragment.this.wayfinder.getNearestPositionName1(FloorplanFragment.this.endingPoint, FloorplanFragment.this.currentMap, scaleXFactor, scaleYFactor);
             endingName = wayfinder.getNearestPositionName(endingPoint);
 
             System.out.println("wayfinding startingPoint: " + startingName + "," + "endingPoint: " + endingName);
@@ -1251,24 +993,12 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                 _previousPathArr = pathArr;
 
                 pathArrayList = wayfinder.drawWayfingPath(pathArr, scaleXFactor, scaleYFactor, currentMap);
-//
-//                if (preferenceHelper.getBooleanValue(PreferenceConstants.KEY_SNAP_TO_PATH, false)) {
-//
-//                    float xPos = FloorplanFragment.this.convertCloudPointToFloorplanXScale(mstPoint.getX());
-//                    float yPos = FloorplanFragment.this.convertCloudPointToFloorplanYScale(mstPoint.getY());
-//
-//                    ArrayList<MSTPath> pathList = FloorplanFragment.this.wayfinder.getPathArrayList();
-//                    nearestMstPoint = FloorplanFragment.this.wayfinder.getSnapPathPosition(xPos, yPos, pathList, startingName);
-//                } else {
-//                    nearestMstPoint = null;
-//                }
+
                 nearestMstPoint = null;
 
                 closestMstPoint = wayfinder.getNearestPosition(endingName);
 
             }
-
-
             return null;
         }
 
@@ -1278,7 +1008,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
             if (getActivity() == null)
                 return;
-
 
             _previousPathArr = pathArr;
             removeViewByTagname("wayfindingpath");
@@ -1295,8 +1024,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                 drawLine.setLayoutParams(lineParams);
                 floorplanLayout.addView(drawLine);
             }
-
-            //setSanptoPath();
 
             if (closestMstPoint != null) {
                 addSnapPathDestinationPoint(closestMstPoint);
@@ -1318,8 +1045,8 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
             // Compare each of the value from path array to make sure they're identical.
             // If any of the values match return false.
             for (int i = 0; i < _previousPathArr.size(); i++) {
-                String currentNodeNameAtIndex = (String) _previousPathArr.get(i);
-                String newNodeNameAtIndex = (String) copyArr.get(i);
+                String currentNodeNameAtIndex = _previousPathArr.get(i);
+                String newNodeNameAtIndex = copyArr.get(i);
                 if (!currentNodeNameAtIndex.equals(newNodeNameAtIndex)) {
                     return true;
                 }
@@ -1328,35 +1055,36 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
+    //adding the destination point
     private void addSnapPathDestinationPoint(MSTPoint mstPoint) {
         if (mstPoint != null && getActivity() != null) {
 
-                snapPathDestinationView = floorplanLayout.findViewWithTag("snapPathDestinationView");
+            snapPathDestinationView = floorplanLayout.findViewWithTag("snapPathDestinationView");
 
-                if (snapPathDestinationView == null) {
-                    snapPathDestinationView = new View(getActivity());
-                    snapPathDestinationView.setTag("snapPathDestinationView");
-                    snapPathDestinationView.setBackgroundResource(R.drawable.snap_destination_pointer);
-                    floorplanLayout.addView(snapPathDestinationView);
-                }
+            if (snapPathDestinationView == null) {
+                snapPathDestinationView = new View(getActivity());
+                snapPathDestinationView.setTag("snapPathDestinationView");
+                snapPathDestinationView.setBackgroundResource(R.drawable.snap_destination_pointer);
+                floorplanLayout.addView(snapPathDestinationView);
+            }
 
-                snapPathDestinationView.setScaleX(this.zoomScaleFactor);
-                snapPathDestinationView.setScaleY(this.zoomScaleFactor);
+            snapPathDestinationView.setScaleX(this.zoomScaleFactor);
+            snapPathDestinationView.setScaleY(this.zoomScaleFactor);
 
 
-                RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(30, 30);
+            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(30, 30);
 
-                if (!isActualData) {
-                    params.leftMargin = (int) (floorImageLeftMargin + (mstPoint.getX() * scaleXFactor * currentMap.getPpm()) - 15);
-                    params.topMargin = (int) (floorImageTopMargin + (mstPoint.getY() * scaleYFactor * currentMap.getPpm()) - 15);
-                } else {
-                    params.leftMargin = (int) (floorImageLeftMargin + (mstPoint.getX() * scaleXFactor) - 15);
-                    params.topMargin = (int) (floorImageTopMargin + (mstPoint.getY() * scaleYFactor) - 15);
-                }
+            if (!isActualData) {
+                params.leftMargin = (int) (floorImageLeftMargin + (mstPoint.getX() * scaleXFactor * currentMap.getPpm()) - 15);
+                params.topMargin = (int) (floorImageTopMargin + (mstPoint.getY() * scaleYFactor * currentMap.getPpm()) - 15);
+            } else {
+                params.leftMargin = (int) (floorImageLeftMargin + (mstPoint.getX() * scaleXFactor) - 15);
+                params.topMargin = (int) (floorImageTopMargin + (mstPoint.getY() * scaleYFactor) - 15);
+            }
 
-                snapPathDestinationView.setLayoutParams(params);
-                snapPathDestinationView.setVisibility(View.VISIBLE);
-                snapPathDestinationView.invalidate();
+            snapPathDestinationView.setLayoutParams(params);
+            snapPathDestinationView.setVisibility(View.VISIBLE);
+            snapPathDestinationView.invalidate();
         }
     }
 
