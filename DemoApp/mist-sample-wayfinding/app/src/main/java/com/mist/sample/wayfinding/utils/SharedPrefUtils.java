@@ -1,4 +1,4 @@
-package com.mist.sample.wayfinding.util;
+package com.mist.sample.wayfinding.utils;
 
 import android.content.Context;
 import android.content.SharedPreferences;

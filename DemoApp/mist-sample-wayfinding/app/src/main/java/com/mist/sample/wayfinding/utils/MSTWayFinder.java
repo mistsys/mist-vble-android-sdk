@@ -1,4 +1,4 @@
-package com.mist.sample.wayfinding.util;
+package com.mist.sample.wayfinding.utils;
 
 import android.graphics.Path;
 import android.graphics.PathMeasure;
@@ -9,7 +9,6 @@ import com.mist.android.MSTPoint;
 import com.mist.android.deadReckoning.path.MSTEdges;
 import com.mist.android.deadReckoning.path.MSTNode;
 
-import com.mist.android.deadReckoning.path.PreferenceConstants;
 import com.mist.android.deadReckoning.path.PreferenceHelper;
 import com.mist.android.deadReckoning.path.Utility;
 

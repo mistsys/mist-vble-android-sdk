@@ -33,7 +33,7 @@ public class MistManager implements MSTOrgCredentialsCallback {
     private MSTOrgCredentialsManager mstOrgCredentialsManager;
     private volatile MSTCentralManager mstCentralManager;
 
-    public MistManager() {
+    private MistManager() {
     }
 
     public static MistManager newInstance(MainApplication mainApplication) {
@@ -100,7 +100,6 @@ public class MistManager implements MSTOrgCredentialsCallback {
                     indoorOnlyListener.onMistErrorReceived(error, new Date());
                 }
             }
-
         }
     }
 
@@ -123,7 +122,7 @@ public class MistManager implements MSTOrgCredentialsCallback {
         }
     }
 
-    public synchronized void destory(){
+    public synchronized void destroy(){
         if (mstCentralManager != null) {
             mstCentralManager.stop();
             mstCentralManager = null;

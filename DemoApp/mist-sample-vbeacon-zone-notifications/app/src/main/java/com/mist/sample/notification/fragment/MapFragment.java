@@ -67,8 +67,9 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     public static final String TAG = MapFragment.class.getSimpleName();
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
+    private static final String SDK_TOKEN = "sdkToken";
     private MainApplication mainApplication;
-    private static String sdkToken;
+    private String sdkToken;
     private String floorPlanImageUrl = "";
     private MSTPoint mstPoint = null;
     private MSTMap mstMap = null;
@@ -80,7 +81,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     private float floorImageTopMargin;
     private HandlerThread sdkHandlerThread;
     private Handler sdkHandler;
-
+    private Unbinder unbinder;
     public HashMap<String, MSTVirtualBeacon> mstVirtualBeaconMap = new HashMap<>();
 
     public enum AlertType {
@@ -89,8 +90,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         location
     }
 
-    @BindView(R.id.floorplan_layout)
-    RelativeLayout floorplanLayout;
     @BindView(R.id.floorplan_bluedot)
     FrameLayout floorplanBluedotView;
     @BindView(R.id.floorplan_image)
@@ -107,11 +106,12 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     @BindColor(R.color.vb_color)
     int vbColor;
 
-    private Unbinder unbinder;
-
     public static MapFragment newInstance(String sdkToken) {
-        MapFragment.sdkToken = sdkToken;
-        return new MapFragment();
+        Bundle bundle = new Bundle();
+        bundle.putString(SDK_TOKEN, sdkToken);
+        MapFragment mapFragment = new MapFragment();
+        mapFragment.setArguments(bundle);
+        return mapFragment;
     }
 
     @Nullable
@@ -127,7 +127,10 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mainApplication = (MainApplication) getActivity().getApplication();
+        if (getActivity() != null)
+            mainApplication = (MainApplication) getActivity().getApplication();
+        if (getArguments() != null)
+            sdkToken = getArguments().getString(SDK_TOKEN);
     }
 
     @Override
@@ -158,7 +161,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     }
 
     private void initMISTSDK() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && getActivity() != null &&
                 getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                         != PackageManager.PERMISSION_GRANTED) {
             showLocationPermissionDialog();
@@ -169,55 +172,58 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     //permission dialogs
     private void showLocationPermissionDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle("This app needs location access");
-        builder.setMessage("Please grant location access so this app can detect beacons in the background.");
-        builder.setPositiveButton(android.R.string.ok, null);
-        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-            @Override
-            public void onDismiss(DialogInterface dialog) {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        PERMISSION_REQUEST_FINE_LOCATION);
-            }
-        });
-        builder.show();
+        if (getActivity() != null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setTitle("This app needs location access");
+            builder.setMessage("Please grant location access so this app can detect beacons in the background.");
+            builder.setPositiveButton(android.R.string.ok, null);
+            builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            PERMISSION_REQUEST_FINE_LOCATION);
+                }
+            });
+            builder.show();
+        }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case PERMISSION_REQUEST_FINE_LOCATION:
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d(TAG, "fine location permission granted !!");
-                    startMistSdk();
-                } else {
-                    final AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                    builder.setTitle("Functionality limited");
-                    builder.setMessage("Since location access has not been granted, " +
-                            "this app will not be able to discover beacons when in the background.");
-                    builder.setPositiveButton(android.R.string.ok, null);
-                    builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                        @Override
-                        public void onDismiss(DialogInterface dialog) {
-                        }
-                    });
-                    builder.show();
-                }
+        if (getActivity() != null) {
+            switch (requestCode) {
+                case PERMISSION_REQUEST_FINE_LOCATION:
+                    if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        Log.d(TAG, "fine location permission granted !!");
+                        startMistSdk();
+                    } else {
+                        final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                        builder.setTitle("Functionality limited");
+                        builder.setMessage("Since location access has not been granted, " +
+                                "this app will not be able to discover beacons when in the background.");
+                        builder.setPositiveButton(android.R.string.ok, null);
+                        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogInterface dialog) {
+                            }
+                        });
+                        builder.show();
+                    }
+            }
         }
-
     }
 
     private void startMistSdk() {
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() &&
-                Utils.isNetworkAvailable(getContext()) && Utils.isLocationServiceEnabled(getContext())) {
+        if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() && getActivity() != null &&
+                Utils.isNetworkAvailable(getActivity()) && Utils.isLocationServiceEnabled(getActivity())) {
             runMISTSDK();
         } else {
-            if (!Utils.isNetworkAvailable(getContext())) {
+            if (getActivity() != null && !Utils.isNetworkAvailable(getActivity())) {
                 showSettingsAlert(AlertType.network);
             }
-            if (!Utils.isLocationServiceEnabled(getContext())) {
+            if (getActivity() != null && !Utils.isLocationServiceEnabled(getActivity())) {
                 showSettingsAlert(AlertType.location);
             }
             if (mBluetoothAdapter != null && !mBluetoothAdapter.isEnabled()) {
@@ -233,55 +239,58 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     }
 
     private void showSettingsAlert(final AlertType alertType) {
-        final String sTitle, sButton;
-        if (alertType == AlertType.bluetooth) {
-            sTitle = "Bluetooth is disabled in your device. Would you like to enable it?";
-            sButton = "Goto Settings Page To Enable Bluetooth";
-        } else if (alertType == AlertType.network) {
-            sTitle = "Network Connection is disabled in your device. Would you like to enable it?";
-            sButton = "Goto Settings Page To Enable Network Connection";
-        } else {
-            sTitle = "Location is disabled in your device. Would you like to enable it?";
-            sButton = "Goto Settings Page To Enable Location";
-        }
+        if (getActivity() != null) {
+            final String sTitle, sButton;
+            if (alertType == AlertType.bluetooth) {
+                sTitle = "Bluetooth is disabled in your device. Would you like to enable it?";
+                sButton = "Goto Settings Page To Enable Bluetooth";
+            } else if (alertType == AlertType.network) {
+                sTitle = "Network Connection is disabled in your device. Would you like to enable it?";
+                sButton = "Goto Settings Page To Enable Network Connection";
+            } else {
+                sTitle = "Location is disabled in your device. Would you like to enable it?";
+                sButton = "Goto Settings Page To Enable Location";
+            }
 
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
-        alertDialogBuilder.setMessage(sTitle)
-                .setCancelable(false)
-                .setPositiveButton(sButton,
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.cancel();
-                                Intent intentOpenBluetoothSettings = new Intent();
-                                if (alertType == AlertType.bluetooth) {
-                                    intentOpenBluetoothSettings.setAction(Settings.ACTION_BLUETOOTH_SETTINGS);
-                                } else if (alertType == AlertType.network) {
-                                    intentOpenBluetoothSettings.setAction(Settings.ACTION_WIFI_SETTINGS);
-                                } else if (alertType == AlertType.location) {
-                                    intentOpenBluetoothSettings.setAction(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
+            alertDialogBuilder.setMessage(sTitle)
+                    .setCancelable(false)
+                    .setPositiveButton(sButton,
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    dialog.cancel();
+                                    Intent intentOpenBluetoothSettings = new Intent();
+                                    if (alertType == AlertType.bluetooth) {
+                                        intentOpenBluetoothSettings.setAction(Settings.ACTION_BLUETOOTH_SETTINGS);
+                                    } else if (alertType == AlertType.network) {
+                                        intentOpenBluetoothSettings.setAction(Settings.ACTION_WIFI_SETTINGS);
+                                    } else if (alertType == AlertType.location) {
+                                        intentOpenBluetoothSettings.setAction(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                                    }
+
+                                    startActivity(intentOpenBluetoothSettings);
                                 }
-                                startActivity(intentOpenBluetoothSettings);
-                            }
-                        });
-        alertDialogBuilder.setNegativeButton("Cancel",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                        final AlertDialog.Builder builder = new
-                                AlertDialog.Builder(getContext());
-                        builder.setTitle("Functionality won't work");
-                        builder.setMessage(sButton);
-                        builder.setPositiveButton(android.R.string.ok, null);
-                        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                            @Override
-                            public void onDismiss(DialogInterface dialog) {
-                            }
-                        });
-                        builder.show();
-                    }
-                });
-        AlertDialog alert = alertDialogBuilder.create();
-        alert.show();
+                            });
+            alertDialogBuilder.setNegativeButton("Cancel",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            final AlertDialog.Builder builder = new
+                                    AlertDialog.Builder(getActivity());
+                            builder.setTitle("Functionality won't work");
+                            builder.setMessage(sButton);
+                            builder.setPositiveButton(android.R.string.ok, null);
+                            builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                                @Override
+                                public void onDismiss(DialogInterface dialog) {
+                                }
+                            });
+                            builder.show();
+                        }
+                    });
+            AlertDialog alert = alertDialogBuilder.create();
+            alert.show();
+        }
     }
 
     @Override
@@ -303,6 +312,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     @Override
     public void onRelativeLocationUpdated(MSTPoint relativeLocation, MSTMap[] maps, Date dateUpdated) {
         if (relativeLocation != null && maps != null) {
+
             mstMap = maps[0];
             mstPoint = relativeLocation;
             updateRelativeLocation();
@@ -310,15 +320,16 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     }
 
     private void updateRelativeLocation() {
-
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (mstMap != null && addedMap) {
-                    renderBlueDot(mstPoint);
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (mstMap != null && addedMap) {
+                        renderBlueDot(mstPoint);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     //logic to show the blue dot for the location
@@ -351,10 +362,8 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
-
     //calculating the scale factors
     private void setupScaleFactorForFloorplan() {
-
         if (floorPlanImage != null) {
             ViewTreeObserver vto = floorPlanImage.getViewTreeObserver();
             vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -409,12 +418,14 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     public void onMapUpdated(MSTMap map, Date dateUpdated) {
         floorPlanImageUrl = map.getMapImageUrl();
         Log.d(TAG, floorPlanImageUrl);
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                renderImage(floorPlanImageUrl);
-            }
-        });
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    renderImage(floorPlanImageUrl);
+                }
+            });
+        }
     }
 
     //map image rendering
@@ -632,7 +643,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
             sdkHandlerThread = null;
         }
 
-        MistManager.newInstance(mainApplication).destory();
+        MistManager.newInstance(mainApplication).destroy();
     }
 
     @Override

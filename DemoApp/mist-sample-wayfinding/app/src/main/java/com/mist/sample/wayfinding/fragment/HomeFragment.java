@@ -13,8 +13,8 @@ import android.widget.Toast;
 
 import com.github.clans.fab.FloatingActionMenu;
 import com.mist.sample.wayfinding.R;
-import com.mist.sample.wayfinding.util.SharedPrefUtils;
-import com.mist.sample.wayfinding.util.Utils;
+import com.mist.sample.wayfinding.utils.SharedPrefUtils;
+import com.mist.sample.wayfinding.utils.Utils;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;

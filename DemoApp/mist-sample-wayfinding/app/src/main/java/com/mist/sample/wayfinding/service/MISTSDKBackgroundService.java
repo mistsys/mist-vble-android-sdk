@@ -2,16 +2,15 @@ package com.mist.sample.wayfinding.service;
 
 import android.app.job.JobParameters;
 import android.app.job.JobService;
-import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.mist.android.AppMode;
 import com.mist.android.BatteryUsage;
 import com.mist.android.model.AppModeParams;
 import com.mist.sample.wayfinding.app.MainApplication;
-import com.mist.sample.wayfinding.util.MistManager;
-import com.mist.sample.wayfinding.util.SharedPrefUtils;
-import com.mist.sample.wayfinding.util.Utils;
+import com.mist.sample.wayfinding.utils.MistManager;
+import com.mist.sample.wayfinding.utils.SharedPrefUtils;
+import com.mist.sample.wayfinding.utils.Utils;
 
 public class MISTSDKBackgroundService extends JobService {
 
