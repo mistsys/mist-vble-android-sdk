@@ -66,7 +66,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     private String sdkToken;
     private String floorPlanImageUrl = "";
     private MSTPoint mstPoint = null;
-    private MSTMap mstMap = null;
     private boolean addedMap = false;
     private double scaleXFactor;
     private double scaleYFactor;
@@ -179,6 +178,9 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
+    /**
+     * This method checks for the availability for Internet , Location and Bluetooth and show dialog if anything is not enabled else start the Mist SDK
+     */
     private void startMistSdk() {
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() && getActivity() != null &&
@@ -203,6 +205,14 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         mistManager.init(sdkToken, this, AppMode.FOREGROUND);
     }
 
+    /**
+     * This method show the alert as per AlertType
+     *
+     * @param alertType Type of Alert
+     *                  bluetooth
+     *                  network
+     *                  location
+     */
     private void showSettingsAlert(final AlertType alertType) {
         if (getActivity() != null) {
             final String sTitle, sButton;
@@ -273,12 +283,16 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     }
 
-    //called when new location is received
+    /**
+     * This callback provide the location of the device
+     *
+     * @param relativeLocation provide x,y of the device on particular map
+     * @param maps
+     * @param dateUpdated      time stamp of the location provided
+     */
     @Override
     public void onRelativeLocationUpdated(MSTPoint relativeLocation, MSTMap[] maps, Date dateUpdated) {
         if (relativeLocation != null && maps != null) {
-
-            mstMap = maps[0];
             mstPoint = relativeLocation;
             updateRelativeLocation();
         }
@@ -289,7 +303,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (mstMap != null && addedMap) {
+                    if (currentMap != null && addedMap) {
                         renderBlueDot(mstPoint);
                     }
                 }
@@ -298,28 +312,30 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     }
 
     //logic to show the blue dot for the location
-    public void renderBlueDot(MSTPoint mstPoint) {
-        if (this.floorPlanImage != null &&
-                this.floorPlanImage.getDrawable() != null &&
-                mstMap != null && mstPoint != null
-                ) {
+    public void renderBlueDot(final MSTPoint point) {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (floorPlanImage != null && floorPlanImage.getDrawable() != null && currentMap != null && point != null && addedMap) {
+                        float xPos = convertCloudPointToFloorplanXScale(point.getX());
+                        float yPos = convertCloudPointToFloorplanYScale(point.getY());
 
-            this.mstPoint = mstPoint;
+                        // If scaleX and scaleY are not defined, check again
+                        if (!scaleFactorCalled && (scaleXFactor == 0 || scaleYFactor == 0)) {
+                            setupScaleFactorForFloorplan();
+                        }
+                        float leftMargin = floorImageLeftMargin + (xPos - (floorplanBluedotView.getWidth() / 2));
+                        float topMargin = floorImageTopMargin + (yPos - (floorplanBluedotView.getHeight() / 2));
 
-            float xPos = this.convertCloudPointToFloorplanXScale(mstPoint.getX());
-            float yPos = this.convertCloudPointToFloorplanYScale(mstPoint.getY());
-
-            // If scaleX and scaleY are not defined, check again
-            if (!scaleFactorCalled && (scaleXFactor == 0 || scaleYFactor == 0)) {
-                setupScaleFactorForFloorplan();
-            }
-            float leftMargin = floorImageLeftMargin + (xPos - (this.floorplanBluedotView.getWidth() / 2));
-            float topMargin = floorImageTopMargin + (yPos - (this.floorplanBluedotView.getHeight() / 2));
-
-            this.floorplanBluedotView.setX(leftMargin);
-            this.floorplanBluedotView.setY(topMargin);
+                        floorplanBluedotView.setX(leftMargin);
+                        floorplanBluedotView.setY(topMargin);
+                    }
+                }
+            });
         }
     }
+
 
     //calculating the scale factors
     private void setupScaleFactorForFloorplan() {
@@ -342,14 +358,14 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
-    //converting the x point from meter's to pixel with the present scaling
+    //converting the x point from meter's to pixel with the present scaling factor of the map rendered in the imageview
     private float convertCloudPointToFloorplanXScale(double meter) {
-        return (float) (meter * this.scaleXFactor * mstMap.getPpm());
+        return (float) (meter * this.scaleXFactor * currentMap.getPpm());
     }
 
-    //converting the y point from meter's to pixel with the present scaling
+    //converting the y point from meter's to pixel with the present scaling factor of the map rendered in the imageview
     private float convertCloudPointToFloorplanYScale(double meter) {
-        return (float) (meter * this.scaleYFactor * mstMap.getPpm());
+        return (float) (meter * this.scaleYFactor * currentMap.getPpm());
     }
 
     @Override
@@ -372,14 +388,19 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     }
 
-    //called when new map is received
+    /**
+     * This callback provide the detail of map user is on
+     *
+     * @param map         Map object having details about the map
+     * @param dateUpdated
+     */
     @Override
     public void onMapUpdated(MSTMap map, Date dateUpdated) {
         floorPlanImageUrl = map.getMapImageUrl();
         Log.d(TAG, floorPlanImageUrl);
-        if (getActivity() != null && (floorPlanImage.getDrawable() == null || this.currentMap == null || !this.currentMap.getMapId().equals(mstMap.getMapId()))) {
+        if (getActivity() != null && (floorPlanImage.getDrawable() == null || this.currentMap == null || !this.currentMap.getMapId().equals(map.getMapId()))) {
             // Set the current map
-            this.currentMap = mstMap;
+            this.currentMap = map;
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -389,7 +410,11 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
-    //map image rendering
+    /**
+     * This method is used for rendering the map image using the url from the MSTMap object received from OnMapUpdated callback
+     *
+     * @param floorPlanImageUrl map image url
+     */
     private void renderImage(final String floorPlanImageUrl) {
         Log.d(TAG, "in picasso");
         addedMap = false;
@@ -461,7 +486,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     public void receivedVerboseLogMessage(String message) {
     }
 
-    //called when successfully registration fails
+    //callback for error
     @Override
     public void onMistErrorReceived(String message, Date date) {
         progressBar.setVisibility(View.GONE);
