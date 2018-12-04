@@ -57,7 +57,7 @@ import butterknife.Unbinder;
  * Created by anubhava on 26/03/18.
  */
 
-public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnlyListener, MistLocationAdvanceListener {
+public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnlyListener {
 
     public static final String TAG = MapFragment.class.getSimpleName();
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
@@ -73,8 +73,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     private boolean scaleFactorCalled;
     private float floorImageLeftMargin;
     private float floorImageTopMargin;
-    private HandlerThread sdkHandlerThread;
-    private Handler sdkHandler;
+    public MSTMap currentMap;
     private Unbinder unbinder;
 
     public enum AlertType {
@@ -121,30 +120,9 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     }
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        sdkHandlerThread = new HandlerThread("SDKHandler");
-        sdkHandlerThread.start();
-        sdkHandler = new Handler(sdkHandlerThread.getLooper());
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (!Utils.isEmptyString(floorPlanImageUrl)) {
-            renderImage(floorPlanImageUrl);
-        }
-    }
-
-    @Override
     public void onStart() {
         super.onStart();
-        sdkHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                initMISTSDK();
-            }
-        }, 500);
+        initMISTSDK();
     }
 
     private void initMISTSDK() {
@@ -331,16 +309,10 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
             float xPos = this.convertCloudPointToFloorplanXScale(mstPoint.getX());
             float yPos = this.convertCloudPointToFloorplanYScale(mstPoint.getY());
 
-            if (this.scaleXFactor == 0 || this.scaleYFactor == 0) {
-                //Defining the scaleX and scaleY for the map image
-                if (!scaleFactorCalled)
-                    setupScaleFactorForFloorplan();
+            // If scaleX and scaleY are not defined, check again
+            if (!scaleFactorCalled && (scaleXFactor == 0 || scaleYFactor == 0)) {
+                setupScaleFactorForFloorplan();
             }
-
-            if (this.floorplanBluedotView.getAlpha() == 0.0) {
-                this.floorplanBluedotView.setAlpha((float) 1.0);
-            }
-
             float leftMargin = floorImageLeftMargin + (xPos - (this.floorplanBluedotView.getWidth() / 2));
             float topMargin = floorImageTopMargin + (yPos - (this.floorplanBluedotView.getHeight() / 2));
 
@@ -359,10 +331,10 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                     if (floorPlanImage != null) {
                         floorImageLeftMargin = floorPlanImage.getLeft();
                         floorImageTopMargin = floorPlanImage.getTop();
-                        scaleFactorCalled = false;
                         if (floorPlanImage.getDrawable() != null) {
                             scaleXFactor = (floorPlanImage.getWidth() / (double) floorPlanImage.getDrawable().getIntrinsicWidth());
                             scaleYFactor = (floorPlanImage.getHeight() / (double) floorPlanImage.getDrawable().getIntrinsicHeight());
+                            scaleFactorCalled = true;
                         }
                     }
                 }
@@ -405,7 +377,9 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     public void onMapUpdated(MSTMap map, Date dateUpdated) {
         floorPlanImageUrl = map.getMapImageUrl();
         Log.d(TAG, floorPlanImageUrl);
-        if (getActivity() != null) {
+        if (getActivity() != null && (floorPlanImage.getDrawable() == null || this.currentMap == null || !this.currentMap.getMapId().equals(mstMap.getMapId()))) {
+            // Set the current map
+            this.currentMap = mstMap;
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -500,38 +474,10 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     }
 
-
-    @Override
-    public void onDRSnappedLocationUpdated(MSTPoint mstPoint, MSTMap mstMap, Date date) {
-        Log.d(TAG, "DR Snapped Location Updated.");
-    }
-
-    @Override
-    public void onDRRawLocationUpdated(MSTPoint mstPoint, MSTMap mstMap, Date date) {
-        Log.d(TAG, "DR Raw Location Updated.");
-    }
-
-    @Override
-    public void onLESnappedLocationUpdated(MSTPoint mstPoint, MSTMap mstMap, Date date) {
-        Log.d(TAG, "LE Snapped Location Updated.");
-    }
-
-    @Override
-    public void onLERawLocationUpdated(MSTPoint mstPoint, MSTMap mstMap, Date date) {
-        Log.d(TAG, "LE Raw Location Updated.");
-    }
-
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         unbinder.unbind();
-
-        sdkHandler = null;
-        if (sdkHandlerThread != null) {
-            sdkHandlerThread.quitSafely();
-            sdkHandlerThread = null;
-        }
-
         MistManager.newInstance(mainApplication).destroy();
     }
 

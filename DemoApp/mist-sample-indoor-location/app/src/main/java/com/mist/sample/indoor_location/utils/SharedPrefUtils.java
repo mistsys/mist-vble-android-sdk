@@ -47,7 +47,7 @@ public class SharedPrefUtils {
     }
 
 
-    //saving sdktoken to sp
+    //saving sdktoken to sharedpref
     public static void saveSdkToken(Context context, String key, String value) {
         getEditor(context).putString(key, value).apply();
     }
