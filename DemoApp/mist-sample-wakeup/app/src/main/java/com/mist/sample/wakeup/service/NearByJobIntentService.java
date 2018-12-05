@@ -40,13 +40,13 @@ public class NearByJobIntentService extends JobIntentService {
                     if (!SharedPrefUtils.isAppAlive(mContext)) {
                         Utils.scheduleJob(mContext);
                     }
-                    if (!SharedPrefUtils.isWelcomeShown(mContext)) {
+                    if (SharedPrefUtils.shouldShowWelcome(mContext)) {
                         Intent intent = new Intent(mContext, MainActivity.class);
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         PendingIntent contentIntent = PendingIntent.getActivity(mContext,
                                 Utils.WELCOME_NOTIFICATION_ID, intent, PendingIntent.FLAG_CANCEL_CURRENT);
                         Utils.sendNotification(mContext, contentIntent);
-                        SharedPrefUtils.setIsWelcomeShown(mContext, true);
+                        SharedPrefUtils.setShouldShowWelcome(mContext, false);
                     }
                 } catch (Exception e) {
                     Log.e(TAG, e.getMessage());

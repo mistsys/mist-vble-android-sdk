@@ -11,8 +11,6 @@ import com.squareup.picasso.Picasso;
 
 public class MainApplication extends Application {
 
-    private static final String TAG = MainApplication.class.getSimpleName();
-
     @Override
     public void onCreate() {
         super.onCreate();

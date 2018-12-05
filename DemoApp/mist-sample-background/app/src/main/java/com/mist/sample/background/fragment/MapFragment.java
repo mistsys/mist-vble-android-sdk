@@ -555,7 +555,12 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     public void onDestroyView() {
         super.onDestroyView();
         unbinder.unbind();
+        sdkHandler = null;
 
+        if (sdkHandlerThread != null) {
+            sdkHandlerThread.quitSafely();
+            sdkHandlerThread = null;
+        }
 
         try {
             //stopping the scheduled job when the app comes to the foreground
