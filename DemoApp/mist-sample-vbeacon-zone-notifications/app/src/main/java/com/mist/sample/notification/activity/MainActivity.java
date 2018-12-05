@@ -24,6 +24,9 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.SdkT
         }
     }
 
+    /**
+     * This method is just setting up the home fragment
+     */
     private void setUpHomeFragment() {
         Fragment tokenFragment = getSupportFragmentManager().
                 findFragmentByTag(HomeFragment.TAG);
@@ -50,7 +53,12 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.SdkT
         }
     }
 
-    //map fragment is called after the sdk token is received
+
+    /**
+     * This method is settingup the Map scrren with passing the SDK token needed by it for Mist SDK to start working
+     *
+     * @param sdkToken sdk token used for enrollment
+     */
     private void setUpMapFragment(String sdkToken) {
         Fragment mapFragment = getSupportFragmentManager().
                 findFragmentByTag(MapFragment.TAG);
