@@ -29,9 +29,8 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
     implementation 'com.android.support:design:27.1.1'
     //mist sdk
-    //implementation 'com.mist:core-sdk:1.5.0'
-    implementation(name:'mist-mobile-sdk', ext:'aar')
-    implementation(name:'mist-mobile', ext:'aar')
+    implementation 'com.mist:core-sdk:2.0.0'
+
     //butterknife
     implementation 'com.jakewharton:butterknife:8.8.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
