@@ -1,24 +1,17 @@
 package com.mist.sample.wayfinding.utils;
 
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
-import android.content.ComponentName;
 import android.content.Context;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.text.TextUtils;
 
-import com.mist.sample.wayfinding.service.MISTSDKBackgroundService;
 
 /**
  * Created by anubhava on 02/04/18.
  */
 
 public class Utils {
-
-    private static final int MIST_SDK_JOB_ID = 100;
-    public static final String TOKEN_PREF_KEY_NAME = "sdkToken";
 
     /**
      * Check Internet is on or off
@@ -66,12 +59,12 @@ public class Utils {
         // set the environment string to return
         if (envType.equalsIgnoreCase("P")) {
             env = "Production";
-        } else if (envType.equalsIgnoreCase("S")) {
-            env = "Staging";
+        } else if (envType.equalsIgnoreCase("E")) {
+            env = "EU";
         } else if (envType.equalsIgnoreCase("K")) {
             env = "Kalam";
         } else {
-            env = "Dev";
+            env = "Production";
         }
         // return the environment string
         return env;
@@ -79,32 +72,5 @@ public class Utils {
 
     public static boolean isEmptyString(String value) {
         return TextUtils.isEmpty(value) || value.equalsIgnoreCase("null");
-    }
-
-    // schedule the start of the service
-    public static void scheduleJob(Context context) throws NullPointerException {
-        ComponentName serviceComponent = new ComponentName(context, MISTSDKBackgroundService.class);
-        JobInfo.Builder builder = new JobInfo.Builder(MIST_SDK_JOB_ID, serviceComponent);
-        builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);// require unmetered network
-        builder.setPersisted(true);
-
-        JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        if (jobScheduler != null) {
-            MISTSDKBackgroundService.needJobReschedule(true);
-            jobScheduler.schedule(builder.build());
-        } else {
-            throw new NullPointerException("JobScheduler Service is null");
-        }
-    }
-
-    // stop scheduled job
-    public static void stopScheduledJob(Context context) throws NullPointerException {
-        JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        if (jobScheduler != null) {
-            MISTSDKBackgroundService.needJobReschedule(false);
-            jobScheduler.cancel(MIST_SDK_JOB_ID);
-        } else {
-            throw new NullPointerException("JobScheduler Service is null");
-        }
     }
 }
