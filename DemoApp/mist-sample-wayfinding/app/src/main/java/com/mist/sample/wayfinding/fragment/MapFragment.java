@@ -100,7 +100,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     private boolean isActualData = false;
     private MSTPoint startingPoint;
     private MSTPoint endingPoint;
-    private MSTPoint preFVPoint;
     private boolean isWayfindingAdded = false;
     private boolean isAsycTaskFinished = true;
     private RenderWayfindingAsyncTask renderWayfindingAsyncTask;
@@ -493,6 +492,9 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                 });
     }
 
+    /**
+     * This is for calling the wayfinder task to draw the way finding path
+     */
     private void callWayfinerAsyncTask() {
         if (wayfinerAsyncTask != null && wayfinerAsyncTask.getStatus() != AsyncTask.Status.FINISHED) {
             wayfinerAsyncTask.cancel(true);
@@ -503,6 +505,12 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         wayfinerAsyncTask.execute();
     }
 
+    /**
+     * This method calculate the scaling factor of the image rendering in image view by taking in account of intrinsic
+     * dimension so that we have the factor to multiply while we position the bluedot on the map image
+     *
+     * @param cb callback to let know about the scaling calculation status
+     */
     private void setupScaleFactorForFloorplan(final Callback cb) {
         if (!scaleFactorCalled && (scaleXFactor == 0 || scaleYFactor == 0)) {
             ViewTreeObserver vto = this.floorPlanImage.getViewTreeObserver();
@@ -580,12 +588,23 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         //disconnecting the Mist SDK
         MistManager.newInstance(mainApplication).disconnect();
     }
+
+    /**
+     * Callback triggered with the coordinates of the touch point
+     * @param x
+     * @param y
+     */
     @Override
     public void onTouchZoomView(float x, float y) {
         drawTouchedDot(x, y);
 
     }
 
+    /**
+     * this method is used to set the destination at the point touched by user
+     * @param x
+     * @param y
+     */
     public void drawTouchedDot(float x, float y) {
 
         if (this.currentMap != null) {
@@ -593,6 +612,10 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
+    /**
+     * This callback provide us the scaling of the view done so we can translate all the assets like bluedot , paths to appropriate zoom level
+     * @param scale
+     */
     @Override
     public void onZoomScaleValue(float scale) {
         float scale1 = 0;
@@ -739,30 +762,20 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                         public void onSuccess() {
                             callWayfinerAsyncTask();
                         }
-
                         @Override
                         public void onError() {
-
                         }
                     });
-
                     return;
                 }
 
                 setStartingPoint(mstPoint);
-                if (this.floorplanBluedotView.getAlpha() == 0.0) {
-                    this.floorplanBluedotView.setAlpha((float) 1.0);
-                }
-
 
                 float leftMargin = floorImageLeftMargin + (xPos - (this.floorplanBluedotView.getWidth() / 2));
                 float topMargin = floorImageTopMargin + (yPos - (this.floorplanBluedotView.getHeight() / 2));
 
                 this.floorplanBluedotView.setX(leftMargin);
                 this.floorplanBluedotView.setY(topMargin);
-
-                if (preFVPoint == null)
-                    preFVPoint = new MSTPoint(0, 0);
 
                 if (!hasAddedWayfinding)
                     getWayFindingData();
