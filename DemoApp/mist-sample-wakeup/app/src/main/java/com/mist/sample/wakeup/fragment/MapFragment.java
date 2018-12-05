@@ -597,7 +597,9 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     }
 
 
-
+    /**
+     * Setting up google client for getting callback from OS for registered beacons
+     */
     private synchronized void buildGoogleApiClient() {
         if (googleApiClient == null) {
             googleApiClient = new GoogleApiClient.Builder(getActivity())
@@ -609,6 +611,10 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
+    /**
+     * checking for location permission
+     * @return
+     */
     private boolean havePermissions() {
         return ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED;
@@ -632,6 +638,9 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                 Snackbar.LENGTH_LONG).show();
     }
 
+    /**
+     * Register the iBeacons for which we need the callback from OS when entered the region
+     */
     private void subscribe() {
 
         String orgId = null, subOrgId = null;
@@ -644,19 +653,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
             MessageFilter filter = new MessageFilter.Builder()
                     .includeIBeaconIds(UUID.fromString(orgId), null, null)
-                    .includeIBeaconIds(UUID.fromString("00000000-0000-0000-0000-000000000001"), null, null)
-                    .includeIBeaconIds(UUID.fromString("00000000-0000-0000-0000-000000000002"), null, null)
-                    .includeIBeaconIds(UUID.fromString("00000000-0000-0000-0000-000000000003"), null, null)
-                    .includeIBeaconIds(UUID.fromString("00000000-0000-0000-0000-000000000004"), null, null)
-                    .includeIBeaconIds(UUID.fromString("00000000-0000-0000-0000-000000000005"), null, null)
-                    .includeIBeaconIds(UUID.fromString("00000000-0000-0000-0000-000000000006"), null, null)
-                    .includeIBeaconIds(UUID.fromString("00000000-0000-0000-0000-000000000007"), null, null)
-                    .includeIBeaconIds(UUID.fromString("00000000-0000-0000-0000-000000000008"), null, null)
-                    .includeIBeaconIds(UUID.fromString("00000000-0000-0000-0000-000000000009"), null, null)
-                    .includeIBeaconIds(UUID.fromString("00000000-0000-0000-0000-00000000000a"), null, null)
-                    .includeIBeaconIds(UUID.fromString("00000000-0000-0000-0000-00000000000b"), null, null)
-                    .includeIBeaconIds(UUID.fromString("00000000-0000-0000-0000-00000000000c"), null, null)
-                    .includeIBeaconIds(UUID.fromString("00000000-0000-0000-0000-00000000000d"), null, null)
                     .includeIBeaconIds(UUID.fromString(subOrgId + "00"), null, null)
                     .includeIBeaconIds(UUID.fromString(subOrgId + "01"), null, null)
                     .includeIBeaconIds(UUID.fromString(subOrgId + "02"), null, null)
