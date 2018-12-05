@@ -1,4 +1,4 @@
-package com.mist.sample.background.util;
+package com.mist.sample.background.utils;
 
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
@@ -66,12 +66,12 @@ public class Utils {
         // set the environment string to return
         if (envType.equalsIgnoreCase("P")) {
             env = "Production";
-        } else if (envType.equalsIgnoreCase("S")) {
-            env = "Staging";
+        } else if (envType.equalsIgnoreCase("E")) {
+            env = "EU";
         } else if (envType.equalsIgnoreCase("K")) {
             env = "Kalam";
         } else {
-            env = "Dev";
+            env = "Production";
         }
         // return the environment string
         return env;
