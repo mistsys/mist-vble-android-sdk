@@ -73,4 +73,15 @@ public class Utils {
     public static boolean isEmptyString(String value) {
         return TextUtils.isEmpty(value) || value.equalsIgnoreCase("null");
     }
+
+    /**
+     * Get distance between two points.
+     */
+    public static double distanceBetweenTwoPoints(double x1, double y1, double x2, double y2) {
+        return Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+    }
+
+    public static boolean isEmpty(Object data) {
+        return data == null;
+    }
 }

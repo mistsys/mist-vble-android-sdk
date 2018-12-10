@@ -1,23 +1,17 @@
-package com.mist.sample.wayfinding.utils;
+package com.mist.sample.wayfinding.wayfindingpath;
 
 import android.graphics.Path;
 import android.graphics.PathMeasure;
 
 import com.mist.android.MSTMap;
 import com.mist.android.MSTPoint;
-
-import com.mist.android.deadReckoning.path.MSTEdges;
-import com.mist.android.deadReckoning.path.MSTNode;
-
-import com.mist.android.deadReckoning.path.PreferenceHelper;
-import com.mist.android.deadReckoning.path.Utility;
+import com.mist.sample.wayfinding.utils.Utils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -27,26 +21,11 @@ public class MSTWayFinder {
     private JSONArray nodesJsonArray = null;
     private MSTPoint startingPoint;
     private MSTPoint destinationPoint;
-    private PreferenceHelper preferenceHelper;
     ArrayList<MSTPath> showPathArrayList = new ArrayList<>();
     ArrayList<MSTEdges> edgesPointArrayList = new ArrayList<>();
     ArrayList<MSTPath> pathArrayList = new ArrayList<>();
     boolean isActualData;
 
-    public MSTWayFinder(JSONObject jsonPath, boolean isActualData, PreferenceHelper preferenceHelper) {
-
-        this.jsonPath = jsonPath;
-        this.preferenceHelper = preferenceHelper;
-        this.isActualData = isActualData;
-
-        if (jsonPath != null) {
-            try {
-                nodesJsonArray = jsonPath.getJSONArray("nodes");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
     public MSTWayFinder(JSONObject jsonPath, boolean isActualData) {
 
@@ -76,78 +55,6 @@ public class MSTWayFinder {
 
     public void setDestinationPoint(MSTPoint destinationPoint) {
         this.destinationPoint = destinationPoint;
-    }
-
-    public MSTPoint closestPointOnAllPaths(MSTPoint point) {
-
-        MSTPoint closestPoint = new MSTPoint(1, 1); // FIX ME
-
-
-        return closestPoint;
-    }
-
-    public Path renderWayfinding(ArrayList pathArr) {
-        //pathArr
-        // loop through the path and draw a line from each node
-        Path path = new Path();
-
-        return path;
-    }
-
-    /**
-     * Get way finding path value
-     */
-    /**
-     * Get way finding path value
-     */
-    public Path drawWayfindingPath(ArrayList<String> keyNameList, double scaleXFactor, double scaleYFactor, MSTMap mstMap) {
-
-        Path path = new Path();
-
-        try {
-            String xValue = "", yValue = "";
-            if (!isActualData) {
-                scaleXFactor = scaleXFactor * mstMap.getPpm();
-                scaleYFactor = scaleYFactor * mstMap.getPpm();
-            }
-
-            if (startingPoint != null && nodesJsonArray != null && nodesJsonArray.length() > 0) {
-                Collections.reverse(keyNameList);
-                path.moveTo((float) (startingPoint.getX() * scaleXFactor), (float) (startingPoint.getY() * scaleYFactor));
-                for (String keyName : keyNameList) {
-
-                    JSONObject positionJsonObject = getPositionValues(keyName);
-                    if (positionJsonObject != null) {
-                        xValue = positionJsonObject.getString("x");
-                        yValue = positionJsonObject.getString("y");
-                        path.lineTo((float) (Double.valueOf(xValue) * scaleXFactor), (float) (Double.valueOf(yValue) * scaleYFactor));
-                    }
-                }
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return path;
-    }
-
-
-    /**
-     * Get position of node from nodeJsonArray
-     */
-    private JSONObject getPositionValues(String keyName) {
-        try {
-            for (int i = 0; i < nodesJsonArray.length(); i++) {
-                JSONObject jsonObject = nodesJsonArray.getJSONObject(i);
-                if (jsonObject.getString("name").equals(keyName)) {
-                    return jsonObject.getJSONObject("position");
-                }
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return null;
     }
 
     public ArrayList<MSTPath> getShowPathList(HashMap<String, Object> nodes,
@@ -398,52 +305,6 @@ public class MSTWayFinder {
         return mstPointArrayList;
     }
 
-    public ArrayList<MSTPoint> getPoints(Path path, float speed) {
-        ArrayList<MSTPoint> mstPointArrayList = new ArrayList<>();
-        PathMeasure pm = new PathMeasure(path, false);
-        float length = pm.getLength();
-        float distance = 0f;
-        float[] aCoordinates = new float[2];
-
-        while ((distance < length)) {
-            // get point from the path
-            pm.getPosTan(distance, aCoordinates, null);
-            mstPointArrayList.add(new MSTPoint(aCoordinates[0], aCoordinates[1]));
-            distance = distance + speed;
-        }
-
-        return mstPointArrayList;
-    }
-
-    public MSTPoint getSnapPathPosition(float xPos, float yPos, ArrayList<MSTPath> pathArrayList, String sEdgeName) {
-        MSTPoint mstPointSnapPosition = null;
-        double minDistance = 0;
-        boolean isFirstTime = true;
-        if (sEdgeName != null && pathArrayList != null) {
-            for (int i = 0; i < pathArrayList.size(); i++) {
-                MSTPath mstPath = pathArrayList.get(i);
-                if (mstPath != null && mstPath.getStartingEdgeName() != null && mstPath.getEndEdgeName() != null
-                        && (mstPath.getStartingEdgeName().equals(sEdgeName) || mstPath.getEndEdgeName().equals(sEdgeName))) {
-                    ArrayList<MSTPoint> mstPointArrayList = mstPath.getMstPointArrayList();
-                    for (MSTPoint mstPoint : mstPointArrayList) {
-                        double distance = Utility.distanceBetweenTwoPoints(xPos, yPos, mstPoint.getX(), mstPoint.getY());
-
-                        if (isFirstTime || distance == 0 || distance < minDistance) {
-                            minDistance = distance;
-                            mstPointSnapPosition = mstPoint;
-                            isFirstTime = false;
-
-                        }
-                    }
-                }
-
-            }
-        }
-
-
-        return mstPointSnapPosition;
-    }
-
     private boolean checkKeyName(String key, String key1, ArrayList<String> pathArrList) {
 
         for (String keyName : pathArrList) {
@@ -464,7 +325,7 @@ public class MSTWayFinder {
 
                 boolean isActualData;
                 String sCoordinate = jsonPath.optString("coordinate");
-                if (!Utility.isEmptyString(sCoordinate) && sCoordinate.equals("actual"))
+                if (!Utils.isEmptyString(sCoordinate) && sCoordinate.equals("actual"))
                     isActualData = true;
                 else
                     isActualData = false;
@@ -479,9 +340,9 @@ public class MSTWayFinder {
 
                         double distance;
                         if (isActualData)
-                            distance = Utility.distanceBetweenTwoPoints(point.getX() * mstMap.getPpm(), point.getY() * mstMap.getPpm(), Double.valueOf(xValue), Double.valueOf(yValue));
+                            distance = Utils.distanceBetweenTwoPoints(point.getX() * mstMap.getPpm(), point.getY() * mstMap.getPpm(), Double.valueOf(xValue), Double.valueOf(yValue));
                         else
-                            distance = Utility.distanceBetweenTwoPoints(point.getX(), point.getY(), Double.valueOf(xValue), Double.valueOf(yValue));
+                            distance = Utils.distanceBetweenTwoPoints(point.getX(), point.getY(), Double.valueOf(xValue), Double.valueOf(yValue));
                         if (i == 0 || distance == 0 || distance < minDistance) {
                             minDistance = distance;
                             finalName = sName;
@@ -513,7 +374,7 @@ public class MSTWayFinder {
 
                     if (screenPoint != null) {
 
-                        double distance = Utility.distanceBetweenTwoPoints(point.getX(), point.getY(), screenPoint.getX(), screenPoint.getY());
+                        double distance = Utils.distanceBetweenTwoPoints(point.getX(), point.getY(), screenPoint.getX(), screenPoint.getY());
 
                         if (i == 0 || distance == 0 || distance < minDistance) {
                             minDistance = distance;
@@ -522,62 +383,6 @@ public class MSTWayFinder {
                     }
                 }
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return finalName;
-    }
-
-
-    /**
-     * Get nearest position name from nodes json array
-     */
-    public String getNearestPositionName1(MSTPoint point, MSTMap mstMap, double scaleXFactor, double scaleYFactor) {
-        String finalName = "";
-        double minDistance = 0;
-        if (point != null) {
-            try {
-
-                boolean isActualData;
-                String sCoordinate = jsonPath.optString("coordinate");
-                if (!Utility.isEmptyString(sCoordinate) && sCoordinate.equals("actual"))
-                    isActualData = true;
-                else
-                    isActualData = false;
-
-                for (int i = 0; i < edgesPointArrayList.size(); i++) {
-                    MSTEdges mstEdges = edgesPointArrayList.get(i);
-                    String sName = mstEdges.getsEdgeName();
-
-                    MSTPoint screenPoint = null;
-
-                    if (mstEdges.getMstScreenPoint() != null) {
-                        screenPoint = mstEdges.getMstScreenPoint();
-
-                        double distance = Utility.distanceBetweenTwoPoints(point.getX(), point.getY(), screenPoint.getX(), screenPoint.getY());
-
-                        if (i == 0 || distance == 0 || distance < minDistance) {
-                            minDistance = distance;
-                            finalName = sName;
-                        }
-                    } else if (mstEdges.getMstPoint() != null) {
-                        {
-                            screenPoint = mstEdges.getMstPoint();
-                            double distance;
-                            if (isActualData)
-                                distance = Utility.distanceBetweenTwoPoints(point.getX() * scaleXFactor * mstMap.getPpm(), point.getY() * scaleYFactor * mstMap.getPpm(), screenPoint.getX() * scaleXFactor * mstMap.getPpm(), screenPoint.getY() * scaleYFactor * mstMap.getPpm());
-                            else
-                                distance = Utility.distanceBetweenTwoPoints(point.getX() * scaleXFactor, point.getY() * scaleYFactor, screenPoint.getX() * scaleXFactor, screenPoint.getY() * scaleYFactor);
-                            if (i == 0 || distance == 0 || distance < minDistance) {
-                                minDistance = distance;
-                                finalName = sName;
-                            }
-                        }
-
-                    }
-
-                }
             } catch (Exception e) {
                 e.printStackTrace();
             }

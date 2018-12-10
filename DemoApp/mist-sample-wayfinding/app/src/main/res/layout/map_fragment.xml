@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:background="@android:color/white">
 
-    <com.mist.sample.wayfinding.utils.ZoomLayout
+    <com.mist.sample.wayfinding.wayfindingpath.ZoomLayout
         android:id="@+id/floorplan_zoomlayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
@@ -63,6 +63,6 @@
             </FrameLayout>
 
         </RelativeLayout>
-    </com.mist.sample.wayfinding.utils.ZoomLayout>
+    </com.mist.sample.wayfinding.wayfindingpath.ZoomLayout>
 
 </RelativeLayout>

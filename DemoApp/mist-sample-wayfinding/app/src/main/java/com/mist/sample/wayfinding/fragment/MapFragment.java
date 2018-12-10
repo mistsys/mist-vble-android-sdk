@@ -36,18 +36,17 @@ import com.mist.android.MSTMap;
 import com.mist.android.MSTPoint;
 import com.mist.android.MSTVirtualBeacon;
 import com.mist.android.MSTZone;
-import com.mist.android.deadReckoning.path.MSTEdges;
-import com.mist.android.deadReckoning.path.MSTNode;
-import com.mist.android.deadReckoning.path.Utility;
 import com.mist.sample.wayfinding.R;
 import com.mist.sample.wayfinding.app.MainApplication;
 import com.mist.sample.wayfinding.utils.DrawLine;
-import com.mist.sample.wayfinding.utils.MSTGraph;
-import com.mist.sample.wayfinding.utils.MSTPath;
-import com.mist.sample.wayfinding.utils.MSTWayFinder;
+import com.mist.sample.wayfinding.wayfindingpath.MSTEdges;
+import com.mist.sample.wayfinding.wayfindingpath.MSTGraph;
+import com.mist.sample.wayfinding.wayfindingpath.MSTNode;
+import com.mist.sample.wayfinding.wayfindingpath.MSTPath;
+import com.mist.sample.wayfinding.wayfindingpath.MSTWayFinder;
 import com.mist.sample.wayfinding.utils.MistManager;
 import com.mist.sample.wayfinding.utils.Utils;
-import com.mist.sample.wayfinding.utils.ZoomLayout;
+import com.mist.sample.wayfinding.wayfindingpath.ZoomLayout;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
@@ -618,18 +617,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
      */
     @Override
     public void onZoomScaleValue(float scale) {
-        float scale1 = 0;
-        if (scale <= 1.5)
-            scale1 = 1;
-        else {
-            if (scale > 3)
-                scale1 = (float) 0.3;
-            else if (scale >= 1.5)
-                scale1 = (float) 0.5;
-            else
-                scale1 = (float) 0.8;
-        }
-        scale1 = 1 / scale;
+        float scale1 = 1 / scale;
 
         this.zoomScaleFactor = scale1;
 
@@ -705,14 +693,14 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
         try {
             String sCoordinate = mapJSON.optString("coordinate");
-            if (!Utility.isEmptyString(sCoordinate) && sCoordinate.equals("actual"))
+            if (!Utils.isEmptyString(sCoordinate) && sCoordinate.equals("actual"))
                 isActualData = true;
             else
                 isActualData = false;
 
             JSONArray nodesFromFile = mapJSON.optJSONArray("nodes");
 
-            if (!Utility.isEmpty(nodesFromFile) && nodesFromFile.length() > 0) {
+            if (!Utils.isEmpty(nodesFromFile) && nodesFromFile.length() > 0) {
 
                 for (int i = 0; i < nodesFromFile.length(); i++) {
                     JSONObject node = (JSONObject) nodesFromFile.get(i);
