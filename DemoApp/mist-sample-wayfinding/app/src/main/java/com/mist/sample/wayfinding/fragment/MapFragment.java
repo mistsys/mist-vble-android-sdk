@@ -38,7 +38,7 @@ import com.mist.android.MSTVirtualBeacon;
 import com.mist.android.MSTZone;
 import com.mist.sample.wayfinding.R;
 import com.mist.sample.wayfinding.app.MainApplication;
-import com.mist.sample.wayfinding.utils.DrawLine;
+import com.mist.sample.wayfinding.wayfindingpath.DrawLine;
 import com.mist.sample.wayfinding.wayfindingpath.MSTEdges;
 import com.mist.sample.wayfinding.wayfindingpath.MSTGraph;
 import com.mist.sample.wayfinding.wayfindingpath.MSTNode;
