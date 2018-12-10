@@ -23,16 +23,19 @@ You have to replace "YOUR_APP_KEY" in the AndroidManifest file with your API Key
     This is a dialog fragment to get the SDK token from the User on click of fab icon
 
 #### HomeFragment
-    This fragment is the initial view attached to MainActivity and have fab icon which will launch AddTokenDialogFragment
+    This fragment is the initial view attached to MainActivity and have fab icon which will launch 
+    AddTokenDialogFragment
     
 #### MISTSDKBackgroundService
-    This is a job service which can be scheduled/unscheduled as per need, like when got the onFound of the beacon registered for wakeup
+    This is a job service which can be scheduled/unscheduled as per need, like when got the onFound 
+    of the beacon registered for wakeup
     
 #### NearByJobIntentService
     This is a job intent service which will be enqued for work when NearByBroadCastReceiver's onReceive is triggered   
         
 #### NearByBroadCastReceiver
-    This is a broadcast receiver  which is past as pendingIntent to Nearby.Messages.subscribe and it will be the one which will enque the     work of NearByJobIntentService
+    This is a broadcast receiver  which is past as pendingIntent to Nearby.Messages.subscribe and 
+    it will be the one which will enque the work of NearByJobIntentService
     
     
 #### Utility/POJO(model) classes
