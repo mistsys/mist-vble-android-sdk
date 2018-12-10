@@ -1,4 +1,4 @@
-package com.mist.sample.wayfinding.util;
+package com.mist.sample.wayfinding.wayfindingpath;
 
 import android.graphics.Path;
 

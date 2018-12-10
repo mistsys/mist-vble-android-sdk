@@ -1,4 +1,4 @@
-package com.mist.sample.background.util;
+package com.mist.sample.background.utils;
 
 import android.app.Application;
 import android.text.TextUtils;
@@ -21,6 +21,14 @@ import java.util.Date;
  * Created by anubhava on 02/04/18.
  */
 
+/**
+ * This is the interactor class which will interact with Mist SDK for
+ * Enrollment
+ * starting Mist SDK
+ * stopping Mist SDK
+ * Reconnection
+ * Setting Mode
+ */
 public class MistManager implements MSTOrgCredentialsCallback {
 
     private static final String TAG = MistManager.class.getSimpleName();
@@ -34,9 +42,15 @@ public class MistManager implements MSTOrgCredentialsCallback {
     private MSTOrgCredentialsManager mstOrgCredentialsManager;
     private volatile MSTCentralManager mstCentralManager;
 
-    public MistManager() {
+    private MistManager() {
     }
 
+    /**
+     * Custructor for creating singleton instance of the interactor class
+     *
+     * @param mainApplication application instance needed by Mist SDK
+     * @return
+     */
     public static MistManager newInstance(MainApplication mainApplication) {
         mApp = new WeakReference<Application>(mainApplication);
         if (mistManager == null) {
@@ -45,6 +59,13 @@ public class MistManager implements MSTOrgCredentialsCallback {
         return mistManager;
     }
 
+    /**
+     * This method will enroll the device and start the Mist SDK on successful enrollment, if we already have the deatil of enrollment response detail we can just start the SDK with those details
+     *
+     * @param sdkToken           Token used for enrollment
+     * @param indoorOnlyListener listener on which callback for location,map,notification can be heard
+     * @param appMode            mode of the app (Background,Foreground)
+     */
     public void init(String sdkToken, MSTCentralManagerIndoorOnlyListener indoorOnlyListener,
                      AppMode appMode) {
         if (sdkToken != null && !sdkToken.isEmpty()) {
@@ -62,13 +83,19 @@ public class MistManager implements MSTOrgCredentialsCallback {
                 mstOrgCredentialsManager.enrollDeviceWithToken(sdkToken);
 
             } else {
-                connect(indoorOnlyListener, this.appMode);
+                connect(indoorOnlyListener, appMode);
             }
         } else {
             Log.d(TAG, "Empty SDK Token");
         }
     }
 
+    /**
+     * This method is used to start the Mist SDk
+     *
+     * @param indoorOnlyListener listener on which callback for location,map,notification can be heard
+     * @param appMode            mode of the app (Background,Foreground)
+     */
     private synchronized void connect(MSTCentralManagerIndoorOnlyListener indoorOnlyListener, AppMode appMode) {
         if (mstCentralManager == null) {
             mstCentralManager = new MSTCentralManager(mApp.get(),
@@ -87,6 +114,10 @@ public class MistManager implements MSTOrgCredentialsCallback {
         }
     }
 
+    /**
+     * @param appModeParams params to let SDK know about the scanning frequency and the state of the app (background or foreground)
+     *                      call this method to switch the mode when app changes the mode between foreground and background
+     */
     public void setAppMode(AppModeParams appModeParams) {
         if (this.mstCentralManager != null) {
             this.mstCentralManager.setAppMode(appModeParams);
@@ -94,6 +125,15 @@ public class MistManager implements MSTOrgCredentialsCallback {
         }
     }
 
+    /**
+     * This is the callback method which will receive the following information from the Mist SDK enrollment call
+     *
+     * @param orgName   name of the token used for the enrollment
+     * @param orgID     organization id
+     * @param sdkSecret secret needed to start the Mist SDK
+     * @param error     error message if any
+     * @param envType   envType which will be used to set the environment
+     */
     @Override
     public void onReceivedSecret(String orgName, String orgID, String sdkSecret, String error, String envType) {
         if (!TextUtils.isEmpty(sdkSecret) && !TextUtils.isEmpty(orgID) && !TextUtils.isEmpty(sdkSecret)) {
@@ -108,17 +148,32 @@ public class MistManager implements MSTOrgCredentialsCallback {
         }
     }
 
+    /**
+     * This method is saving the following details so that we can use it again for starting Mist SDK without need for enrollment again
+     *
+     * @param orgName   name of the token used for the enrollment
+     * @param orgID     organization id
+     * @param sdkSecret secret needed to start the Mist SDK
+     * @param envType   envType which will be used to set the environment
+     */
     private void saveConfig(String orgName, String orgID, String sdkSecret, String envType) {
         orgData = new OrgData(orgName, orgID, sdkSecret, envType);
         SharedPrefUtils.saveConfig(mApp.get(), orgData, sdkToken);
     }
 
+
+    /**
+     * This method will stop the Mist SDK
+     */
     public void disconnect() {
         if (mstCentralManager != null) {
             mstCentralManager.stop();
         }
     }
 
+    /**
+     * This method will reconnect he Mist SDK
+     */
     private synchronized void reconnect() {
         if (mstCentralManager != null) {
             disconnect();
@@ -126,7 +181,11 @@ public class MistManager implements MSTOrgCredentialsCallback {
             mstCentralManager.start();
         }
     }
-    public synchronized void destory(){
+
+    /**
+     * This method will clear/destroy the Mist SDK instance
+     */
+    public synchronized void destroy() {
         if (mstCentralManager != null) {
             mstCentralManager.stop();
             mstCentralManager = null;

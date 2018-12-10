@@ -2,16 +2,15 @@ package com.mist.sample.background.service;
 
 import android.app.job.JobParameters;
 import android.app.job.JobService;
-import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.mist.android.AppMode;
 import com.mist.android.BatteryUsage;
 import com.mist.android.model.AppModeParams;
 import com.mist.sample.background.app.MainApplication;
-import com.mist.sample.background.util.MistManager;
-import com.mist.sample.background.util.SharedPrefUtils;
-import com.mist.sample.background.util.Utils;
+import com.mist.sample.background.utils.MistManager;
+import com.mist.sample.background.utils.SharedPrefUtils;
+import com.mist.sample.background.utils.Utils;
 
 public class MISTSDKBackgroundService extends JobService {
 

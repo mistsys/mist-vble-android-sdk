@@ -69,4 +69,3 @@ public class OrgData implements Parcelable {
         return envType;
     }
 }
-

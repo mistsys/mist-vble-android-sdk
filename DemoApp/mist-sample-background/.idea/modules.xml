@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../../../Mist/Android-Framework2/android-framework/android-framework.iml" filepath="$PROJECT_DIR$/../../../Mist/Android-Framework2/android-framework/android-framework.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/mist-sample-background.iml" filepath="$PROJECT_DIR$/mist-sample-background.iml" />
     </modules>

@@ -10,6 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:background="#80000000"
+        android:layout_margin="20dp"
         android:adjustViewBounds="true"
         android:scaleType="fitCenter" />
 
@@ -33,7 +34,6 @@
         android:id="@+id/floorplan_bluedot"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:alpha="0"
         android:clipChildren="false">
 
 

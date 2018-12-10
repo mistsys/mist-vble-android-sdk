@@ -9,16 +9,12 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.text.TextUtils;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,7 +27,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.mist.android.AppMode;
-import com.mist.android.BatteryUsage;
 import com.mist.android.MSTAsset;
 import com.mist.android.MSTBeacon;
 import com.mist.android.MSTCentralManagerIndoorOnlyListener;
@@ -41,22 +36,19 @@ import com.mist.android.MSTMap;
 import com.mist.android.MSTPoint;
 import com.mist.android.MSTVirtualBeacon;
 import com.mist.android.MSTZone;
-import com.mist.android.MistLocationAdvanceListener;
-
-import com.mist.android.deadReckoning.path.MSTEdges;
-import com.mist.android.deadReckoning.path.MSTNode;
-import com.mist.android.deadReckoning.path.Utility;
-import com.mist.android.model.AppModeParams;
 import com.mist.sample.wayfinding.R;
 import com.mist.sample.wayfinding.app.MainApplication;
-import com.mist.sample.wayfinding.util.DrawLine;
-import com.mist.sample.wayfinding.util.MSTGraph;
-import com.mist.sample.wayfinding.util.MSTPath;
-import com.mist.sample.wayfinding.util.MSTWayFinder;
-import com.mist.sample.wayfinding.util.MistManager;
-import com.mist.sample.wayfinding.util.Utils;
-import com.mist.sample.wayfinding.util.ZoomLayout;
+import com.mist.sample.wayfinding.wayfindingpath.DrawLine;
+import com.mist.sample.wayfinding.wayfindingpath.MSTEdges;
+import com.mist.sample.wayfinding.wayfindingpath.MSTGraph;
+import com.mist.sample.wayfinding.wayfindingpath.MSTNode;
+import com.mist.sample.wayfinding.wayfindingpath.MSTPath;
+import com.mist.sample.wayfinding.wayfindingpath.MSTWayFinder;
+import com.mist.sample.wayfinding.utils.MistManager;
+import com.mist.sample.wayfinding.utils.Utils;
+import com.mist.sample.wayfinding.wayfindingpath.ZoomLayout;
 import com.squareup.picasso.Callback;
+import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -78,16 +70,16 @@ import butterknife.Unbinder;
  * Created by anubhava on 02/04/18.
  */
 
-public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnlyListener, MistLocationAdvanceListener,
+public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnlyListener,
         ZoomLayout.ZoomViewTouchListener {
 
     public static final String TAG = MapFragment.class.getSimpleName();
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
+    private static final String SDK_TOKEN = "sdkToken";
     private MainApplication mainApplication;
-    public static String sdkToken = "";
+    private String sdkToken;
     private String floorPlanImageUrl = "";
     private MSTPoint mstPoint = null;
-    private MSTMap mstMap = null;
     private boolean addedMap = false;
     private double scaleXFactor;
     private float zoomScaleFactor = 1;
@@ -95,12 +87,9 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     private float floorImageLeftMargin;
     private float floorImageTopMargin;
     private Unbinder unbinder;
-    private HandlerThread sdkHandlerThread;
-    private Handler sdkHandler;
     private MSTMap currentMap;
-    private Handler blueDotHandler;
     private boolean isNewPath = false;
-    private boolean isScaleFactorCalculated = false;
+    private boolean scaleFactorCalled = false;
     private int scale;
     private WayfinerAsyncTask wayfinerAsyncTask;
     private boolean hasAddedWayfinding;
@@ -110,7 +99,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     private boolean isActualData = false;
     private MSTPoint startingPoint;
     private MSTPoint endingPoint;
-    private MSTPoint preFVPoint;
     private boolean isWayfindingAdded = false;
     private boolean isAsycTaskFinished = true;
     private RenderWayfindingAsyncTask renderWayfindingAsyncTask;
@@ -121,60 +109,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     MSTPoint nearestMstPoint = null, closestMstPoint;
     private View snapPathDestinationView;
 
-
-    @Override
-    public void onTouchZoomView(float x, float y) {
-        drawTouchedDot(x, y);
-
-    }
-
-    public void drawTouchedDot(float x, float y) {
-
-        if (this.currentMap != null) {
-            setDestinationPoint(new MSTPoint(x, y));
-        }
-    }
-
-    @Override
-    public void onZoomScaleValue(float scale) {
-        float scale1 = 0;
-        if (scale <= 1.5)
-            scale1 = 1;
-        else {
-            if (scale > 3)
-                scale1 = (float) 0.3;
-            else if (scale >= 1.5)
-                scale1 = (float) 0.5;
-            else
-                scale1 = (float) 0.8;
-        }
-        scale1 = 1 / scale;
-
-        this.zoomScaleFactor = scale1;
-
-        View view1 = floorplanLayout.findViewById(R.id.floorplan_bluedot);
-        View view2 = floorplanLayout.findViewWithTag("renderNearestBluedot");
-        View view3 = floorplanLayout.findViewWithTag("wayfindingpath");
-
-        setScaleValue(view1, scale1);
-        setScaleValue(view2, scale1);
-        setScaleValue(view3, scale1);
-        setScaleValue(snapPathDestinationView, scale1);
-
-    }
-
-    private void setScaleValue(View view, float scale) {
-        if (view != null && view.getVisibility() == View.VISIBLE) {
-            view.setScaleX(scale);
-            view.setScaleY(scale);
-        }
-    }
-
-    public enum AlertType {
-        bluetooth,
-        network,
-        location
-    }
 
     @BindView(R.id.floorplan_layout)
     RelativeLayout floorplanLayout;
@@ -189,10 +123,21 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     @BindView(R.id.floorplan_zoomlayout)
     ZoomLayout zoomLayout;
 
-    public static MapFragment newInstance(String sdkToken) {
-        MapFragment.sdkToken = sdkToken;
-        return new MapFragment();
+
+    public enum AlertType {
+        bluetooth,
+        network,
+        location
     }
+
+    public static MapFragment newInstance(String sdkToken) {
+        Bundle bundle = new Bundle();
+        bundle.putString(SDK_TOKEN, sdkToken);
+        MapFragment mapFragment = new MapFragment();
+        mapFragment.setArguments(bundle);
+        return mapFragment;
+    }
+
 
     @Nullable
     @Override
@@ -202,7 +147,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         View view = inflater.inflate(R.layout.map_fragment, container, false);
         unbinder = ButterKnife.bind(this, view);
         progressBar.setVisibility(View.VISIBLE);
-        blueDotHandler = new Handler(Looper.getMainLooper());
         zoomLayout.setListener(this);
         return view;
     }
@@ -210,74 +154,21 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mainApplication = (MainApplication) getActivity().getApplication();
-    }
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        sdkHandlerThread = new HandlerThread("SDKHandler");
-        sdkHandlerThread.start();
-        sdkHandler = new Handler(sdkHandlerThread.getLooper());
+        if (getActivity() != null)
+            mainApplication = (MainApplication) getActivity().getApplication();
+        if (getArguments() != null)
+            sdkToken = getArguments().getString(SDK_TOKEN);
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        try {
-            //stopping the scheduled job when the app comes to the foreground
-            Utils.stopScheduledJob(mainApplication);
-        } catch (Exception e) {
-            Log.e(TAG, e.getMessage());
-        }
-        //disconnecting the Mist sdk, to make sure there is no prior active instance
-        MistManager.newInstance(mainApplication).disconnect();
-        MistManager.newInstance(mainApplication).
-                setAppMode(new AppModeParams(AppMode.FOREGROUND,
-                        BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY,
-                        true, 0.5, 1));
-        sdkHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                //initializing the Mist sdk
-                initMistSdk();
-            }
-        }, 500);
-        if (blueDotHandler != null) {
-            blueDotHandler.post(sendingTask);
-        } else {
-            blueDotHandler = new Handler(Looper.getMainLooper());
-            blueDotHandler.post(sendingTask);
-        }
+        initMISTSDK();
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        //stopping the Mist sdk
-        MistManager.newInstance(mainApplication).disconnect();
-        MistManager.newInstance(mainApplication).
-                setAppMode(new AppModeParams(AppMode.BACKGROUND,
-                        BatteryUsage.LOW_BATTERY_USAGE_LOW_ACCURACY,
-                        true, 0.5, 1));
-        sdkHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    //scheduling the job to run Mist sdk in the background
-                    Utils.scheduleJob(mainApplication.getApplicationContext());
-                } catch (Exception e) {
-                    Log.e(TAG, e.getMessage());
-                }
-            }
-        }, 500);
-        blueDotHandler.removeCallbacks(sendingTask);
-        blueDotHandler = null;
-    }
-
-    private void initMistSdk() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                getContext().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+    private void initMISTSDK() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && getActivity() != null &&
+                getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                         != PackageManager.PERMISSION_GRANTED) {
             showLocationPermissionDialog();
         } else {
@@ -285,109 +176,38 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
+    //permission dialogs
     private void showLocationPermissionDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle("This app needs location access");
-        builder.setMessage("Please grant location access so this app can detect beacons in the background.");
-        builder.setPositiveButton(android.R.string.ok, null);
-        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-            @Override
-            public void onDismiss(DialogInterface dialog) {
-                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        PERMISSION_REQUEST_FINE_LOCATION);
-            }
-        });
-        builder.show();
+        if (getActivity() != null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setTitle("This app needs location access");
+            builder.setMessage("Please grant location access so this app can detect beacons in the background.");
+            builder.setPositiveButton(android.R.string.ok, null);
+            builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            PERMISSION_REQUEST_FINE_LOCATION);
+                }
+            });
+            builder.show();
+        }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case PERMISSION_REQUEST_FINE_LOCATION:
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d(TAG, "fine location permission granted !!");
-                    startMistSdk();
-                } else {
-                    final AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                    builder.setTitle("Functionality limited");
-                    builder.setMessage("Since location access has not been granted, " +
-                            "this app will not be able to discover beacons when in the background.");
-                    builder.setPositiveButton(android.R.string.ok, null);
-                    builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                        @Override
-                        public void onDismiss(DialogInterface dialog) {
-                        }
-                    });
-                    builder.show();
-                }
-        }
-
-    }
-
-    private void startMistSdk() {
-        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() &&
-                Utils.isNetworkAvailable(getActivity()) && Utils.isLocationServiceEnabled(getActivity())) {
-            runMISTSDK();
-        } else {
-            if (!Utils.isNetworkAvailable(getActivity())) {
-                showSettingsAlert(AlertType.network);
-            }
-            if (!Utils.isLocationServiceEnabled(getActivity())) {
-                showSettingsAlert(AlertType.location);
-            }
-            if (mBluetoothAdapter != null && !mBluetoothAdapter.isEnabled()) {
-                showSettingsAlert(AlertType.bluetooth);
-            }
-        }
-    }
-
-    //initializing the Mist Sdk with sdkToken
-    private void runMISTSDK() {
-        MistManager mistManager = MistManager.newInstance(mainApplication);
-        mistManager.init(sdkToken, this, AppMode.FOREGROUND);
-    }
-
-    private void showSettingsAlert(final AlertType alertType) {
-        final String sTitle, sButton;
-        if (alertType == AlertType.bluetooth) {
-            sTitle = "Bluetooth is disabled in your device. Would you like to enable it?";
-            sButton = "Goto Settings Page To Enable Bluetooth";
-        } else if (alertType == AlertType.network) {
-            sTitle = "Network Connection is disabled in your device. Would you like to enable it?";
-            sButton = "Goto Settings Page To Enable Network Connection";
-        } else {
-            sTitle = "Location is disabled in your device. Would you like to enable it?";
-            sButton = "Goto Settings Page To Enable Location";
-        }
-
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
-        alertDialogBuilder.setMessage(sTitle)
-                .setCancelable(false)
-                .setPositiveButton(sButton,
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.cancel();
-                                Intent intentOpenBluetoothSettings = new Intent();
-                                if (alertType == AlertType.bluetooth) {
-                                    intentOpenBluetoothSettings.setAction(Settings.ACTION_BLUETOOTH_SETTINGS);
-                                } else if (alertType == AlertType.network) {
-                                    intentOpenBluetoothSettings.setAction(Settings.ACTION_WIFI_SETTINGS);
-                                } else if (alertType == AlertType.location) {
-                                    intentOpenBluetoothSettings.setAction(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                                }
-                                startActivity(intentOpenBluetoothSettings);
-                            }
-                        });
-        alertDialogBuilder.setNegativeButton("Cancel",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                        final AlertDialog.Builder builder = new
-                                AlertDialog.Builder(getActivity());
-                        builder.setTitle("Functionality won't work");
-                        builder.setMessage(sButton);
+        if (getActivity() != null) {
+            switch (requestCode) {
+                case PERMISSION_REQUEST_FINE_LOCATION:
+                    if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        Log.d(TAG, "fine location permission granted !!");
+                        startMistSdk();
+                    } else {
+                        final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                        builder.setTitle("Functionality limited");
+                        builder.setMessage("Since location access has not been granted, " +
+                                "this app will not be able to discover beacons when in the background.");
                         builder.setPositiveButton(android.R.string.ok, null);
                         builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                             @Override
@@ -396,9 +216,98 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                         });
                         builder.show();
                     }
-                });
-        AlertDialog alert = alertDialogBuilder.create();
-        alert.show();
+            }
+        }
+    }
+
+    /**
+     * This method checks for the availability for Internet , Location and Bluetooth and show dialog if anything is not enabled else start the Mist SDK
+     */
+    private void startMistSdk() {
+        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() && getActivity() != null &&
+                Utils.isNetworkAvailable(getActivity()) && Utils.isLocationServiceEnabled(getActivity())) {
+            runMISTSDK();
+        } else {
+            if (getActivity() != null && !Utils.isNetworkAvailable(getActivity())) {
+                showSettingsAlert(AlertType.network);
+            }
+            if (getActivity() != null && !Utils.isLocationServiceEnabled(getActivity())) {
+                showSettingsAlert(AlertType.location);
+            }
+            if (mBluetoothAdapter != null && !mBluetoothAdapter.isEnabled()) {
+                showSettingsAlert(AlertType.bluetooth);
+            }
+        }
+    }
+
+    //initializing the Mist sdk with sdkToken
+    private void runMISTSDK() {
+        MistManager mistManager = MistManager.newInstance(mainApplication);
+        mistManager.init(sdkToken, this, AppMode.FOREGROUND);
+    }
+
+    /**
+     * This method show the alert as per AlertType
+     *
+     * @param alertType Type of Alert
+     *                  bluetooth
+     *                  network
+     *                  location
+     */
+    private void showSettingsAlert(final AlertType alertType) {
+        if (getActivity() != null) {
+            final String sTitle, sButton;
+            if (alertType == AlertType.bluetooth) {
+                sTitle = "Bluetooth is disabled in your device. Would you like to enable it?";
+                sButton = "Goto Settings Page To Enable Bluetooth";
+            } else if (alertType == AlertType.network) {
+                sTitle = "Network Connection is disabled in your device. Would you like to enable it?";
+                sButton = "Goto Settings Page To Enable Network Connection";
+            } else {
+                sTitle = "Location is disabled in your device. Would you like to enable it?";
+                sButton = "Goto Settings Page To Enable Location";
+            }
+
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
+            alertDialogBuilder.setMessage(sTitle)
+                    .setCancelable(false)
+                    .setPositiveButton(sButton,
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    dialog.cancel();
+                                    Intent intentOpenBluetoothSettings = new Intent();
+                                    if (alertType == AlertType.bluetooth) {
+                                        intentOpenBluetoothSettings.setAction(Settings.ACTION_BLUETOOTH_SETTINGS);
+                                    } else if (alertType == AlertType.network) {
+                                        intentOpenBluetoothSettings.setAction(Settings.ACTION_WIFI_SETTINGS);
+                                    } else if (alertType == AlertType.location) {
+                                        intentOpenBluetoothSettings.setAction(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                                    }
+
+                                    startActivity(intentOpenBluetoothSettings);
+                                }
+                            });
+            alertDialogBuilder.setNegativeButton("Cancel",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            final AlertDialog.Builder builder = new
+                                    AlertDialog.Builder(getActivity());
+                            builder.setTitle("Functionality won't work");
+                            builder.setMessage(sButton);
+                            builder.setPositiveButton(android.R.string.ok, null);
+                            builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                                @Override
+                                public void onDismiss(DialogInterface dialog) {
+                                }
+                            });
+                            builder.show();
+                        }
+                    });
+            AlertDialog alert = alertDialogBuilder.create();
+            alert.show();
+        }
     }
 
     @Override
@@ -416,26 +325,32 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     }
 
-    //called when new location is received
+    /**
+     * This callback provide the location of the device
+     *
+     * @param relativeLocation provide x,y of the device on particular map
+     * @param maps
+     * @param dateUpdated      time stamp of the location provided
+     */
     @Override
     public void onRelativeLocationUpdated(MSTPoint relativeLocation, MSTMap[] maps, Date dateUpdated) {
         if (relativeLocation != null && maps != null) {
-            mstMap = maps[0];
             mstPoint = relativeLocation;
-
             updateRelativeLocation();
         }
     }
 
     private void updateRelativeLocation() {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if (mstMap != null && addedMap) {
-                    renderBlueDot(mstPoint);
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (currentMap != null && addedMap) {
+                        renderBlueDot(mstPoint);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     //calculating the scale factors
@@ -464,14 +379,14 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
-    //converting the x point from meter's to pixel with the present scaling
+    //converting the x point from meter's to pixel with the present scaling factor of the map rendered in the imageview
     private float convertCloudPointToFloorplanXScale(double meter) {
-        return (float) (meter * this.scaleXFactor * mstMap.getPpm());
+        return (float) (meter * this.scaleXFactor * currentMap.getPpm());
     }
 
-    //converting the y point from meter's to pixel with the present scaling
+    //converting the y point from meter's to pixel with the present scaling factor of the map rendered in the imageview
     private float convertCloudPointToFloorplanYScale(double meter) {
-        return (float) (meter * this.scaleYFactor * mstMap.getPpm());
+        return (float) (meter * this.scaleYFactor * currentMap.getPpm());
     }
 
     @Override
@@ -494,75 +409,91 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     }
 
-    //called when new map is received
+    /**
+     * This callback provide the detail of map user is on
+     *
+     * @param map         Map object having details about the map
+     * @param dateUpdated
+     */
     @Override
-    public void onMapUpdated(final MSTMap map, Date dateUpdated) {
+    public void onMapUpdated(MSTMap map, Date dateUpdated) {
         floorPlanImageUrl = map.getMapImageUrl();
         Log.d(TAG, floorPlanImageUrl);
-        if (getActivity() != null) {
+        if (getActivity() != null && (floorPlanImage.getDrawable() == null || this.currentMap == null || !this.currentMap.getMapId().equals(map.getMapId()))) {
+            // Set the current map
+            this.currentMap = map;
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    addIndoorMap(map);
+                    renderImage(floorPlanImageUrl);
                 }
             });
         }
     }
 
-    private void addIndoorMap(MSTMap mstMap) {
-        if (mstMap != null) {
-            if (this.currentMap == null || !this.currentMap.getMapId().equals(mstMap.getMapId())) {
-                this.currentMap = mstMap;
-                isNewPath = true;
-                isScaleFactorCalculated = false;
-                scaleXFactor = 0;
-                scaleYFactor = 0;
-                loadMap();
-            }
-        }
+    /**
+     * This method is used for rendering the map image using the url from the MSTMap object received from OnMapUpdated callback
+     *
+     * @param floorPlanImageUrl map image url
+     */
+    private void renderImage(final String floorPlanImageUrl) {
+        Log.d(TAG, "in picasso");
+        addedMap = false;
+        isNewPath = true;
+        Picasso.with(getActivity()).
+                load(floorPlanImageUrl).
+                networkPolicy(NetworkPolicy.OFFLINE).
+                into(floorPlanImage, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        Log.d(TAG, "Image loaded successfully from the cached");
+                        addedMap = true;
+                        progressBar.setVisibility(View.GONE);
+
+                        if (!scaleFactorCalled) {
+                            setupScaleFactorForFloorplan();
+                        }
+                    }
+
+                    @Override
+                    public void onError() {
+                        Picasso.with(getActivity()).
+                                load(floorPlanImageUrl)
+                                .into(floorPlanImage, new Callback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        progressBar.setVisibility(View.GONE);
+                                        addedMap = true;
+                                        if (!scaleFactorCalled) {
+                                            setupScaleFactorForFloorplan(new Callback() {
+                                                @Override
+                                                public void onSuccess() {
+                                                    progressBar.setVisibility(View.GONE);
+                                                    callWayfinerAsyncTask();
+                                                }
+
+                                                @Override
+                                                public void onError() {
+
+                                                }
+                                            });
+                                        }
+                                        Log.d(TAG, "Image downloaded from server successfully !!");
+                                    }
+
+                                    @Override
+                                    public void onError() {
+                                        progressBar.setVisibility(View.GONE);
+                                        Log.d(TAG, "Could not download the image from the server");
+                                    }
+                                });
+                    }
+                });
     }
 
-    //map loading
-    private void loadMap() {
-        if (this.currentMap != null) {
-            try {
-                DisplayMetrics displayMetrics = new DisplayMetrics();
-                getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-                int height = displayMetrics.heightPixels;
-                double dscale = (currentMap.getMapHeight() * currentMap.getPpm() / height);
-                if (dscale < 1) {
-                    scale = 1;
-                } else {
-                    scale = (int) dscale;
-                }
-
-                Picasso.with(getActivity()).load(currentMap.getMapImageUrl()).resize((int)
-                        (currentMap.getMapWidth() * currentMap.getPpm() / scale), (int)
-                        (currentMap.getMapHeight() * currentMap.getPpm() / scale)).into(floorPlanImage);
-                // Defining the scaleX and scaleY for the map image
-                if (!isScaleFactorCalculated) {
-                    setupScaleFactorForFloorplan(new Callback() {
-                        @Override
-                        public void onSuccess() {
-                            addedMap = true;
-                            progressBar.setVisibility(View.GONE);
-                            callWayfinerAsyncTask();
-                        }
-
-                        @Override
-                        public void onError() {
-
-                        }
-                    });
-
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Exception in loadMap " + e.getMessage());
-            }
-        }
-
-    }
-
+    /**
+     * This is for calling the wayfinder task to draw the way finding path
+     */
     private void callWayfinerAsyncTask() {
         if (wayfinerAsyncTask != null && wayfinerAsyncTask.getStatus() != AsyncTask.Status.FINISHED) {
             wayfinerAsyncTask.cancel(true);
@@ -573,20 +504,25 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         wayfinerAsyncTask.execute();
     }
 
+    /**
+     * This method calculate the scaling factor of the image rendering in image view by taking in account of intrinsic
+     * dimension so that we have the factor to multiply while we position the bluedot on the map image
+     *
+     * @param cb callback to let know about the scaling calculation status
+     */
     private void setupScaleFactorForFloorplan(final Callback cb) {
-        if (!isScaleFactorCalculated && (scaleXFactor == 0 || scaleYFactor == 0)) {
+        if (!scaleFactorCalled && (scaleXFactor == 0 || scaleYFactor == 0)) {
             ViewTreeObserver vto = this.floorPlanImage.getViewTreeObserver();
             vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
                 public void onGlobalLayout() {
                     floorPlanImage.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-
                     if (floorPlanImage.getDrawable() != null) {
                         floorImageLeftMargin = floorPlanImage.getLeft();
                         floorImageTopMargin = floorPlanImage.getTop();
                         scaleXFactor = (floorPlanImage.getWidth() / (double) floorPlanImage.getDrawable().getIntrinsicWidth());
                         scaleYFactor = (floorPlanImage.getHeight() / (double) floorPlanImage.getDrawable().getIntrinsicHeight());
-                        isScaleFactorCalculated = true;
+                        scaleFactorCalled = true;
                     }
                     cb.onSuccess();
                 }
@@ -618,15 +554,13 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     @Override
     public void receivedLogMessageForCode(String message, MSTCentralManagerStatusCode code) {
-
     }
 
     @Override
     public void receivedVerboseLogMessage(String message) {
-
     }
 
-    //called when successfully registration fails
+    //callback for error
     @Override
     public void onMistErrorReceived(String message, Date date) {
         progressBar.setVisibility(View.GONE);
@@ -640,54 +574,70 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     }
 
     @Override
-    public void onDRSnappedLocationUpdated(MSTPoint mstPoint, MSTMap mstMap, Date date) {
-        Log.d(TAG, "DR Snapped Location Updated.");
-    }
-
-    @Override
-    public void onDRRawLocationUpdated(MSTPoint mstPoint, MSTMap mstMap, Date date) {
-        Log.d(TAG, "DR Raw Location Updated.");
-    }
-
-    @Override
-    public void onLESnappedLocationUpdated(MSTPoint mstPoint, MSTMap mstMap, Date date) {
-        Log.d(TAG, "LE Snapped Location Updated.");
-    }
-
-    @Override
-    public void onLERawLocationUpdated(MSTPoint mstPoint, MSTMap mstMap, Date date) {
-        Log.d(TAG, "LE Raw Location Updated.");
-    }
-
-
-    @Override
     public void onDestroyView() {
         super.onDestroyView();
         unbinder.unbind();
-
-        sdkHandler = null;
-        if (sdkHandlerThread != null) {
-            sdkHandlerThread.quitSafely();
-            sdkHandlerThread = null;
-        }
-
-        try {
-            //stopping the scheduled job when the app comes to the foreground
-            Utils.stopScheduledJob(mainApplication);
-        } catch (Exception e) {
-            Log.e(TAG, e.getMessage());
-        }
         //disconnecting the Mist sdk, to make sure there is no prior active instance
-        MistManager.newInstance(mainApplication).destory();
+        MistManager.newInstance(mainApplication).destroy();
     }
 
-    private Runnable sendingTask = new Runnable() {
-        @Override
-        public void run() {
-            blueDotHandler.postDelayed(this, 1000);
-            renderBlueDot(mstPoint);
+    @Override
+    public void onStop() {
+        super.onStop();
+        //disconnecting the Mist SDK
+        MistManager.newInstance(mainApplication).disconnect();
+    }
+
+    /**
+     * Callback triggered with the coordinates of the touch point
+     * @param x
+     * @param y
+     */
+    @Override
+    public void onTouchZoomView(float x, float y) {
+        drawTouchedDot(x, y);
+
+    }
+
+    /**
+     * this method is used to set the destination at the point touched by user
+     * @param x
+     * @param y
+     */
+    public void drawTouchedDot(float x, float y) {
+
+        if (this.currentMap != null) {
+            setDestinationPoint(new MSTPoint(x, y));
         }
-    };
+    }
+
+    /**
+     * This callback provide us the scaling of the view done so we can translate all the assets like bluedot , paths to appropriate zoom level
+     * @param scale
+     */
+    @Override
+    public void onZoomScaleValue(float scale) {
+        float scale1 = 1 / scale;
+
+        this.zoomScaleFactor = scale1;
+
+        View view1 = floorplanLayout.findViewById(R.id.floorplan_bluedot);
+        View view2 = floorplanLayout.findViewWithTag("renderNearestBluedot");
+        View view3 = floorplanLayout.findViewWithTag("wayfindingpath");
+
+        setScaleValue(view1, scale1);
+        setScaleValue(view2, scale1);
+        setScaleValue(view3, scale1);
+        setScaleValue(snapPathDestinationView, scale1);
+
+    }
+
+    private void setScaleValue(View view, float scale) {
+        if (view != null && view.getVisibility() == View.VISIBLE) {
+            view.setScaleX(scale);
+            view.setScaleY(scale);
+        }
+    }
 
     //async task to show path lists and draw paths
     private class WayfinerAsyncTask extends AsyncTask<String, Void, String> {
@@ -743,14 +693,14 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
         try {
             String sCoordinate = mapJSON.optString("coordinate");
-            if (!Utility.isEmptyString(sCoordinate) && sCoordinate.equals("actual"))
+            if (!Utils.isEmptyString(sCoordinate) && sCoordinate.equals("actual"))
                 isActualData = true;
             else
                 isActualData = false;
 
             JSONArray nodesFromFile = mapJSON.optJSONArray("nodes");
 
-            if (!Utility.isEmpty(nodesFromFile) && nodesFromFile.length() > 0) {
+            if (!Utils.isEmpty(nodesFromFile) && nodesFromFile.length() > 0) {
 
                 for (int i = 0; i < nodesFromFile.length(); i++) {
                     JSONObject node = (JSONObject) nodesFromFile.get(i);
@@ -793,37 +743,27 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                 float xPos = this.convertCloudPointToFloorplanXScale(mstPoint.getX());
                 float yPos = this.convertCloudPointToFloorplanYScale(mstPoint.getY());
                 this.mstPoint = mstPoint;
-                if (!isScaleFactorCalculated && (this.scaleXFactor == 0 || this.scaleYFactor == 0)) {
+                if (!scaleFactorCalled && (this.scaleXFactor == 0 || this.scaleYFactor == 0)) {
                     // Defining the scaleX and scaleY for the map image
                     setupScaleFactorForFloorplan(new Callback() {
                         @Override
                         public void onSuccess() {
                             callWayfinerAsyncTask();
                         }
-
                         @Override
                         public void onError() {
-
                         }
                     });
-
                     return;
                 }
 
                 setStartingPoint(mstPoint);
-                if (this.floorplanBluedotView.getAlpha() == 0.0) {
-                    this.floorplanBluedotView.setAlpha((float) 1.0);
-                }
-
 
                 float leftMargin = floorImageLeftMargin + (xPos - (this.floorplanBluedotView.getWidth() / 2));
                 float topMargin = floorImageTopMargin + (yPos - (this.floorplanBluedotView.getHeight() / 2));
 
                 this.floorplanBluedotView.setX(leftMargin);
                 this.floorplanBluedotView.setY(topMargin);
-
-                if (preFVPoint == null)
-                    preFVPoint = new MSTPoint(0, 0);
 
                 if (!hasAddedWayfinding)
                     getWayFindingData();
@@ -847,7 +787,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                 }
 
             } else {
-                loadMap();
+                renderImage(floorPlanImageUrl);
             }
         }
     }
@@ -986,7 +926,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
             pathArr = graph.findPathFrom(startingName, endingName);
             if (_previousPathArr == null || (pathArr.size() != 0 && hasPathChanged(pathArr))) {
 
-                if (!isScaleFactorCalculated && (scaleXFactor == 0 || scaleYFactor == 0)) {
+                if (!scaleFactorCalled && (scaleXFactor == 0 || scaleYFactor == 0)) {
                     setupScaleFactorForFloorplan();
                 }
 

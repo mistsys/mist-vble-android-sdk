@@ -1,4 +1,4 @@
-package com.mist.sample.wayfinding.util;
+package com.mist.sample.wayfinding.wayfindingpath;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -9,6 +9,7 @@ import android.view.View;
 
 import com.mist.android.MSTMap;
 import com.mist.android.MSTPoint;
+import com.mist.sample.wayfinding.wayfindingpath.MSTPath;
 
 
 import java.util.ArrayList;

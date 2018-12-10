@@ -1,4 +1,4 @@
-package com.mist.sample.wayfinding.util;
+package com.mist.sample.background.utils;
 
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
@@ -9,7 +9,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.text.TextUtils;
 
-import com.mist.sample.wayfinding.service.MISTSDKBackgroundService;
+import com.mist.sample.background.service.MISTSDKBackgroundService;
 
 /**
  * Created by anubhava on 02/04/18.
@@ -66,12 +66,12 @@ public class Utils {
         // set the environment string to return
         if (envType.equalsIgnoreCase("P")) {
             env = "Production";
-        } else if (envType.equalsIgnoreCase("S")) {
-            env = "Staging";
+        } else if (envType.equalsIgnoreCase("E")) {
+            env = "EU";
         } else if (envType.equalsIgnoreCase("K")) {
             env = "Kalam";
         } else {
-            env = "Dev";
+            env = "Production";
         }
         // return the environment string
         return env;

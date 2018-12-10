@@ -1,10 +1,11 @@
 package com.mist.sample.notification.fragment;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.design.widget.Snackbar;
+import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,10 +20,8 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.Unbinder;
 
-public class AddTokenDialogFragment extends android.support.v4.app.DialogFragment {
+public class AddTokenDialogFragment extends DialogFragment {
 
-
-    private AlertDialog.Builder builder;
     private AlertDialog alertDialog;
     private static final String TOKEN_PREF_KEY_NAME = "sdkToken";
     private static final String TAG = AddTokenDialogFragment.class.getSimpleName();
@@ -47,22 +46,24 @@ public class AddTokenDialogFragment extends android.support.v4.app.DialogFragmen
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        View view = LayoutInflater.from(getActivity()).inflate(R.layout.token_input_dialog, null);
-        unbinder = ButterKnife.bind(this, view);
+        Activity activity = getActivity();
+        if(activity!=null) {
+            View view = LayoutInflater.from(activity).inflate(R.layout.token_input_dialog, null);
+            unbinder = ButterKnife.bind(this, view);
 
-        //reading the sdk token from shared preference
-        sdkToken = SharedPrefUtils.readSdkToken(getActivity(), TOKEN_PREF_KEY_NAME);
+            //reading the sdk token from shared preference
+            sdkToken = SharedPrefUtils.readSdkToken(getActivity(), TOKEN_PREF_KEY_NAME);
 
-        //check for null sdkToken
-        if (!Utils.isEmptyString(sdkToken)) {
-            edtToken.setText(sdkToken);
+            //check for null sdkToken
+            if (!Utils.isEmptyString(sdkToken)) {
+                edtToken.setText(sdkToken);
+            }
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            alertDialog = builder.create();
+            alertDialog.setView(view);
+            alertDialog.show();
         }
-
-
-        builder = new AlertDialog.Builder(getActivity());
-        alertDialog = builder.create();
-        alertDialog.setView(view);
-        alertDialog.show();
         return alertDialog;
     }
 
@@ -72,7 +73,6 @@ public class AddTokenDialogFragment extends android.support.v4.app.DialogFragmen
         sdkToken = edtToken.getText().toString();
         if (!Utils.isEmptyString(sdkToken)) {
             SharedPrefUtils.saveSdkToken(getActivity(), TOKEN_PREF_KEY_NAME, edtToken.getText().toString());
-            Snackbar.make(getActivity().findViewById(android.R.id.content), R.string.sdk_token_saved, Snackbar.LENGTH_LONG).show();
             sdkTokenSavedListener.onSdkTokenSaved(edtToken.getText().toString());
             alertDialog.dismiss();
         }
@@ -91,6 +91,12 @@ public class AddTokenDialogFragment extends android.support.v4.app.DialogFragmen
     public void onDestroyView() {
         super.onDestroyView();
         unbinder.unbind();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        alertDialog.dismiss();
     }
 
     public interface SdkTokenSavedListener {
