@@ -46,13 +46,11 @@ public class SharedPrefUtils {
             return null;
     }
 
-
-    //saving sdktoken to sharedpref
-    public static void saveSdkToken(Context context, String key, String value) {
+    public static void saveSDKToken(Context context, String key, String value) {
         getEditor(context).putString(key, value).apply();
     }
 
-    public static String readSdkToken(Context context, String key) {
+    public static String readSDKToken(Context context, String key) {
         return getPreferences(context).getString(key, EMPTY_STRING);
     }
 

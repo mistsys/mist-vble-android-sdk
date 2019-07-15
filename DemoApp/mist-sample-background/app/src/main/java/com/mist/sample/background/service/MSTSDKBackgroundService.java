@@ -12,39 +12,40 @@ import com.mist.sample.background.utils.MistManager;
 import com.mist.sample.background.utils.SharedPrefUtils;
 import com.mist.sample.background.utils.Utils;
 
-public class MISTSDKBackgroundService extends JobService {
+public class MSTSDKBackgroundService extends JobService {
 
-    private static final String TAG = MISTSDKBackgroundService.class.getSimpleName();
+    private static final String TAG = MSTSDKBackgroundService.class.getSimpleName();
     private static boolean needReschedule = true;
 
     @Override
     public boolean onStartJob(JobParameters params) {
         Log.d(TAG, "Job started.");
-        startWorkOnNewThread();
+        startWorkOnNewThread(params);
         return true;
     }
 
-    private void startWorkOnNewThread() {
+    private void startWorkOnNewThread(final JobParameters params) {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                doWork();
+                doWork(params);
             }
         }, TAG).start();
     }
 
-    private void doWork() {
-        String sdkToken = SharedPrefUtils.readSdkToken(getApplication(), Utils.TOKEN_PREF_KEY_NAME);
-
-        if (sdkToken != null) {
-            MistManager.newInstance((MainApplication) getApplication()).
-                    init(sdkToken, null, AppMode.BACKGROUND);
-
-            MistManager.newInstance((MainApplication) getApplication()).
-                    setAppMode(new AppModeParams(AppMode.BACKGROUND,
-                            BatteryUsage.LOW_BATTERY_USAGE_LOW_ACCURACY,
-                            true, 0.5, 1));
+    private void doWork(JobParameters params) {
+        String sdkToken = SharedPrefUtils.readSDKToken(getApplication(), Utils.TOKEN_PREF_KEY_NAME);
+        if (!Utils.isValidToken(sdkToken)) {
+            Log.e(TAG, "SDK token is invalid. Please check the token and try again. " + sdkToken);
+            jobFinished(params, false);
+            return;
         }
+        MistManager.newInstance((MainApplication) getApplication()).
+                setAppMode(new AppModeParams(AppMode.BACKGROUND,
+                        BatteryUsage.LOW_BATTERY_USAGE_LOW_ACCURACY,
+                        true, 0.5, 1));
+        MistManager.newInstance((MainApplication) getApplication()).
+                init(sdkToken, null, AppMode.BACKGROUND);
     }
 
     @Override
@@ -55,6 +56,6 @@ public class MISTSDKBackgroundService extends JobService {
     }
 
     public static void needJobReschedule(boolean needReschedule) {
-        MISTSDKBackgroundService.needReschedule = needReschedule;
+        MSTSDKBackgroundService.needReschedule = needReschedule;
     }
 }

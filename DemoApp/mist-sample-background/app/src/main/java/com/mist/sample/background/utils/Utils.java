@@ -1,15 +1,13 @@
 package com.mist.sample.background.utils;
 
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
-import android.content.ComponentName;
 import android.content.Context;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.text.TextUtils;
+import android.util.Log;
 
-import com.mist.sample.background.service.MISTSDKBackgroundService;
+import com.mist.sample.background.service.MSTSDKBackgroundService;
 
 /**
  * Created by anubhava on 02/04/18.
@@ -17,13 +15,16 @@ import com.mist.sample.background.service.MISTSDKBackgroundService;
 
 public class Utils {
 
-    private static final int MIST_SDK_JOB_ID = 100;
+    private static final String TAG = Utils.class.getSimpleName();
+
     public static final String TOKEN_PREF_KEY_NAME = "sdkToken";
 
     /**
-     * Check Internet is on or off
+     * Check if connectivity is available
+     *
+     * @param context
+     * @return
      */
-
     public static boolean isNetworkAvailable(Context context) {
         boolean isNet = false;
         if (context != null) {
@@ -38,42 +39,50 @@ public class Utils {
         return isNet;
     }
 
-    /*checking if location service
-      is enabled */
-
+    /**
+     * Check if location services are enabled
+     *
+     * @param context
+     * @return
+     */
     public static boolean isLocationServiceEnabled(Context context) {
-        boolean gps_enabled = false, network_enabled = false;
+        boolean gpsEnabled = false, networkEnabled = false;
 
         LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         if (locationManager != null) {
             try {
-                gps_enabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-            } catch (Exception ex) {
-                //do nothing...
+                gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+            } catch (RuntimeException ex) {
+                Log.e(TAG, "Cannot access GPS provider: " + ex.getLocalizedMessage());
             }
 
             try {
-                network_enabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-            } catch (Exception ex) {
-                //do nothing...
+                networkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+            } catch (RuntimeException ex) {
+                Log.e(TAG, "Cannot access GPS provider: " + ex.getLocalizedMessage());
             }
         }
-        return gps_enabled || network_enabled;
+        return gpsEnabled || networkEnabled;
     }
 
-    public static String getEnvironment(String envType) {
+    /**
+     * Get the environment name given env
+     *
+     * @param envType
+     * @return
+     */
+    public static String getEnvironment(String envType) throws Exception {
         String env;
-        // set the environment string to return
-        if (envType.equalsIgnoreCase("P")) {
+        envType = envType.toUpperCase();
+        if (envType.charAt(0) == 'P'){
             env = "Production";
-        } else if (envType.equalsIgnoreCase("E")) {
+        } else if (envType.charAt(0) == 'E') {
             env = "EU";
-        } else if (envType.equalsIgnoreCase("K")) {
+        } else if (envType.charAt(0) == 'K') {
             env = "Kalam";
         } else {
-            env = "Production";
+            throw new Exception("Invalid environemnt is specified");
         }
-        // return the environment string
         return env;
     }
 
@@ -81,30 +90,19 @@ public class Utils {
         return TextUtils.isEmpty(value) || value.equalsIgnoreCase("null");
     }
 
-    // schedule the start of the service
-    public static void scheduleJob(Context context) throws NullPointerException {
-        ComponentName serviceComponent = new ComponentName(context, MISTSDKBackgroundService.class);
-        JobInfo.Builder builder = new JobInfo.Builder(MIST_SDK_JOB_ID, serviceComponent);
-        builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);// require unmetered network
-        builder.setPersisted(true);
-
-        JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        if (jobScheduler != null) {
-            MISTSDKBackgroundService.needJobReschedule(true);
-            jobScheduler.schedule(builder.build());
-        } else {
-            throw new NullPointerException("JobScheduler Service is null");
-        }
-    }
-
-    // stop scheduled job
-    public static void stopScheduledJob(Context context) throws NullPointerException {
-        JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        if (jobScheduler != null) {
-            MISTSDKBackgroundService.needJobReschedule(false);
-            jobScheduler.cancel(MIST_SDK_JOB_ID);
-        } else {
-            throw new NullPointerException("JobScheduler Service is null");
-        }
+    /**
+     * Check if the token is empty and valid
+     *
+     * @param token
+     * @return
+     */
+    public static boolean isValidToken(String token) {
+        if (TextUtils.isEmpty(token))
+            return false;
+        token = token.toUpperCase();
+        return (token.charAt(0) == 'P' ||
+                token.charAt(0) == 'S' ||
+                token.charAt(0) == 'E' ||
+                token.charAt(0) == 'K');
     }
 }

@@ -6,12 +6,12 @@ import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 
 import com.mist.sample.background.R;
-import com.mist.sample.background.fragment.AddTokenDialogFragment;
 import com.mist.sample.background.fragment.HomeFragment;
 import com.mist.sample.background.fragment.MapFragment;
+import com.mist.sample.background.utils.SharedPrefUtils;
+import com.mist.sample.background.utils.Utils;
 
-public class MainActivity extends AppCompatActivity implements HomeFragment.SdkTokenReceivedListener,
-        AddTokenDialogFragment.SdkTokenSavedListener {
+public class MainActivity extends AppCompatActivity implements HomeFragment.HomeFragmentListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,7 +19,6 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.SdkT
         setContentView(R.layout.activity_main);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle(R.string.app_title_bar_name);
-            //setting up the home fragment
             setUpHomeFragment();
         }
     }
@@ -40,7 +39,6 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.SdkT
         }
     }
 
-
     @Override
     public void onBackPressed() {
         if (getSupportFragmentManager().getBackStackEntryCount() == 1) {
@@ -52,7 +50,6 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.SdkT
             super.onBackPressed();
         }
     }
-
 
     /**
      * This method is settingup the Map scrren with passing the SDK token needed by it for Mist SDK to start working
@@ -74,13 +71,9 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.SdkT
     }
 
     @Override
-    public void onSdkTokenSaved(String token) {
-        Snackbar.make(findViewById(android.R.id.content), R.string.sdk_token_saved, Snackbar.LENGTH_LONG).show();
-    }
-
-    @Override
-    public void OnSdkTokenReceived(String sdkToken) {
-        setUpMapFragment(sdkToken);
+    public void onSDKTokenSelected(String token) {
+        SharedPrefUtils.saveSDKToken(this.getApplicationContext(), Utils.TOKEN_PREF_KEY_NAME, token);
+        setUpMapFragment(token);
     }
 
 }

@@ -1,33 +1,31 @@
-# Background Sample
+# Background Sample App Code
 
-This application demonstrates how to handle the SDK in the background state using Mist core SDK. 
+This application demonstrates how to handle the SDK in the background state using Mist SDK.
 
 ## Prerequisites
 
-For running this application you need SDK Token, which can be obtained from the Mist Portal (Organization —> Mobile SDK)
+For running this application you need the SDK Token, which can be obtained from the Mist Portal (Organization —> Mobile SDK)
 
 ### Major classes and its usage
 
 #### MistManager
-    This is the manager class which is doing all the interaction between Mist core SDK and App
+    The manager class manages all the crucial interactions between Mist SDK and App
 
 #### MapFragment
     This is the fragment which is used to render the map/bluedot with the info received from the Mist SDK.
     This class also check for permission provided and the availability of network/bluetooth/location.
     MapFragment is responsible to start the SDK from the Token info it got from the AddTokenDialogFragment
 
-#### AddTokenDialogFragment
-    This is a dialog fragment to get the SDK token from the User on click of fab icon
-
 #### HomeFragment
-    This fragment is the initial view attached to MainActivity and have fab icon which will launch AddTokenDialogFragment
+    This fragment is the initial view attached to MainActivity
 
-#### MISTSDKBackgroundService
-    This is a job service which will be scheduled when app goes to background (onStop got triggered) and will unscheduled when the app         comes back to foreground (onStart got triggered)
+#### MSTSDKBackgroundService
+    The background service that will be scheduled and unscheduled when MapFragment goes to background via onStop and foreground via onStart respectively.
+
 #### Utility/POJO(model) classes
-    SharedPrefUtils : Utility for Shared preference
-    Utils : general utility class
-    OrgData : POJO to save the org info got from enrollment 
+    SharedPrefUtils: Utility for Shared preference
+    Utils: general utility class
+    OrgData: POJO to save the org info got from enrollment
     
 ### Main callbacks leveraged for this sample app
     onRelativeLocationUpdated : for location details
@@ -35,4 +33,4 @@ For running this application you need SDK Token, which can be obtained from the 
 
 ### More details
 
-For more details please visit https://github.com/mistsys/mist-vble-android-sdk/wiki#background-mode
+For more details please visit https://github.com/mistsys/mist-vble-android-sdk/wiki/Background-mode

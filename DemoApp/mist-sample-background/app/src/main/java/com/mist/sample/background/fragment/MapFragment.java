@@ -39,6 +39,7 @@ import com.mist.android.MistLocationAdvanceListener;
 import com.mist.android.model.AppModeParams;
 import com.mist.sample.background.R;
 import com.mist.sample.background.app.MainApplication;
+import com.mist.sample.background.utils.BackgroundManager;
 import com.mist.sample.background.utils.MistManager;
 import com.mist.sample.background.utils.Utils;
 import com.squareup.picasso.Callback;
@@ -62,19 +63,19 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     public static final String TAG = MapFragment.class.getSimpleName();
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
+    private static final int JOB_ID = 100;
     private static final String SDK_TOKEN = "sdkToken";
     private MainApplication mainApplication;
     private String sdkToken;
     private String floorPlanImageUrl = "";
     private MSTPoint mstPoint = null;
+    public MSTMap currentMap;
     private boolean addedMap = false;
     private double scaleXFactor;
     private double scaleYFactor;
     private boolean scaleFactorCalled;
     private float floorImageLeftMargin;
     private float floorImageTopMargin;
-    public MSTMap currentMap;
-    private Unbinder unbinder;
     private HandlerThread sdkHandlerThread;
     private Handler sdkHandler;
 
@@ -84,6 +85,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         location
     }
 
+    private Unbinder unbinder;
     @BindView(R.id.floorplan_bluedot)
     FrameLayout floorplanBluedotView;
     @BindView(R.id.floorplan_image)
@@ -92,7 +94,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     ProgressBar progressBar;
     @BindView(R.id.txt_error)
     TextView txtError;
-
 
     public static MapFragment newInstance(String sdkToken) {
         Bundle bundle = new Bundle();
@@ -120,40 +121,56 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         if (getArguments() != null)
             sdkToken = getArguments().getString(SDK_TOKEN);
     }
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //handler = new Handler(Looper.getMainLooper());
         sdkHandlerThread = new HandlerThread("SDKHandler");
         sdkHandlerThread.start();
         sdkHandler = new Handler(sdkHandlerThread.getLooper());
     }
+
     @Override
     public void onStart() {
-
         super.onStart();
+
+        // Stop previous scheduled job when the app comes to the foreground
         try {
-            //stopping the scheduled job when the app comes to the foreground
-            Utils.stopScheduledJob(mainApplication);
+            BackgroundManager.stopScheduledJob(mainApplication, JOB_ID);
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
         }
-        //disconnecting the Mist sdk, to make sure there is no prior active instance
+
+        // Discount previous Mist SDK to make sure there is no prior active instance
         MistManager.newInstance(mainApplication).disconnect();
+
+        // Update SDK to use foreground mode
         MistManager.newInstance(mainApplication).
                 setAppMode(new AppModeParams(AppMode.FOREGROUND,
                         BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY,
-                        true, 0.5, 1));
+                        true,
+                        0.5,
+                        1));
 
-        //initializing the Mist sdk
-        initMISTSDK();
+        // Make sure the version and permissions are valid
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                getActivity() != null &&
+                getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            showLocationPermissionDialog();
+        } else {
+            // Start Mist SDK
+            startMistSDK();
+        }
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        //stopping the Mist sdk
+
+        // Stop Mist SDK
         MistManager.newInstance(mainApplication).disconnect();
+
+        // Start the Mist SDK in background mode
         MistManager.newInstance(mainApplication).
                 setAppMode(new AppModeParams(AppMode.BACKGROUND,
                         BatteryUsage.LOW_BATTERY_USAGE_LOW_ACCURACY,
@@ -161,24 +178,14 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         sdkHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-        try {
-            //scheduling the job to run Mist sdk in the background
-            Utils.scheduleJob(mainApplication.getApplicationContext());
-        } catch (Exception e) {
-            Log.e(TAG, e.getMessage());
-        }
-    }
+                try {
+                    //scheduling the job to run Mist sdk in the background
+                    BackgroundManager.scheduleJob(mainApplication.getApplicationContext(), JOB_ID);
+                } catch (Exception e) {
+                    Log.e(TAG, e.getMessage());
+                }
+            }
         }, 500);
-    }
-
-    private void initMISTSDK() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && getActivity() != null &&
-                getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED) {
-            showLocationPermissionDialog();
-        } else {
-            startMistSdk();
-        }
     }
 
     //permission dialogs
@@ -206,8 +213,8 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
             switch (requestCode) {
                 case PERMISSION_REQUEST_FINE_LOCATION:
                     if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                        Log.d(TAG, "fine location permission granted !!");
-                        startMistSdk();
+                        Log.d(TAG, "Fine Location Permission granted");
+                        startMistSDK();
                     } else {
                         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                         builder.setTitle("Functionality limited");
@@ -226,13 +233,15 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     }
 
     /**
-     * This method checks for the availability for Internet , Location and Bluetooth and show dialog if anything is not enabled else start the Mist SDK
+     * This method checks for Internet, Location and Bluetooth availability and show dialog if anything is not enabled else start the Mist SDK
      */
-    private void startMistSdk() {
+    private void startMistSDK() {
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() && getActivity() != null &&
                 Utils.isNetworkAvailable(getActivity()) && Utils.isLocationServiceEnabled(getActivity())) {
-            runMISTSDK();
+            // Start the Mist SDK
+            MistManager mistManager = MistManager.newInstance(mainApplication);
+            mistManager.init(sdkToken, this, AppMode.FOREGROUND);
         } else {
             if (getActivity() != null && !Utils.isNetworkAvailable(getActivity())) {
                 showSettingsAlert(AlertType.network);
@@ -244,12 +253,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                 showSettingsAlert(AlertType.bluetooth);
             }
         }
-    }
-
-    //initializing the Mist sdk with sdkToken
-    private void runMISTSDK() {
-        MistManager mistManager = MistManager.newInstance(mainApplication);
-        mistManager.init(sdkToken, this, AppMode.FOREGROUND);
     }
 
     /**
@@ -313,21 +316,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
             AlertDialog alert = alertDialogBuilder.create();
             alert.show();
         }
-    }
-
-    @Override
-    public void onBeaconDetected(MSTBeacon[] beaconArray, String region, Date dateUpdated) {
-
-    }
-
-    @Override
-    public void onBeaconDetected(JSONArray beaconArray, Date dateUpdated) {
-
-    }
-
-    @Override
-    public void onBeaconListUpdated(HashMap<String, HashMap<Integer, Integer[]>> beaconList, Date dateUpdated) {
-
     }
 
     /**
@@ -420,26 +408,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         return (float) (meter * this.scaleYFactor * currentMap.getPpm());
     }
 
-    @Override
-    public void onPressureUpdated(double pressure, Date dateUpdated) {
-
-    }
-
-    @Override
-    public void onZoneStatsUpdated(MSTZone[] zones, Date dateUpdated) {
-
-    }
-
-    @Override
-    public void onClientUpdated(MSTClient[] clients, MSTZone[] zones, Date dateUpdated) {
-
-    }
-
-    @Override
-    public void onAssetUpdated(MSTAsset[] assets, MSTZone[] zones, Date dateUpdated) {
-
-    }
-
     /**
      * This callback provide the detail of map user is on
      *
@@ -511,44 +479,10 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     }
 
     @Override
-    public void onVirtualBeaconListUpdated(MSTVirtualBeacon[] virtualBeacons, Date dateUpdated) {
-
-    }
-
-    @Override
-    public void onNotificationReceived(Date dateReceived, String message) {
-
-    }
-
-    @Override
-    public void onClientInformationUpdated(String clientName) {
-
-    }
-
-    @Override
-    public void onReceivedSecret(String orgName, String orgID, String sdkSecret, String error) {
-
-    }
-
-    @Override
-    public void receivedLogMessageForCode(String message, MSTCentralManagerStatusCode code) {
-    }
-
-    @Override
-    public void receivedVerboseLogMessage(String message) {
-    }
-
-    //callback for error
-    @Override
     public void onMistErrorReceived(String message, Date date) {
         progressBar.setVisibility(View.GONE);
         txtError.setVisibility(View.VISIBLE);
         txtError.setText(message);
-    }
-
-    @Override
-    public void onMistRecommendedAction(String message) {
-
     }
 
     @Override
@@ -564,11 +498,81 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
         try {
             //stopping the scheduled job when the app comes to the foreground
-            Utils.stopScheduledJob(mainApplication);
+            BackgroundManager.stopScheduledJob(mainApplication, JOB_ID);
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
         }
         //disconnecting the Mist sdk, to make sure there is no prior active instance
         MistManager.newInstance(mainApplication).destroy();
+    }
+
+    @Override
+    public void onBeaconDetected(MSTBeacon[] mstBeacons, String s, Date date) {
+        // Not needed
+    }
+
+    @Override
+    public void onBeaconDetected(JSONArray beaconArray, Date dateUpdated) {
+        // Not needed
+    }
+
+    @Override
+    public void onBeaconListUpdated(HashMap<String, HashMap<Integer, Integer[]>> hashMap, Date date) {
+        // Not needed
+    }
+
+    @Override
+    public void onVirtualBeaconListUpdated(MSTVirtualBeacon[] virtualBeacons, Date dateUpdated) {
+        // Not needed
+    }
+
+    @Override
+    public void onNotificationReceived(Date dateReceived, String message) {
+        // Not needed
+    }
+
+    @Override
+    public void onClientInformationUpdated(String clientName) {
+        // Not needed
+    }
+
+    @Override
+    public void onReceivedSecret(String s, String s1, String s2, String s3) {
+        // Not needed
+    }
+
+    @Override
+    public void receivedLogMessageForCode(String message, MSTCentralManagerStatusCode code) {
+        // Not needed
+    }
+
+    @Override
+    public void receivedVerboseLogMessage(String message) {
+        // Not needed
+    }
+
+    @Override
+    public void onMistRecommendedAction(String message) {
+        // Not needed
+    }
+
+    @Override
+    public void onPressureUpdated(double pressure, Date dateUpdated) {
+        // Not needed
+    }
+
+    @Override
+    public void onZoneStatsUpdated(MSTZone[] mstZones, Date date) {
+        // Not needed
+    }
+
+    @Override
+    public void onClientUpdated(MSTClient[] mstClients, MSTZone[] mstZones, Date date) {
+        // Not needed
+    }
+
+    @Override
+    public void onAssetUpdated(MSTAsset[] mstAssets, MSTZone[] mstZones, Date date) {
+        // Not needed
     }
 }

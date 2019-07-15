@@ -32,13 +32,14 @@ import java.util.Date;
 public class MistManager implements MSTOrgCredentialsCallback {
 
     private static final String TAG = MistManager.class.getSimpleName();
+
     private static WeakReference<Application> mApp;
     private static MistManager mistManager;
     private String sdkToken;
     private String envType;
+    private OrgData orgData;
     private MSTCentralManagerIndoorOnlyListener indoorOnlyListener;
     private AppMode appMode = AppMode.FOREGROUND;
-    private OrgData orgData;
     private MSTOrgCredentialsManager mstOrgCredentialsManager;
     private volatile MSTCentralManager mstCentralManager;
 
@@ -66,13 +67,12 @@ public class MistManager implements MSTOrgCredentialsCallback {
      * @param indoorOnlyListener listener on which callback for location,map,notification can be heard
      * @param appMode            mode of the app (Background,Foreground)
      */
-    public void init(String sdkToken, MSTCentralManagerIndoorOnlyListener indoorOnlyListener,
-                     AppMode appMode) {
+    public void init(String sdkToken, MSTCentralManagerIndoorOnlyListener indoorOnlyListener, AppMode appMode) {
         if (sdkToken != null && !sdkToken.isEmpty()) {
             this.sdkToken = sdkToken;
             this.envType = String.valueOf(sdkToken.charAt(0));
             this.indoorOnlyListener = indoorOnlyListener;
-            if(appMode !=null) {
+            if (appMode != null) {
                 this.appMode = appMode;
             }
             orgData = SharedPrefUtils.readConfig(mApp.get(), sdkToken);
@@ -99,14 +99,27 @@ public class MistManager implements MSTOrgCredentialsCallback {
     private synchronized void connect(MSTCentralManagerIndoorOnlyListener indoorOnlyListener, AppMode appMode) {
         if (mstCentralManager == null) {
             mstCentralManager = new MSTCentralManager(mApp.get(),
-                    orgData.getOrgId(), orgData.getSdkSecret(), indoorOnlyListener);
-            mstCentralManager.setEnvironment(Utils.getEnvironment(envType));
+                    orgData.getOrgId(),
+                    orgData.getSdkSecret(),
+                    indoorOnlyListener);
+            try{
+                mstCentralManager.setEnvironment(Utils.getEnvironment(envType));
+            } catch (Exception e) {
+                Log.e(TAG, e.getLocalizedMessage());
+                return;
+            }
             if (appMode.equals(AppMode.FOREGROUND)) {
-                setAppMode(new AppModeParams(AppMode.FOREGROUND, BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY,
-                        true, 0.5, 1));
+                setAppMode(new AppModeParams(AppMode.FOREGROUND,
+                        BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY,
+                        true,
+                        0.5,
+                        1));
             } else {
-                setAppMode(new AppModeParams(AppMode.BACKGROUND, BatteryUsage.LOW_BATTERY_USAGE_LOW_ACCURACY,
-                        true, 0.5, 1));
+                setAppMode(new AppModeParams(AppMode.BACKGROUND,
+                        BatteryUsage.LOW_BATTERY_USAGE_LOW_ACCURACY,
+                        true,
+                        0.5,
+                        1));
             }
             mstCentralManager.start();
         } else {
