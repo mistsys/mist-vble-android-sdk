@@ -166,8 +166,13 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     @Override
     public void onStart() {
-
         super.onStart();
+
+        //connecting to the google api client
+        if (googleApiClient != null && !googleApiClient.isConnected()) {
+            googleApiClient.connect();
+        }
+
         try {
             //stopping the scheduled job when the app comes to the foreground
             Utils.stopScheduledJob(mainApplication);
@@ -411,7 +416,8 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (floorPlanImage != null && floorPlanImage.getDrawable() != null && currentMap != null && point != null && addedMap) {
+                    if (floorPlanImage != null && floorPlanImage.getDrawable() != null &&
+                            currentMap != null && point != null && addedMap) {
                         float xPos = convertCloudPointToFloorplanXScale(point.getX());
                         float yPos = convertCloudPointToFloorplanYScale(point.getY());
 
@@ -718,4 +724,5 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         //disconnecting the Mist sdk, to make sure there is no prior active instance
         MistManager.newInstance(mainApplication).destroy();
     }
+
 }

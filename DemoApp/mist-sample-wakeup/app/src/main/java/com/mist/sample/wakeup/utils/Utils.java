@@ -86,6 +86,8 @@ public class Utils {
             env = "EU";
         } else if (envType.equalsIgnoreCase("K")) {
             env = "Kalam";
+        } else if (envType.equalsIgnoreCase("S")) {
+            env = "Staging";
         } else {
             env = "Production";
         }
