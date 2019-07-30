@@ -18,6 +18,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -51,7 +52,6 @@ import com.mist.android.MSTMap;
 import com.mist.android.MSTPoint;
 import com.mist.android.MSTVirtualBeacon;
 import com.mist.android.MSTZone;
-import com.mist.android.MistLocationAdvanceListener;
 import com.mist.android.model.AppModeParams;
 import com.mist.sample.wakeup.R;
 import com.mist.sample.wakeup.app.MainApplication;
@@ -61,6 +61,7 @@ import com.mist.sample.wakeup.service.NearByJobIntentService;
 import com.mist.sample.wakeup.utils.MistManager;
 import com.mist.sample.wakeup.utils.SharedPrefUtils;
 import com.mist.sample.wakeup.utils.Utils;
+import com.mist.sample.wakeup.utils.ZoomLayout;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
@@ -81,7 +82,7 @@ import butterknife.Unbinder;
 
 public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnlyListener,
         GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, MistManager.fragmentInteraction {
+        GoogleApiClient.OnConnectionFailedListener, MistManager.fragmentInteraction, ZoomLayout.ZoomViewTouchListener {
 
     public static final String TAG = MapFragment.class.getSimpleName();
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
@@ -93,7 +94,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     private boolean addedMap = false;
     private double scaleXFactor;
     private double scaleYFactor;
-    private boolean scaleFactorCalled;
+    private boolean isScaleFactorCalculated;
     private float floorImageLeftMargin;
     private float floorImageTopMargin;
     public MSTMap currentMap;
@@ -101,6 +102,9 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     private HandlerThread sdkHandlerThread;
     private Handler sdkHandler;
     private GoogleApiClient googleApiClient;
+    int scale;
+    private float scale1;
+    float zoomScaleFactor = 1;
 
     @Override
     public void onOrgDataReceived() {
@@ -123,6 +127,8 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     ProgressBar progressBar;
     @BindView(R.id.txt_error)
     TextView txtError;
+    @BindView(R.id.floorplan_zoomlayout)
+    ZoomLayout zoomLayout;
 
 
     public static MapFragment newInstance(String sdkToken) {
@@ -150,9 +156,10 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
             mainApplication = (MainApplication) getActivity().getApplication();
         if (getArguments() != null)
             sdkToken = getArguments().getString(SDK_TOKEN);
-			 if (havePermissions()) {
+        if (havePermissions()) {
             buildGoogleApiClient();
         }
+        zoomLayout.setListener(this);
     }
 
     @Override
@@ -203,13 +210,13 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         sdkHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-        try {
-            //scheduling the job to run Mist sdk in the background
-            Utils.scheduleJob(mainApplication.getApplicationContext());
-        } catch (Exception e) {
-            Log.e(TAG, e.getMessage());
-        }
-    }
+                try {
+                    //scheduling the job to run Mist sdk in the background
+                    Utils.scheduleJob(mainApplication.getApplicationContext());
+                } catch (Exception e) {
+                    Log.e(TAG, e.getMessage());
+                }
+            }
         }, 500);
 
         //disconnecting from the google api client
@@ -251,29 +258,29 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         if (getActivity() != null) {
-        switch (requestCode) {
-            case PERMISSION_REQUEST_FINE_LOCATION:
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d(TAG, "fine location permission granted !!");
-                    startMistSdk();
-                    buildGoogleApiClient();
-                    if (googleApiClient != null && !googleApiClient.isConnected()) {
-                        googleApiClient.connect();
-                    }
-                } else {
-                        final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                    builder.setTitle("Functionality limited");
-                    builder.setMessage("Since location access has not been granted, " +
-                            "this app will not be able to discover beacons when in the background.");
-                    builder.setPositiveButton(android.R.string.ok, null);
-                    builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                        @Override
-                        public void onDismiss(DialogInterface dialog) {
+            switch (requestCode) {
+                case PERMISSION_REQUEST_FINE_LOCATION:
+                    if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        Log.d(TAG, "fine location permission granted !!");
+                        startMistSdk();
+                        buildGoogleApiClient();
+                        if (googleApiClient != null && !googleApiClient.isConnected()) {
+                            googleApiClient.connect();
                         }
-                    });
-                    builder.show();
-                }
-        }
+                    } else {
+                        final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                        builder.setTitle("Functionality limited");
+                        builder.setMessage("Since location access has not been granted, " +
+                                "this app will not be able to discover beacons when in the background.");
+                        builder.setPositiveButton(android.R.string.ok, null);
+                        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogInterface dialog) {
+                            }
+                        });
+                        builder.show();
+                    }
+            }
         }
     }
 
@@ -422,7 +429,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                         float yPos = convertCloudPointToFloorplanYScale(point.getY());
 
                         // If scaleX and scaleY are not defined, check again
-                        if (!scaleFactorCalled && (scaleXFactor == 0 || scaleYFactor == 0)) {
+                        if (!isScaleFactorCalculated && (scaleXFactor == 0 || scaleYFactor == 0)) {
                             setupScaleFactorForFloorplan();
                         }
                         float leftMargin = floorImageLeftMargin + (xPos - (floorplanBluedotView.getWidth() / 2));
@@ -451,7 +458,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                         if (floorPlanImage.getDrawable() != null) {
                             scaleXFactor = (floorPlanImage.getWidth() / (double) floorPlanImage.getDrawable().getIntrinsicWidth());
                             scaleYFactor = (floorPlanImage.getHeight() / (double) floorPlanImage.getDrawable().getIntrinsicHeight());
-                                scaleFactorCalled = true;
+                            isScaleFactorCalculated = true;
                         }
                     }
                 }
@@ -461,12 +468,12 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     //converting the x point from meter's to pixel with the present scaling factor of the map rendered in the imageview
     private float convertCloudPointToFloorplanXScale(double meter) {
-        return (float) (meter * this.scaleXFactor * currentMap.getPpm());
+        return (float) (meter * this.scaleXFactor * currentMap.getPpm() / scale);
     }
 
     //converting the y point from meter's to pixel with the present scaling factor of the map rendered in the imageview
     private float convertCloudPointToFloorplanYScale(double meter) {
-        return (float) (meter * this.scaleYFactor * currentMap.getPpm());
+        return (float) (meter * this.scaleYFactor * currentMap.getPpm() / scale);
     }
 
     @Override
@@ -505,7 +512,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    renderImage(floorPlanImageUrl);
+                    loadMap(floorPlanImageUrl);
                 }
             });
         }
@@ -529,7 +536,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                         addedMap = true;
                         progressBar.setVisibility(View.GONE);
 
-                        if (!scaleFactorCalled) {
+                        if (!isScaleFactorCalculated) {
                             setupScaleFactorForFloorplan();
                         }
                     }
@@ -541,11 +548,11 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                                 .into(floorPlanImage, new Callback() {
                                     @Override
                                     public void onSuccess() {
-                                        if(progressBar!=null) {
+                                        if (progressBar != null) {
                                             progressBar.setVisibility(View.GONE);
                                         }
                                         addedMap = true;
-                                        if (!scaleFactorCalled) {
+                                        if (!isScaleFactorCalculated) {
                                             setupScaleFactorForFloorplan();
                                         }
                                         Log.d(TAG, "Image downloaded from server successfully !!");
@@ -559,6 +566,85 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                                 });
                     }
                 });
+    }
+
+    private void loadMap(final String floorPlanImageUrl) {
+        if (this.currentMap != null) {
+            try {
+                DisplayMetrics displayMetrics = new DisplayMetrics();
+                getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+                int height = displayMetrics.heightPixels;
+                double dscale = (currentMap.getMapHeight() * currentMap.getPpm() / height);
+                if (dscale < 1) {
+                    scale = 1;
+                } else {
+                    scale = (int) (Math.round(dscale));
+                }
+
+                Picasso.with(getActivity()).load(floorPlanImageUrl).resize((int)
+                        (currentMap.getMapWidth() * currentMap.getPpm() / scale), (int)
+                        (currentMap.getMapHeight() * currentMap.getPpm() / scale)).into(floorPlanImage, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        Log.d(TAG, "Image loaded successfully from the cached");
+                        addedMap = true;
+                        progressBar.setVisibility(View.GONE);
+                    }
+
+                    @Override
+                    public void onError() {
+                        progressBar.setVisibility(View.GONE);
+                        Log.d(TAG, "Could not download the image from the server");
+                    }
+                });
+
+                if (!isScaleFactorCalculated) {
+                    setupScaleFactorForFloorplan();
+                }
+
+            } catch (Exception e) {
+                Log.e(TAG, "Exception in load map : " + e.getMessage());
+            }
+        }
+    }
+
+    @Override
+    public void onTouchZoomView(float x, float y) {
+    }
+
+    @Override
+    public void onZoomScaleValue(float scale) {
+        scale1 = 0;
+        if (scale <= 1.5)
+            scale1 = 1;
+        else {
+            if (scale > 3)
+                scale1 = (float) 0.3;
+            else if (scale >= 1.5)
+                scale1 = (float) 0.5;
+            else
+                scale1 = (float) 0.8;
+        }
+        scale1 = 1 / scale;
+
+        zoomScaleFactor = scale1;
+
+        View view1 = floorplanLayout.findViewById(R.id.floorplan_bluedot);
+        View view2 = floorplanLayout.findViewWithTag("renderNearestBluedot");
+
+        setScaleValue(view1, scale1);
+        setScaleValue(view2, scale1);
+        /*for (String id : customViewsIds) {
+            View customView = floorplanLayout.findViewWithTag(id);
+            setScaleValue(customView, scale1);
+        }*/
+    }
+
+    private void setScaleValue(View view, float scale) {
+        if (view != null && view.getVisibility() == View.VISIBLE) {
+            view.setScaleX(scale);
+            view.setScaleY(scale);
+        }
     }
 
     @Override
@@ -619,6 +705,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     /**
      * checking for location permission
+     *
      * @return
      */
     private boolean havePermissions() {
