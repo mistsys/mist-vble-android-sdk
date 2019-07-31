@@ -18,4 +18,6 @@
     <string name="app_title_bar_name">Mist Wakeup</string>
     <string name="connection_suspended">Connection suspended, Error Code :</string>
     <string name="play_service_exception">Exception while connecting to Google Play services:</string>
+    <string name="floorplan_bluedot">floorplan bluedot</string>
+    <string name="bluedot_flashlight">Flashlight</string>
 </resources>
