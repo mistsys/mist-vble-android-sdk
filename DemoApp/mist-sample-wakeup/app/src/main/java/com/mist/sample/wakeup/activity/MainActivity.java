@@ -5,6 +5,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 
+
 import com.mist.sample.wakeup.R;
 import com.mist.sample.wakeup.fragment.AddTokenDialogFragment;
 import com.mist.sample.wakeup.fragment.HomeFragment;
@@ -93,5 +94,18 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.SdkT
         SharedPrefUtils.setIsAppAlive(this, false);
         SharedPrefUtils.setShouldShowWelcome(this, true);
         super.onDestroy();
+    }
+
+    @Override
+    protected void onStop() {
+        SharedPrefUtils.setIsAppAlive(this, false);
+        SharedPrefUtils.setShouldShowWelcome(this, true);
+        super.onStop();
+    }
+
+    @Override
+    protected void onResume() {
+        SharedPrefUtils.setIsAppAlive(this, true);
+        super.onResume();
     }
 }

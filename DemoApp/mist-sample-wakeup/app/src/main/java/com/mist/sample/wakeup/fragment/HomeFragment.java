@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+
 import com.github.clans.fab.FloatingActionMenu;
 import com.mist.sample.wakeup.R;
 import com.mist.sample.wakeup.utils.SharedPrefUtils;
@@ -45,6 +46,7 @@ public class HomeFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.home_fragment, container, false);
         unbinder = ButterKnife.bind(this, view);
+
         return view;
     }
 
@@ -61,7 +63,8 @@ public class HomeFragment extends Fragment {
 
     @OnClick(R.id.btn_enter)
     public void onClick() {
-        sdkToken = TextUtils.isEmpty(SharedPrefUtils.readSdkToken(getActivity(), TOKEN_PREF_KEY_NAME))?sdkToken:SharedPrefUtils.readSdkToken(getActivity(), TOKEN_PREF_KEY_NAME);
+        sdkToken = TextUtils.isEmpty(SharedPrefUtils.readSdkToken(getActivity(), TOKEN_PREF_KEY_NAME)) ? sdkToken : SharedPrefUtils.readSdkToken(getActivity(), TOKEN_PREF_KEY_NAME);
+        SharedPrefUtils.saveSdkToken(getActivity(), TOKEN_PREF_KEY_NAME, sdkToken);
         if (Utils.isEmptyString(sdkToken) && getActivity() != null) {
             Snackbar.make(getActivity().findViewById(android.R.id.content), R.string.enter_sdk_token, Snackbar.LENGTH_LONG).show();
         } else if (sdkToken.toUpperCase().charAt(0) == 'P' || sdkToken.toUpperCase().charAt(0) == 'S') {

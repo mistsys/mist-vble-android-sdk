@@ -1,0 +1,475 @@
+Index: .idea/codeStyles/Project.xml
+===================================================================
+--- .idea/codeStyles/Project.xml	(revision 54e78aaa4f5da63edd592c0f387078d1e03db082)
++++ .idea/codeStyles/Project.xml	(revision 54e78aaa4f5da63edd592c0f387078d1e03db082)
+@@ -1,29 +0,0 @@
+-<component name="ProjectCodeStyleConfiguration">
+-  <code_scheme name="Project" version="173">
+-    <Objective-C-extensions>
+-      <file>
+-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Import" />
+-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Macro" />
+-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Typedef" />
+-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Enum" />
+-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Constant" />
+-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Global" />
+-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Struct" />
+-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="FunctionPredecl" />
+-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Function" />
+-      </file>
+-      <class>
+-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Property" />
+-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="Synthesize" />
+-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="InitMethod" />
+-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="StaticMethod" />
+-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="InstanceMethod" />
+-        <option name="com.jetbrains.cidr.lang.util.OCDeclarationKind" value="DeallocMethod" />
+-      </class>
+-      <extensions>
+-        <pair source="cpp" header="h" fileNamingConvention="NONE" />
+-        <pair source="c" header="h" fileNamingConvention="NONE" />
+-      </extensions>
+-    </Objective-C-extensions>
+-  </code_scheme>
+-</component>
+\ No newline at end of file
+Index: app/src/main/java/com/mist/sample/wakeup/utils/MistManager.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.mist.sample.wakeup.utils;\n\nimport android.app.Application;\nimport android.text.TextUtils;\nimport android.util.Log;\n\nimport com.mist.android.AppMode;\nimport com.mist.android.BatteryUsage;\nimport com.mist.android.MSTCentralManager;\nimport com.mist.android.MSTCentralManagerIndoorOnlyListener;\nimport com.mist.android.MSTOrgCredentialsCallback;\nimport com.mist.android.MSTOrgCredentialsManager;\nimport com.mist.android.model.AppModeParams;\nimport com.mist.sample.wakeup.app.MainApplication;\nimport com.mist.sample.wakeup.model.OrgData;\n\nimport java.lang.ref.WeakReference;\nimport java.util.Date;\n\n/**\n * Created by anubhava on 26/03/18.\n */\n\n/**\n * This is the interactor class which will interact with Mist SDK for\n * Enrollment\n * starting Mist SDK\n * stopping Mist SDK\n * Reconnection\n * Setting Mode\n */\npublic class MistManager implements MSTOrgCredentialsCallback {\n\n    private static final String TAG = MistManager.class.getSimpleName();\n    private static WeakReference<Application> mApp;\n    private static MistManager mistManager;\n    private String sdkToken;\n    private String envType;\n    private MSTCentralManagerIndoorOnlyListener indoorOnlyListener;\n    private AppMode appMode = AppMode.FOREGROUND;\n    private static OrgData orgData;\n    private MSTOrgCredentialsManager mstOrgCredentialsManager;\n    private volatile MSTCentralManager mstCentralManager;\n    private fragmentInteraction fragmentInteractionListener;\n\n    private MistManager() {\n    }\n\n    public void setFragmentInteractionListener(fragmentInteraction fragmentInteractionListener) {\n        this.fragmentInteractionListener = fragmentInteractionListener;\n    }\n\n    public interface fragmentInteraction {\n        void onOrgDataReceived();\n    }\n\t\n /**\n     * Custructor for creating singleton instance of the interactor class\n     *\n     * @param mainApplication application instance needed by Mist SDK\n     * @return\n     */\n\t \n    public static MistManager newInstance(MainApplication mainApplication) {\n        mApp = new WeakReference<Application>(mainApplication);\n        if (mistManager == null) {\n            mistManager = new MistManager();\n        }\n        return mistManager;\n    }\n\n    /**\n     * This method will enroll the device and start the Mist SDK on successful enrollment, if we already have the deatil of enrollment response detail we can just start the SDK with those details\n     *\n     * @param sdkToken           Token used for enrollment\n     * @param indoorOnlyListener listener on which callback for location,map,notification can be heard\n     * @param appMode            mode of the app (Background,Foreground)\n     */\n    public void init(String sdkToken, MSTCentralManagerIndoorOnlyListener indoorOnlyListener,\n                     AppMode appMode) {\n        if (sdkToken != null && !sdkToken.isEmpty()) {\n            this.sdkToken = sdkToken;\n            this.envType = String.valueOf(sdkToken.charAt(0));\n            this.indoorOnlyListener = indoorOnlyListener;\n            if(appMode !=null) {\n                this.appMode = appMode;\n            }\n            orgData = SharedPrefUtils.readConfig(mApp.get(), sdkToken);\n            if (orgData == null || orgData.getSdkSecret() == null || orgData.getSdkSecret().isEmpty()) {\n                if (mstOrgCredentialsManager == null) {\n                    mstOrgCredentialsManager = new MSTOrgCredentialsManager(mApp.get(), this);\n                }\n                mstOrgCredentialsManager.enrollDeviceWithToken(sdkToken);\n\n            } else {\n                connect(indoorOnlyListener, appMode);\n            }\n        } else {\n            Log.d(TAG, \"Empty SDK Token\");\n        }\n    }\n\n    /**\n     * This method is used to start the Mist SDk\n     *\n     * @param indoorOnlyListener listener on which callback for location,map,notification can be heard\n     * @param appMode            mode of the app (Background,Foreground)\n     */\n    private synchronized void connect(MSTCentralManagerIndoorOnlyListener indoorOnlyListener, AppMode appMode) {\n        if (mstCentralManager == null) {\n            mstCentralManager = new MSTCentralManager(mApp.get(),\n                    orgData.getOrgId(), orgData.getSdkSecret(), indoorOnlyListener);\n            mstCentralManager.setEnvironment(Utils.getEnvironment(envType));\n            if (appMode.equals(AppMode.FOREGROUND)) {\n                setAppMode(new AppModeParams(AppMode.FOREGROUND, BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY,\n                        true, 0.5, 1));\n            } else {\n                setAppMode(new AppModeParams(AppMode.BACKGROUND, BatteryUsage.LOW_BATTERY_USAGE_LOW_ACCURACY,\n                        true, 0.5, 1));\n            }\n            mstCentralManager.start();\n        } else {\n            reconnect();\n        }\n    }\n\n    /**\n     * @param appModeParams params to let SDK know about the scanning frequency and the state of the app (background or foreground)\n     *                      call this method to switch the mode when app changes the mode between foreground and background\n     */\n    public void setAppMode(AppModeParams appModeParams) {\n        if (this.mstCentralManager != null) {\n            this.mstCentralManager.setAppMode(appModeParams);\n            this.appMode = appModeParams.getAppMode();\n        }\n    }\n\n    /**\n     * This is the callback method which will receive the following information from the Mist SDK enrollment call\n     *\n     * @param orgName   name of the token used for the enrollment\n     * @param orgID     organization id\n     * @param sdkSecret secret needed to start the Mist SDK\n     * @param error     error message if any\n     * @param envType   envType which will be used to set the environment\n     */\n    @Override\n    public void onReceivedSecret(String orgName, String orgID, String sdkSecret, String error, String envType) {\n        if (!TextUtils.isEmpty(sdkSecret) && !TextUtils.isEmpty(orgID) && !TextUtils.isEmpty(sdkSecret)) {\n            saveConfig(orgName, orgID, sdkSecret, envType);\n            connect(indoorOnlyListener, appMode);\n        } else {\n            if (!Utils.isEmptyString(error)) {\n                if (indoorOnlyListener != null) {\n                    indoorOnlyListener.onMistErrorReceived(error, new Date());\n                }\n            }\n        }\n    }\n\n    /**\n     * This method is saving the following details so that we can use it again for starting Mist SDK without need for enrollment again\n     *\n     * @param orgName   name of the token used for the enrollment\n     * @param orgID     organization id\n     * @param sdkSecret secret needed to start the Mist SDK\n     * @param envType   envType which will be used to set the environment\n     */\n    private void saveConfig(String orgName, String orgID, String sdkSecret, String envType) {\n        orgData = new OrgData(orgName, orgID, sdkSecret, envType);\n        SharedPrefUtils.saveConfig(mApp.get(), orgData, sdkToken);\n        if(fragmentInteractionListener!=null){\n            fragmentInteractionListener.onOrgDataReceived();\n        }\n    }\n\n    /**\n     * This method will stop the Mist SDK\n     */\n    public void disconnect() {\n        if (mstCentralManager != null) {\n            mstCentralManager.stop();\n        }\n    }\n\n    /**\n     * This method will reconnect he Mist SDK\n     */\n    private synchronized void reconnect() {\n        if (mstCentralManager != null) {\n            disconnect();\n            mstCentralManager.setMSTCentralManagerIndoorOnlyListener(indoorOnlyListener);\n            mstCentralManager.start();\n        }\n    }\n\n    /**\n     * This method will clear/destroy the Mist SDK instance\n     */\n    public synchronized void destroy() {\n        if (mstCentralManager != null) {\n            mstCentralManager.stop();\n            mstCentralManager = null;\n        }\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/mist/sample/wakeup/utils/MistManager.java	(revision 54e78aaa4f5da63edd592c0f387078d1e03db082)
++++ app/src/main/java/com/mist/sample/wakeup/utils/MistManager.java	(date 1565083222000)
+@@ -113,10 +113,10 @@
+             mstCentralManager.setEnvironment(Utils.getEnvironment(envType));
+             if (appMode.equals(AppMode.FOREGROUND)) {
+                 setAppMode(new AppModeParams(AppMode.FOREGROUND, BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY,
+-                        true, 0.5, 1));
++                        true, 1, 0.5));
+             } else {
+                 setAppMode(new AppModeParams(AppMode.BACKGROUND, BatteryUsage.LOW_BATTERY_USAGE_LOW_ACCURACY,
+-                        true, 0.5, 1));
++                        true, 1, 0.5));
+             }
+             mstCentralManager.start();
+         } else {
+Index: gradle/wrapper/gradle-wrapper.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>#Mon Mar 26 11:57:20 IST 2018\ndistributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-4.1-all.zip\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- gradle/wrapper/gradle-wrapper.properties	(revision 54e78aaa4f5da63edd592c0f387078d1e03db082)
++++ gradle/wrapper/gradle-wrapper.properties	(date 1565081985000)
+@@ -1,6 +1,6 @@
+-#Mon Mar 26 11:57:20 IST 2018
++#Tue Aug 06 12:53:34 IST 2019
+ distributionBase=GRADLE_USER_HOME
+ distributionPath=wrapper/dists
+ zipStoreBase=GRADLE_USER_HOME
+ zipStorePath=wrapper/dists
+-distributionUrl=https\://services.gradle.org/distributions/gradle-4.1-all.zip
++distributionUrl=https\://services.gradle.org/distributions/gradle-5.1.1-all.zip
+Index: app/src/main/res/layout/home_fragment.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"utf-8\"?>\n<RelativeLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"\n    xmlns:app=\"http://schemas.android.com/apk/res-auto\"\n    xmlns:fab=\"http://schemas.android.com/tools\"\n    android:layout_width=\"match_parent\"\n    android:layout_height=\"match_parent\"\n    android:layout_margin=\"20dp\">\n\n    <Button\n        android:id=\"@+id/btn_enter\"\n        android:layout_width=\"match_parent\"\n        android:layout_height=\"wrap_content\"\n        android:layout_centerInParent=\"true\"\n        android:background=\"@drawable/custom_button\"\n        android:text=\"@string/load_map\" />\n\n    <android.support.design.widget.CoordinatorLayout\n        android:layout_width=\"match_parent\"\n        android:layout_height=\"match_parent\">\n\n        <com.github.clans.fab.FloatingActionMenu\n            android:id=\"@+id/token_menu\"\n            android:layout_width=\"wrap_content\"\n            android:layout_height=\"wrap_content\"\n            android:layout_gravity=\"bottom|right\"\n            android:layout_marginBottom=\"20dp\"\n            android:layout_marginRight=\"10dp\"\n            app:menu_icon=\"@drawable/ic_settings\"\n            app:menu_colorNormal=\"@color/colorAccent\"\n            app:menu_colorPressed=\"@color/colorPrimary\">\n\n            <com.github.clans.fab.FloatingActionButton\n                android:id=\"@+id/add_token_button\"\n                android:layout_width=\"wrap_content\"\n                android:layout_height=\"wrap_content\"\n                android:src=\"@drawable/ic_add\"\n                app:fab_colorNormal=\"@color/colorPrimary\"\n                app:fab_colorPressed=\"@color/colorPrimaryDark\"\n                app:fab_label=\"@string/add_sdk_token\"\n                fab:fab_size=\"mini\" />\n\n        </com.github.clans.fab.FloatingActionMenu>\n    </android.support.design.widget.CoordinatorLayout>\n</RelativeLayout>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/home_fragment.xml	(revision 54e78aaa4f5da63edd592c0f387078d1e03db082)
++++ app/src/main/res/layout/home_fragment.xml	(date 1565081985000)
+@@ -14,7 +14,7 @@
+         android:background="@drawable/custom_button"
+         android:text="@string/load_map" />
+ 
+-    <android.support.design.widget.CoordinatorLayout
++    <androidx.coordinatorlayout.widget.CoordinatorLayout
+         android:layout_width="match_parent"
+         android:layout_height="match_parent">
+ 
+@@ -40,5 +40,5 @@
+                 fab:fab_size="mini" />
+ 
+         </com.github.clans.fab.FloatingActionMenu>
+-    </android.support.design.widget.CoordinatorLayout>
++    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+ </RelativeLayout>
+\ No newline at end of file
+Index: app/src/main/java/com/mist/sample/wakeup/fragment/HomeFragment.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.mist.sample.wakeup.fragment;\n\nimport android.content.Context;\nimport android.os.Bundle;\nimport android.support.annotation.NonNull;\nimport android.support.annotation.Nullable;\nimport android.support.design.widget.Snackbar;\nimport android.support.v4.app.Fragment;\nimport android.text.TextUtils;\nimport android.view.LayoutInflater;\nimport android.view.View;\nimport android.view.ViewGroup;\nimport android.widget.Toast;\n\nimport com.github.clans.fab.FloatingActionMenu;\nimport com.mist.sample.wakeup.R;\nimport com.mist.sample.wakeup.utils.SharedPrefUtils;\nimport com.mist.sample.wakeup.utils.Utils;\n\nimport butterknife.BindView;\nimport butterknife.ButterKnife;\nimport butterknife.OnClick;\nimport butterknife.Unbinder;\n\npublic class HomeFragment extends Fragment {\n\n    private static final String TOKEN_PREF_KEY_NAME = \"sdkToken\";\n    public static final String TAG = HomeFragment.class.getSimpleName();\n    // you can replace this text with you sdk token\n    public static String sdkToken = \"PPRsreycFghetRLsPKHDTRH71gVDULVC\";\n\n    @BindView(R.id.token_menu)\n    FloatingActionMenu fabTokenMenu;\n\n    private Unbinder unbinder;\n    private SdkTokenReceivedListener sdkTokenReceivedListener;\n\n    //returns an instance of the HomeFragment\n    public static Fragment newInstance() {\n        return new HomeFragment();\n    }\n\n    @Nullable\n    @Override\n    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {\n        View view = inflater.inflate(R.layout.home_fragment, container, false);\n        unbinder = ButterKnife.bind(this, view);\n        return view;\n    }\n\n    //checking if the interface is implemented by the parent activity\n    @Override\n    public void onAttach(Context context) {\n        super.onAttach(context);\n        try {\n            sdkTokenReceivedListener = (SdkTokenReceivedListener) context;\n        } catch (ClassCastException e) {\n            throw new ClassCastException(context.toString() + \" must implement SdkTokenReceivedListener\");\n        }\n    }\n\n    @OnClick(R.id.btn_enter)\n    public void onClick() {\n        sdkToken = TextUtils.isEmpty(SharedPrefUtils.readSdkToken(getActivity(), TOKEN_PREF_KEY_NAME))?sdkToken:SharedPrefUtils.readSdkToken(getActivity(), TOKEN_PREF_KEY_NAME);\n        if (Utils.isEmptyString(sdkToken) && getActivity() != null) {\n            Snackbar.make(getActivity().findViewById(android.R.id.content), R.string.enter_sdk_token, Snackbar.LENGTH_LONG).show();\n        } else if (sdkToken.toUpperCase().charAt(0) == 'P' || sdkToken.toUpperCase().charAt(0) == 'S') {\n            sdkTokenReceivedListener.OnSdkTokenReceived(sdkToken);\n        } else {\n            Toast.makeText(getActivity(), R.string.valid_sdk_token, Toast.LENGTH_SHORT).show();\n        }\n    }\n\n    @OnClick(R.id.add_token_button)\n    public void onClickAddTokenButton() {\n        AddTokenDialogFragment tokenDialogFragment = AddTokenDialogFragment.newInstance();\n        tokenDialogFragment.show(getFragmentManager(), \"dialog\");\n        tokenDialogFragment.setCancelable(false);\n        fabTokenMenu.close(true);\n    }\n\n    @Override\n    public void onDestroyView() {\n        super.onDestroyView();\n        unbinder.unbind();\n    }\n\n    //interface to send the token to the parent activity\n    public interface SdkTokenReceivedListener {\n        void OnSdkTokenReceived(String sdkToken);\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/mist/sample/wakeup/fragment/HomeFragment.java	(revision 54e78aaa4f5da63edd592c0f387078d1e03db082)
++++ app/src/main/java/com/mist/sample/wakeup/fragment/HomeFragment.java	(date 1565081985000)
+@@ -2,10 +2,10 @@
+ 
+ import android.content.Context;
+ import android.os.Bundle;
+-import android.support.annotation.NonNull;
+-import android.support.annotation.Nullable;
+-import android.support.design.widget.Snackbar;
+-import android.support.v4.app.Fragment;
++import androidx.annotation.NonNull;
++import androidx.annotation.Nullable;
++import com.google.android.material.snackbar.Snackbar;
++import androidx.fragment.app.Fragment;
+ import android.text.TextUtils;
+ import android.view.LayoutInflater;
+ import android.view.View;
+Index: app/src/main/java/com/mist/sample/wakeup/fragment/MapFragment.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.mist.sample.wakeup.fragment;\n\n\nimport android.Manifest;\nimport android.app.PendingIntent;\nimport android.bluetooth.BluetoothAdapter;\nimport android.content.DialogInterface;\nimport android.content.Intent;\nimport android.content.pm.PackageManager;\nimport android.os.Build;\nimport android.os.Bundle;\nimport android.os.Handler;\nimport android.os.HandlerThread;\nimport android.provider.Settings;\nimport android.support.annotation.NonNull;\nimport android.support.annotation.Nullable;\nimport android.support.design.widget.Snackbar;\nimport android.support.v4.app.Fragment;\nimport android.support.v4.content.ContextCompat;\nimport android.support.v7.app.AlertDialog;\nimport android.util.DisplayMetrics;\nimport android.util.Log;\nimport android.view.LayoutInflater;\nimport android.view.View;\nimport android.view.ViewGroup;\nimport android.view.ViewTreeObserver;\nimport android.widget.FrameLayout;\nimport android.widget.ImageView;\nimport android.widget.ProgressBar;\nimport android.widget.RelativeLayout;\nimport android.widget.TextView;\n\nimport com.google.android.gms.common.ConnectionResult;\nimport com.google.android.gms.common.api.GoogleApiClient;\nimport com.google.android.gms.common.api.ResultCallback;\nimport com.google.android.gms.common.api.Status;\nimport com.google.android.gms.nearby.Nearby;\nimport com.google.android.gms.nearby.messages.MessageFilter;\nimport com.google.android.gms.nearby.messages.MessagesOptions;\nimport com.google.android.gms.nearby.messages.NearbyMessagesStatusCodes;\nimport com.google.android.gms.nearby.messages.NearbyPermissions;\nimport com.google.android.gms.nearby.messages.Strategy;\nimport com.google.android.gms.nearby.messages.SubscribeOptions;\nimport com.mist.android.AppMode;\nimport com.mist.android.BatteryUsage;\nimport com.mist.android.MSTAsset;\nimport com.mist.android.MSTBeacon;\nimport com.mist.android.MSTCentralManagerIndoorOnlyListener;\nimport com.mist.android.MSTCentralManagerStatusCode;\nimport com.mist.android.MSTClient;\nimport com.mist.android.MSTMap;\nimport com.mist.android.MSTPoint;\nimport com.mist.android.MSTVirtualBeacon;\nimport com.mist.android.MSTZone;\nimport com.mist.android.model.AppModeParams;\nimport com.mist.sample.wakeup.R;\nimport com.mist.sample.wakeup.app.MainApplication;\nimport com.mist.sample.wakeup.model.OrgData;\nimport com.mist.sample.wakeup.receiver.NearByBroadCastReceiver;\nimport com.mist.sample.wakeup.service.NearByJobIntentService;\nimport com.mist.sample.wakeup.utils.MistManager;\nimport com.mist.sample.wakeup.utils.SharedPrefUtils;\nimport com.mist.sample.wakeup.utils.Utils;\nimport com.mist.sample.wakeup.utils.ZoomLayout;\nimport com.squareup.picasso.Callback;\nimport com.squareup.picasso.NetworkPolicy;\nimport com.squareup.picasso.Picasso;\n\nimport org.json.JSONArray;\n\nimport java.util.Date;\nimport java.util.HashMap;\nimport java.util.UUID;\n\nimport butterknife.BindView;\nimport butterknife.ButterKnife;\nimport butterknife.Unbinder;\n\n/**\n * Created by anubhava on 26/03/18.\n */\n\npublic class MapFragment extends Fragment implements MSTCentralManagerIndoorOnlyListener,\n        GoogleApiClient.ConnectionCallbacks,\n        GoogleApiClient.OnConnectionFailedListener, MistManager.fragmentInteraction, ZoomLayout.ZoomViewTouchListener {\n\n    public static final String TAG = MapFragment.class.getSimpleName();\n    private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;\n    private static final String SDK_TOKEN = \"sdkToken\";\n    private MainApplication mainApplication;\n    private String sdkToken;\n    private String floorPlanImageUrl = \"\";\n    private MSTPoint mstPoint = null;\n    private boolean addedMap = false;\n    private double scaleXFactor;\n    private double scaleYFactor;\n    private boolean isScaleFactorCalculated;\n    private float floorImageLeftMargin;\n    private float floorImageTopMargin;\n    public MSTMap currentMap;\n    private Unbinder unbinder;\n    private HandlerThread sdkHandlerThread;\n    private Handler sdkHandler;\n    private GoogleApiClient googleApiClient;\n    int scale;\n    private float scale1;\n    float zoomScaleFactor = 1;\n\n    @Override\n    public void onOrgDataReceived() {\n        subscribe();\n    }\n\n    public enum AlertType {\n        bluetooth,\n        network,\n        location\n    }\n\n    @BindView(R.id.floorplan_layout)\n    RelativeLayout floorplanLayout;\n    @BindView(R.id.floorplan_bluedot)\n    FrameLayout floorplanBluedotView;\n    @BindView(R.id.floorplan_image)\n    ImageView floorPlanImage;\n    @BindView(R.id.progress_bar)\n    ProgressBar progressBar;\n    @BindView(R.id.txt_error)\n    TextView txtError;\n    @BindView(R.id.floorplan_zoomlayout)\n    ZoomLayout zoomLayout;\n\n\n    public static MapFragment newInstance(String sdkToken) {\n        Bundle bundle = new Bundle();\n        bundle.putString(SDK_TOKEN, sdkToken);\n        MapFragment mapFragment = new MapFragment();\n        mapFragment.setArguments(bundle);\n        return mapFragment;\n    }\n\n    @Nullable\n    @Override\n    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,\n                             @Nullable Bundle savedInstanceState) {\n        View view = inflater.inflate(R.layout.map_fragment, container, false);\n        unbinder = ButterKnife.bind(this, view);\n        progressBar.setVisibility(View.VISIBLE);\n        return view;\n    }\n\n    @Override\n    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {\n        super.onViewCreated(view, savedInstanceState);\n        if (getActivity() != null)\n            mainApplication = (MainApplication) getActivity().getApplication();\n        if (getArguments() != null)\n            sdkToken = getArguments().getString(SDK_TOKEN);\n        if (havePermissions()) {\n            buildGoogleApiClient();\n        }\n        zoomLayout.setListener(this);\n    }\n\n    @Override\n    public void onCreate(@Nullable Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        sdkHandlerThread = new HandlerThread(\"SDKHandler\");\n        sdkHandlerThread.start();\n        sdkHandler = new Handler(sdkHandlerThread.getLooper());\n        MistManager.newInstance(mainApplication).setFragmentInteractionListener(this);\n    }\n\n    @Override\n    public void onStart() {\n        super.onStart();\n\n        //connecting to the google api client\n        if (googleApiClient != null && !googleApiClient.isConnected()) {\n            googleApiClient.connect();\n        }\n\n        try {\n            //stopping the scheduled job when the app comes to the foreground\n            Utils.stopScheduledJob(mainApplication);\n        } catch (Exception e) {\n            Log.e(TAG, e.getMessage());\n        }\n        //disconnecting the Mist sdk, to make sure there is no prior active instance\n        MistManager.newInstance(mainApplication).disconnect();\n        MistManager.newInstance(mainApplication).\n                setAppMode(new AppModeParams(AppMode.FOREGROUND,\n                        BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY,\n                        true, 0.5, 1));\n\n        //initializing the Mist sdk\n        initMISTSDK();\n        SharedPrefUtils.setShouldShowWelcome(getActivity(), true);\n    }\n\n    @Override\n    public void onStop() {\n        super.onStop();\n        //stopping the Mist sdk\n        MistManager.newInstance(mainApplication).disconnect();\n        MistManager.newInstance(mainApplication).\n                setAppMode(new AppModeParams(AppMode.BACKGROUND,\n                        BatteryUsage.LOW_BATTERY_USAGE_LOW_ACCURACY,\n                        true, 0.5, 1));\n        sdkHandler.postDelayed(new Runnable() {\n            @Override\n            public void run() {\n                try {\n                    //scheduling the job to run Mist sdk in the background\n                    Utils.scheduleJob(mainApplication.getApplicationContext());\n                } catch (Exception e) {\n                    Log.e(TAG, e.getMessage());\n                }\n            }\n        }, 500);\n\n        //disconnecting from the google api client\n        if (googleApiClient != null && googleApiClient.isConnected()) {\n            googleApiClient.disconnect();\n        }\n        SharedPrefUtils.setShouldShowWelcome(getActivity(), true);\n    }\n\n    private void initMISTSDK() {\n        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && getActivity() != null &&\n                getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)\n                        != PackageManager.PERMISSION_GRANTED) {\n            showLocationPermissionDialog();\n        } else {\n            startMistSdk();\n        }\n    }\n\n    //permission dialogs\n    private void showLocationPermissionDialog() {\n        if (getActivity() != null) {\n            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());\n            builder.setTitle(\"This app needs location access\");\n            builder.setMessage(\"Please grant location access so this app can detect beacons in the background.\");\n            builder.setPositiveButton(android.R.string.ok, null);\n            builder.setOnDismissListener(new DialogInterface.OnDismissListener() {\n                @Override\n                public void onDismiss(DialogInterface dialog) {\n                    requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},\n                            PERMISSION_REQUEST_FINE_LOCATION);\n                }\n            });\n            builder.show();\n        }\n    }\n\n    @Override\n    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,\n                                           @NonNull int[] grantResults) {\n        if (getActivity() != null) {\n            switch (requestCode) {\n                case PERMISSION_REQUEST_FINE_LOCATION:\n                    if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {\n                        Log.d(TAG, \"fine location permission granted !!\");\n                        startMistSdk();\n                        buildGoogleApiClient();\n                        if (googleApiClient != null && !googleApiClient.isConnected()) {\n                            googleApiClient.connect();\n                        }\n                    } else {\n                        final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());\n                        builder.setTitle(\"Functionality limited\");\n                        builder.setMessage(\"Since location access has not been granted, \" +\n                                \"this app will not be able to discover beacons when in the background.\");\n                        builder.setPositiveButton(android.R.string.ok, null);\n                        builder.setOnDismissListener(new DialogInterface.OnDismissListener() {\n                            @Override\n                            public void onDismiss(DialogInterface dialog) {\n                            }\n                        });\n                        builder.show();\n                    }\n            }\n        }\n    }\n\n    /**\n     * This method checks for the availability for Internet , Location and Bluetooth and show dialog if anything is not enabled else start the Mist SDK\n     */\n    private void startMistSdk() {\n        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();\n        if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() && getActivity() != null &&\n                Utils.isNetworkAvailable(getActivity()) && Utils.isLocationServiceEnabled(getActivity())) {\n            runMISTSDK();\n        } else {\n            if (getActivity() != null && !Utils.isNetworkAvailable(getActivity())) {\n                showSettingsAlert(AlertType.network);\n            }\n            if (getActivity() != null && !Utils.isLocationServiceEnabled(getActivity())) {\n                showSettingsAlert(AlertType.location);\n            }\n            if (mBluetoothAdapter != null && !mBluetoothAdapter.isEnabled()) {\n                showSettingsAlert(AlertType.bluetooth);\n            }\n        }\n    }\n\n    //initializing the Mist sdk with sdkToken\n    private void runMISTSDK() {\n        MistManager mistManager = MistManager.newInstance(mainApplication);\n        mistManager.init(sdkToken, this, AppMode.FOREGROUND);\n    }\n\n    /**\n     * This method show the alert as per AlertType\n     *\n     * @param alertType Type of Alert\n     *                  bluetooth\n     *                  network\n     *                  location\n     */\n    private void showSettingsAlert(final AlertType alertType) {\n        if (getActivity() != null) {\n            final String sTitle, sButton;\n            if (alertType == AlertType.bluetooth) {\n                sTitle = \"Bluetooth is disabled in your device. Would you like to enable it?\";\n                sButton = \"Goto Settings Page To Enable Bluetooth\";\n            } else if (alertType == AlertType.network) {\n                sTitle = \"Network Connection is disabled in your device. Would you like to enable it?\";\n                sButton = \"Goto Settings Page To Enable Network Connection\";\n            } else {\n                sTitle = \"Location is disabled in your device. Would you like to enable it?\";\n                sButton = \"Goto Settings Page To Enable Location\";\n            }\n\n            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());\n            alertDialogBuilder.setMessage(sTitle)\n                    .setCancelable(false)\n                    .setPositiveButton(sButton,\n                            new DialogInterface.OnClickListener() {\n                                public void onClick(DialogInterface dialog, int id) {\n                                    dialog.cancel();\n                                    Intent intentOpenBluetoothSettings = new Intent();\n                                    if (alertType == AlertType.bluetooth) {\n                                        intentOpenBluetoothSettings.setAction(Settings.ACTION_BLUETOOTH_SETTINGS);\n                                    } else if (alertType == AlertType.network) {\n                                        intentOpenBluetoothSettings.setAction(Settings.ACTION_WIFI_SETTINGS);\n                                    } else if (alertType == AlertType.location) {\n                                        intentOpenBluetoothSettings.setAction(Settings.ACTION_LOCATION_SOURCE_SETTINGS);\n                                    }\n\n                                    startActivity(intentOpenBluetoothSettings);\n                                }\n                            });\n            alertDialogBuilder.setNegativeButton(\"Cancel\",\n                    new DialogInterface.OnClickListener() {\n                        public void onClick(DialogInterface dialog, int id) {\n                            dialog.cancel();\n                            final AlertDialog.Builder builder = new\n                                    AlertDialog.Builder(getActivity());\n                            builder.setTitle(\"Functionality won't work\");\n                            builder.setMessage(sButton);\n                            builder.setPositiveButton(android.R.string.ok, null);\n                            builder.setOnDismissListener(new DialogInterface.OnDismissListener() {\n                                @Override\n                                public void onDismiss(DialogInterface dialog) {\n                                }\n                            });\n                            builder.show();\n                        }\n                    });\n            AlertDialog alert = alertDialogBuilder.create();\n            alert.show();\n        }\n    }\n\n    @Override\n    public void onBeaconDetected(MSTBeacon[] beaconArray, String region, Date dateUpdated) {\n\n    }\n\n    @Override\n    public void onBeaconDetected(JSONArray beaconArray, Date dateUpdated) {\n\n    }\n\n    @Override\n    public void onBeaconListUpdated(HashMap<String, HashMap<Integer, Integer[]>> beaconList, Date dateUpdated) {\n\n    }\n\n    /**\n     * This callback provide the location of the device\n     *\n     * @param relativeLocation provide x,y of the device on particular map\n     * @param maps\n     * @param dateUpdated      time stamp of the location provided\n     */\n    @Override\n    public void onRelativeLocationUpdated(MSTPoint relativeLocation, MSTMap[] maps, Date dateUpdated) {\n        if (relativeLocation != null && maps != null) {\n            mstPoint = relativeLocation;\n            updateRelativeLocation();\n        }\n    }\n\n    private void updateRelativeLocation() {\n        if (getActivity() != null) {\n            getActivity().runOnUiThread(new Runnable() {\n                @Override\n                public void run() {\n                    if (currentMap != null && addedMap) {\n                        renderBlueDot(mstPoint);\n                    }\n                }\n            });\n        }\n    }\n\n    //logic to show the blue dot for the location\n    public void renderBlueDot(final MSTPoint point) {\n        if (getActivity() != null) {\n            getActivity().runOnUiThread(new Runnable() {\n                @Override\n                public void run() {\n                    if (floorPlanImage != null && floorPlanImage.getDrawable() != null &&\n                            currentMap != null && point != null && addedMap) {\n                        float xPos = convertCloudPointToFloorplanXScale(point.getX());\n                        float yPos = convertCloudPointToFloorplanYScale(point.getY());\n\n                        // If scaleX and scaleY are not defined, check again\n                        if (!isScaleFactorCalculated && (scaleXFactor == 0 || scaleYFactor == 0)) {\n                            setupScaleFactorForFloorplan();\n                        }\n                        float leftMargin = floorImageLeftMargin + (xPos - (floorplanBluedotView.getWidth() / 2));\n                        float topMargin = floorImageTopMargin + (yPos - (floorplanBluedotView.getHeight() / 2));\n\n                        floorplanBluedotView.setX(leftMargin);\n                        floorplanBluedotView.setY(topMargin);\n                        floorplanBluedotView.setVisibility(View.VISIBLE);\n                    }\n                }\n            });\n        }\n    }\n\n\n    //calculating the scale factors\n    private void setupScaleFactorForFloorplan() {\n        if (floorPlanImage != null) {\n            ViewTreeObserver vto = floorPlanImage.getViewTreeObserver();\n            vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {\n                @Override\n                public void onGlobalLayout() {\n                    if (floorPlanImage != null) {\n                        floorImageLeftMargin = floorPlanImage.getLeft();\n                        floorImageTopMargin = floorPlanImage.getTop();\n                        if (floorPlanImage.getDrawable() != null) {\n                            scaleXFactor = (floorPlanImage.getWidth() / (double) floorPlanImage.getDrawable().getIntrinsicWidth());\n                            scaleYFactor = (floorPlanImage.getHeight() / (double) floorPlanImage.getDrawable().getIntrinsicHeight());\n                            isScaleFactorCalculated = true;\n                        }\n                    }\n                }\n            });\n        }\n    }\n\n    //converting the x point from meter's to pixel with the present scaling factor of the map rendered in the imageview\n    private float convertCloudPointToFloorplanXScale(double meter) {\n        return (float) (meter * this.scaleXFactor * currentMap.getPpm() / scale);\n    }\n\n    //converting the y point from meter's to pixel with the present scaling factor of the map rendered in the imageview\n    private float convertCloudPointToFloorplanYScale(double meter) {\n        return (float) (meter * this.scaleYFactor * currentMap.getPpm() / scale);\n    }\n\n    @Override\n    public void onPressureUpdated(double pressure, Date dateUpdated) {\n\n    }\n\n    @Override\n    public void onZoneStatsUpdated(MSTZone[] zones, Date dateUpdated) {\n\n    }\n\n    @Override\n    public void onClientUpdated(MSTClient[] clients, MSTZone[] zones, Date dateUpdated) {\n\n    }\n\n    @Override\n    public void onAssetUpdated(MSTAsset[] assets, MSTZone[] zones, Date dateUpdated) {\n\n    }\n\n    /**\n     * This callback provide the detail of map user is on\n     *\n     * @param map         Map object having details about the map\n     * @param dateUpdated\n     */\n    @Override\n    public void onMapUpdated(MSTMap map, Date dateUpdated) {\n        floorPlanImageUrl = map.getMapImageUrl();\n        Log.d(TAG, floorPlanImageUrl);\n        if (getActivity() != null && (floorPlanImage.getDrawable() == null || this.currentMap == null || !this.currentMap.getMapId().equals(map.getMapId()))) {\n            // Set the current map\n            this.currentMap = map;\n            getActivity().runOnUiThread(new Runnable() {\n                @Override\n                public void run() {\n                    loadMap(floorPlanImageUrl);\n                }\n            });\n        }\n    }\n\n    /**\n     * This method is used for rendering the map image using the url from the MSTMap object received from OnMapUpdated callback\n     *\n     * @param floorPlanImageUrl map image url\n     */\n    private void renderImage(final String floorPlanImageUrl) {\n        Log.d(TAG, \"in picasso\");\n        addedMap = false;\n        Picasso.with(getActivity()).\n                load(floorPlanImageUrl).\n                networkPolicy(NetworkPolicy.OFFLINE).\n                into(floorPlanImage, new Callback() {\n                    @Override\n                    public void onSuccess() {\n                        Log.d(TAG, \"Image loaded successfully from the cached\");\n                        addedMap = true;\n                        progressBar.setVisibility(View.GONE);\n\n                        if (!isScaleFactorCalculated) {\n                            setupScaleFactorForFloorplan();\n                        }\n                    }\n\n                    @Override\n                    public void onError() {\n                        Picasso.with(getActivity()).\n                                load(floorPlanImageUrl)\n                                .into(floorPlanImage, new Callback() {\n                                    @Override\n                                    public void onSuccess() {\n                                        if (progressBar != null) {\n                                            progressBar.setVisibility(View.GONE);\n                                        }\n                                        addedMap = true;\n                                        if (!isScaleFactorCalculated) {\n                                            setupScaleFactorForFloorplan();\n                                        }\n                                        Log.d(TAG, \"Image downloaded from server successfully !!\");\n                                    }\n\n                                    @Override\n                                    public void onError() {\n                                        progressBar.setVisibility(View.GONE);\n                                        Log.d(TAG, \"Could not download the image from the server\");\n                                    }\n                                });\n                    }\n                });\n    }\n\n    private void loadMap(final String floorPlanImageUrl) {\n        if (this.currentMap != null) {\n            try {\n                DisplayMetrics displayMetrics = new DisplayMetrics();\n                getActivity().getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);\n                int height = displayMetrics.heightPixels;\n                double dscale = (currentMap.getMapHeight() * currentMap.getPpm() / height);\n                if (dscale < 1) {\n                    scale = 1;\n                } else {\n                    scale = (int) (Math.round(dscale));\n                }\n\n                Picasso.with(getActivity()).load(floorPlanImageUrl).resize((int)\n                        (currentMap.getMapWidth() * currentMap.getPpm() / scale), (int)\n                        (currentMap.getMapHeight() * currentMap.getPpm() / scale)).into(floorPlanImage, new Callback() {\n                    @Override\n                    public void onSuccess() {\n                        Log.d(TAG, \"Image loaded successfully from the cached\");\n                        addedMap = true;\n                        progressBar.setVisibility(View.GONE);\n                    }\n\n                    @Override\n                    public void onError() {\n                        progressBar.setVisibility(View.GONE);\n                        Log.d(TAG, \"Could not download the image from the server\");\n                    }\n                });\n\n                if (!isScaleFactorCalculated) {\n                    setupScaleFactorForFloorplan();\n                }\n\n            } catch (Exception e) {\n                Log.e(TAG, \"Exception in load map : \" + e.getMessage());\n            }\n        }\n    }\n\n    @Override\n    public void onTouchZoomView(float x, float y) {\n    }\n\n    @Override\n    public void onZoomScaleValue(float scale) {\n        scale1 = 0;\n        if (scale <= 1.5)\n            scale1 = 1;\n        else {\n            if (scale > 3)\n                scale1 = (float) 0.3;\n            else if (scale >= 1.5)\n                scale1 = (float) 0.5;\n            else\n                scale1 = (float) 0.8;\n        }\n        scale1 = 1 / scale;\n\n        zoomScaleFactor = scale1;\n\n        View view1 = floorplanLayout.findViewById(R.id.floorplan_bluedot);\n        View view2 = floorplanLayout.findViewWithTag(\"renderNearestBluedot\");\n\n        setScaleValue(view1, scale1);\n        setScaleValue(view2, scale1);\n        /*for (String id : customViewsIds) {\n            View customView = floorplanLayout.findViewWithTag(id);\n            setScaleValue(customView, scale1);\n        }*/\n    }\n\n    private void setScaleValue(View view, float scale) {\n        if (view != null && view.getVisibility() == View.VISIBLE) {\n            view.setScaleX(scale);\n            view.setScaleY(scale);\n        }\n    }\n\n    @Override\n    public void onVirtualBeaconListUpdated(MSTVirtualBeacon[] virtualBeacons, Date dateUpdated) {\n\n    }\n\n    @Override\n    public void onNotificationReceived(Date dateReceived, String message) {\n\n    }\n\n    @Override\n    public void onClientInformationUpdated(String clientName) {\n\n    }\n\n    @Override\n    public void onReceivedSecret(String orgName, String orgID, String sdkSecret, String error) {\n\n    }\n\n    @Override\n    public void receivedLogMessageForCode(String message, MSTCentralManagerStatusCode code) {\n    }\n\n    @Override\n    public void receivedVerboseLogMessage(String message) {\n    }\n\n    //callback for error\n    @Override\n    public void onMistErrorReceived(String message, Date date) {\n        progressBar.setVisibility(View.GONE);\n        txtError.setVisibility(View.VISIBLE);\n        txtError.setText(message);\n    }\n\n    @Override\n    public void onMistRecommendedAction(String message) {\n\n    }\n\n\n    /**\n     * Setting up google client for getting callback from OS for registered beacons\n     */\n    private synchronized void buildGoogleApiClient() {\n        if (googleApiClient == null) {\n            googleApiClient = new GoogleApiClient.Builder(getActivity())\n                    .addApi(Nearby.MESSAGES_API, new MessagesOptions.Builder()\n                            .setPermissions(NearbyPermissions.BLE)\n                            .build())\n                    .addConnectionCallbacks(this)\n                    .build();\n        }\n    }\n\n    /**\n     * checking for location permission\n     *\n     * @return\n     */\n    private boolean havePermissions() {\n        return ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)\n                == PackageManager.PERMISSION_GRANTED;\n    }\n\n    @Override\n    public void onConnected(@Nullable Bundle bundle) {\n        Log.d(TAG, \"GoogleApiClient Connected !!\");\n        subscribe();\n    }\n\n    @Override\n    public void onConnectionSuspended(int i) {\n        Log.d(TAG, getString(R.string.connection_suspended) + i);\n    }\n\n    @Override\n    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {\n        Snackbar.make(getActivity().findViewById(android.R.id.content),\n                getString(R.string.play_service_exception) + connectionResult.getErrorMessage(),\n                Snackbar.LENGTH_LONG).show();\n    }\n\n    /**\n     * Register the iBeacons for which we need the callback from OS when entered the region\n     */\n    private void subscribe() {\n\n        String orgId = null, subOrgId = null;\n\n        OrgData orgData = SharedPrefUtils.readConfig(getActivity().getApplicationContext(), sdkToken);\n\n        if (orgData != null) {\n            orgId = orgData.getOrgId();\n            subOrgId = orgId.substring(0, orgId.length() - 2);\n\n            MessageFilter filter = new MessageFilter.Builder()\n                    .includeIBeaconIds(UUID.fromString(orgId), null, null)\n                    .includeIBeaconIds(UUID.fromString(subOrgId + \"00\"), null, null)\n                    .includeIBeaconIds(UUID.fromString(subOrgId + \"01\"), null, null)\n                    .includeIBeaconIds(UUID.fromString(subOrgId + \"02\"), null, null)\n                    .includeIBeaconIds(UUID.fromString(subOrgId + \"03\"), null, null)\n                    .includeIBeaconIds(UUID.fromString(subOrgId + \"04\"), null, null)\n                    .includeIBeaconIds(UUID.fromString(subOrgId + \"05\"), null, null)\n                    .includeIBeaconIds(UUID.fromString(subOrgId + \"06\"), null, null)\n                    .includeIBeaconIds(UUID.fromString(subOrgId + \"07\"), null, null)\n                    .includeIBeaconIds(UUID.fromString(subOrgId + \"08\"), null, null)\n                    .includeIBeaconIds(UUID.fromString(subOrgId + \"0a\"), null, null)\n                    .includeIBeaconIds(UUID.fromString(subOrgId + \"0b\"), null, null)\n                    .includeIBeaconIds(UUID.fromString(subOrgId + \"0c\"), null, null)\n                    .includeIBeaconIds(UUID.fromString(subOrgId + \"0d\"), null, null)\n                    .build();\n\n            SubscribeOptions options = new SubscribeOptions.Builder()\n                    .setStrategy(Strategy.BLE_ONLY)\n                    .setFilter(filter)\n                    .build();\n\n            Nearby.Messages.subscribe(googleApiClient, getPendingIntent(), options)\n                    .setResultCallback(new ResultCallback<Status>() {\n                        @Override\n                        public void onResult(@NonNull Status status) {\n                            if (status.isSuccess()) {\n                                Log.d(TAG, \"Successfully Subscribed\");\n                                getActivity().startService(getBackgroundSubscribeServiceIntent());\n                            } else {\n                                Log.d(TAG, \"Operation Failed, Error : \" +\n                                        NearbyMessagesStatusCodes.getStatusCodeString(status.getStatusCode()));\n                            }\n                        }\n                    });\n        }\n    }\n\n    private Intent getBackgroundSubscribeServiceIntent() {\n        return new Intent(getActivity(), NearByJobIntentService.class);\n    }\n\n    private PendingIntent getPendingIntent() {\n        Intent nearByIntent = new Intent(getActivity(), NearByBroadCastReceiver.class);\n        return PendingIntent.getBroadcast(getActivity(), 0, nearByIntent, PendingIntent.FLAG_UPDATE_CURRENT);\n    }\n\n    @Override\n    public void onDestroyView() {\n        super.onDestroyView();\n        unbinder.unbind();\n        sdkHandler = null;\n\n        if (sdkHandlerThread != null) {\n            sdkHandlerThread.quitSafely();\n            sdkHandlerThread = null;\n        }\n\n        try {\n            //stopping the scheduled job when the app comes to the foreground\n            Utils.stopScheduledJob(mainApplication);\n        } catch (Exception e) {\n            Log.e(TAG, e.getMessage());\n        }\n        //disconnecting the Mist sdk, to make sure there is no prior active instance\n        MistManager.newInstance(mainApplication).destroy();\n    }\n\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/mist/sample/wakeup/fragment/MapFragment.java	(revision 54e78aaa4f5da63edd592c0f387078d1e03db082)
++++ app/src/main/java/com/mist/sample/wakeup/fragment/MapFragment.java	(date 1565087910000)
+@@ -12,12 +12,13 @@
+ import android.os.Handler;
+ import android.os.HandlerThread;
+ import android.provider.Settings;
+-import android.support.annotation.NonNull;
+-import android.support.annotation.Nullable;
+-import android.support.design.widget.Snackbar;
+-import android.support.v4.app.Fragment;
+-import android.support.v4.content.ContextCompat;
+-import android.support.v7.app.AlertDialog;
++import androidx.annotation.NonNull;
++import androidx.annotation.Nullable;
++import com.google.android.material.snackbar.Snackbar;
++import androidx.fragment.app.Fragment;
++import androidx.core.content.ContextCompat;
++import androidx.appcompat.app.AlertDialog;
++
+ import android.util.DisplayMetrics;
+ import android.util.Log;
+ import android.view.LayoutInflater;
+Index: app/src/main/java/com/mist/sample/wakeup/fragment/AddTokenDialogFragment.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.mist.sample.wakeup.fragment;\n\nimport android.app.Activity;\nimport android.app.Dialog;\nimport android.content.Context;\nimport android.os.Bundle;\nimport android.support.annotation.NonNull;\nimport android.support.v4.app.DialogFragment;\nimport android.support.v7.app.AlertDialog;\nimport android.view.LayoutInflater;\nimport android.view.View;\nimport android.widget.EditText;\nimport android.widget.LinearLayout;\n\nimport com.mist.sample.wakeup.R;\nimport com.mist.sample.wakeup.utils.SharedPrefUtils;\nimport com.mist.sample.wakeup.utils.Utils;\n\nimport butterknife.BindView;\nimport butterknife.ButterKnife;\nimport butterknife.OnClick;\nimport butterknife.Unbinder;\n\npublic class AddTokenDialogFragment extends DialogFragment {\n\n    private AlertDialog alertDialog;\n    private static final String TOKEN_PREF_KEY_NAME = \"sdkToken\";\n    private static final String TAG = AddTokenDialogFragment.class.getSimpleName();\n    public String sdkToken;\n\n    @BindView(R.id.edt_token)\n    EditText edtToken;\n\n    private SdkTokenSavedListener sdkTokenSavedListener;\n    private Unbinder unbinder;\n\n    @Override\n    public void onAttach(Context context) {\n        super.onAttach(context);\n        try {\n            sdkTokenSavedListener = (SdkTokenSavedListener) context;\n        } catch (ClassCastException e) {\n            throw new ClassCastException(context.toString() + \" must implement SdkTokenSavedListener\");\n        }\n    }\n\n    @NonNull\n    @Override\n    public Dialog onCreateDialog(Bundle savedInstanceState) {\n        Activity activity = getActivity();\n        if(activity!=null) {\n            View view = LayoutInflater.from(activity).inflate(R.layout.token_input_dialog, null);\n            unbinder = ButterKnife.bind(this, view);\n\n            //reading the sdk token from shared preference\n            sdkToken = SharedPrefUtils.readSdkToken(getActivity(), TOKEN_PREF_KEY_NAME);\n\n            //check for null sdkToken\n            if (!Utils.isEmptyString(sdkToken)) {\n                edtToken.setText(sdkToken);\n            }\n\n            AlertDialog.Builder builder = new AlertDialog.Builder(activity);\n            alertDialog = builder.create();\n            alertDialog.setView(view);\n            alertDialog.show();\n        }\n        return alertDialog;\n    }\n\n    //saves the sdk token to shared preference and passes it to the parent activity\n    @OnClick(R.id.btn_ok)\n    public void onOkClicked() {\n        sdkToken = edtToken.getText().toString();\n        if (!Utils.isEmptyString(sdkToken)) {\n            SharedPrefUtils.saveSdkToken(getActivity(), TOKEN_PREF_KEY_NAME, edtToken.getText().toString());\n            sdkTokenSavedListener.onSdkTokenSaved(edtToken.getText().toString());\n            alertDialog.dismiss();\n        }\n    }\n\n    @OnClick(R.id.btn_cancel)\n    public void onCancelClicked() {\n        alertDialog.dismiss();\n    }\n\n    public static AddTokenDialogFragment newInstance() {\n        return new AddTokenDialogFragment();\n    }\n\n    @Override\n    public void onDestroyView() {\n        super.onDestroyView();\n        unbinder.unbind();\n    }\n\n    @Override\n    public void onPause() {\n        super.onPause();\n        alertDialog.dismiss();\n    }\n\n    public interface SdkTokenSavedListener {\n        void onSdkTokenSaved(String token);\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/mist/sample/wakeup/fragment/AddTokenDialogFragment.java	(revision 54e78aaa4f5da63edd592c0f387078d1e03db082)
++++ app/src/main/java/com/mist/sample/wakeup/fragment/AddTokenDialogFragment.java	(date 1565081985000)
+@@ -4,13 +4,12 @@
+ import android.app.Dialog;
+ import android.content.Context;
+ import android.os.Bundle;
+-import android.support.annotation.NonNull;
+-import android.support.v4.app.DialogFragment;
+-import android.support.v7.app.AlertDialog;
++import androidx.annotation.NonNull;
++import androidx.fragment.app.DialogFragment;
++import androidx.appcompat.app.AlertDialog;
+ import android.view.LayoutInflater;
+ import android.view.View;
+ import android.widget.EditText;
+-import android.widget.LinearLayout;
+ 
+ import com.mist.sample.wakeup.R;
+ import com.mist.sample.wakeup.utils.SharedPrefUtils;
+Index: app/src/main/java/com/mist/sample/wakeup/service/NearByJobIntentService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.mist.sample.wakeup.service;\n\nimport android.app.PendingIntent;\nimport android.content.Context;\nimport android.content.Intent;\nimport android.support.annotation.NonNull;\nimport android.support.v4.app.JobIntentService;\nimport android.util.Log;\n\nimport com.google.android.gms.nearby.Nearby;\nimport com.google.android.gms.nearby.messages.Message;\nimport com.google.android.gms.nearby.messages.MessageListener;\nimport com.mist.sample.wakeup.activity.MainActivity;\nimport com.mist.sample.wakeup.utils.SharedPrefUtils;\nimport com.mist.sample.wakeup.utils.Utils;\n\npublic class NearByJobIntentService extends JobIntentService {\n\n    private static Context mContext;\n    private static final int JOB_ID = 100;\n    private static final String TAG = NearByJobIntentService.class.getSimpleName();\n\n    public static void enqueueWork(Context context, Intent intent) {\n        mContext = context;\n        enqueueWork(context, NearByJobIntentService.class, JOB_ID, intent);\n    }\n\n    @Override\n    protected void onHandleWork(@NonNull Intent intent) {\n        Nearby.Messages.handleIntent(intent, new MessageListener() {\n\n            @Override\n            public void onFound(Message message) {\n                try {\n                    if (mContext == null) {\n                        mContext = getApplicationContext();\n                    }\n                    Log.v(TAG, \"@!@!  Found Tag type -\" +\n                            message.getType() + \" ID - \" + toHexadecimal(message.getContent()));\n                    if (!SharedPrefUtils.isAppAlive(mContext)) {\n                        Utils.scheduleJob(mContext);\n                    }\n                    if (SharedPrefUtils.shouldShowWelcome(mContext)) {\n                        Intent intent = new Intent(mContext, MainActivity.class);\n                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);\n                        PendingIntent contentIntent = PendingIntent.getActivity(mContext,\n                                Utils.WELCOME_NOTIFICATION_ID, intent, PendingIntent.FLAG_CANCEL_CURRENT);\n                        Utils.sendNotification(mContext, contentIntent);\n                        SharedPrefUtils.setShouldShowWelcome(mContext, false);\n                    }\n                } catch (Exception e) {\n                    Log.e(TAG, e.getMessage());\n                }\n            }\n\n            @Override\n            public void onLost(Message message) {\n                Log.e(TAG, \"@!@!  Lost Tag type -\" + message.getType() + \" ID - \" +\n                        toHexadecimal(message.getContent()));\n            }\n        });\n    }\n\n    private static String toHexadecimal(byte[] digest) {\n        String hash = \"\";\n        for (byte aux : digest) {\n            int b = aux & 0xff;\n            if (Integer.toHexString(b).length() == 1) hash += \"0\";\n            hash += Integer.toHexString(b);\n        }\n        return hash;\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/mist/sample/wakeup/service/NearByJobIntentService.java	(revision 54e78aaa4f5da63edd592c0f387078d1e03db082)
++++ app/src/main/java/com/mist/sample/wakeup/service/NearByJobIntentService.java	(date 1565084216000)
+@@ -3,8 +3,8 @@
+ import android.app.PendingIntent;
+ import android.content.Context;
+ import android.content.Intent;
+-import android.support.annotation.NonNull;
+-import android.support.v4.app.JobIntentService;
++import androidx.annotation.NonNull;
++import androidx.core.app.JobIntentService;
+ import android.util.Log;
+ 
+ import com.google.android.gms.nearby.Nearby;
+@@ -35,7 +35,7 @@
+                     if (mContext == null) {
+                         mContext = getApplicationContext();
+                     }
+-                    Log.v(TAG, "@!@!  Found Tag type -" +
++                    Log.v(TAG, "@!@!  Found Tag type -" +"isAppalive:"+SharedPrefUtils.isAppAlive(mContext)+
+                             message.getType() + " ID - " + toHexadecimal(message.getContent()));
+                     if (!SharedPrefUtils.isAppAlive(mContext)) {
+                         Utils.scheduleJob(mContext);
+Index: app/build.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>apply plugin: 'com.android.application'\n\nandroid {\n    compileSdkVersion 27\n    defaultConfig {\n        applicationId \"com.mist.sample.wakeup\"\n        minSdkVersion 21\n        targetSdkVersion 27\n        versionCode 1\n        versionName \"1.0\"\n        testInstrumentationRunner \"android.support.test.runner.AndroidJUnitRunner\"\n    }\n    buildTypes {\n        release {\n            debuggable true\n            minifyEnabled false\n            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'\n        }\n    }\n    configurations.all {\n        resolutionStrategy.force 'com.google.code.findbugs:jsr305:1.3.9'\n    }\n}\n\ndependencies {\n    implementation fileTree(dir: 'libs', include: ['*.jar'])\n    implementation 'com.android.support:appcompat-v7:27.1.1'\n    implementation 'com.android.support.constraint:constraint-layout:1.1.3'\n    implementation 'com.android.support:design:27.1.1'\n    //mist sdk\n    //implementation 'com.mist:core-sdk:1.5.0'\n    implementation(name:'mist-mobile-sdk', ext:'aar')\n    implementation(name:'mist-mobile', ext:'aar')\n    //butterknife\n    implementation 'com.jakewharton:butterknife:8.8.1'\n    annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'\n    implementation 'com.google.code.gson:gson:2.8.2'\n\n    //picasso\n    implementation 'com.squareup.picasso:picasso:2.5.2'\n    implementation 'com.squareup.okhttp3:okhttp:3.10.0'\n    implementation 'com.jakewharton.picasso:picasso2-okhttp3-downloader:1.1.0'\n    //fab_menu\n    implementation 'com.github.clans:fab:1.6.4'\n\n    implementation 'com.google.android.gms:play-services-location:16.0.0'\n    implementation 'com.google.android.gms:play-services-maps:16.0.0'\n    implementation 'com.google.guava:guava:23.3-android'\n\n    testImplementation 'junit:junit:4.12'\n    androidTestImplementation 'com.android.support.test:runner:1.0.2'\n    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'\n    //google nearby api\n    implementation 'com.google.android.gms:play-services-nearby:16.0.0'\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/build.gradle	(revision 54e78aaa4f5da63edd592c0f387078d1e03db082)
++++ app/build.gradle	(date 1565082790000)
+@@ -1,14 +1,14 @@
+ apply plugin: 'com.android.application'
+ 
+ android {
+-    compileSdkVersion 27
++    compileSdkVersion 28
+     defaultConfig {
+         applicationId "com.mist.sample.wakeup"
+         minSdkVersion 21
+-        targetSdkVersion 27
++        targetSdkVersion 28
+         versionCode 1
+         versionName "1.0"
+-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
++        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+     }
+     buildTypes {
+         release {
+@@ -20,36 +20,40 @@
+     configurations.all {
+         resolutionStrategy.force 'com.google.code.findbugs:jsr305:1.3.9'
+     }
++    compileOptions {
++        sourceCompatibility JavaVersion.VERSION_1_8
++        targetCompatibility JavaVersion.VERSION_1_8
++    }
+ }
+ 
+ dependencies {
+     implementation fileTree(dir: 'libs', include: ['*.jar'])
+-    implementation 'com.android.support:appcompat-v7:27.1.1'
+-    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+-    implementation 'com.android.support:design:27.1.1'
++    implementation 'androidx.appcompat:appcompat:1.0.2'
++    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
++    implementation 'com.google.android.material:material:1.0.0'
+     //mist sdk
+     //implementation 'com.mist:core-sdk:1.5.0'
+     implementation(name:'mist-mobile-sdk', ext:'aar')
+     implementation(name:'mist-mobile', ext:'aar')
+     //butterknife
+-    implementation 'com.jakewharton:butterknife:8.8.1'
+-    annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
+-    implementation 'com.google.code.gson:gson:2.8.2'
++    implementation 'com.jakewharton:butterknife:10.1.0'
++    annotationProcessor 'com.jakewharton:butterknife-compiler:10.1.0'
++    implementation 'com.google.code.gson:gson:2.8.5'
+ 
+     //picasso
+     implementation 'com.squareup.picasso:picasso:2.5.2'
+-    implementation 'com.squareup.okhttp3:okhttp:3.10.0'
++    implementation 'com.squareup.okhttp3:okhttp:3.12.1'
+     implementation 'com.jakewharton.picasso:picasso2-okhttp3-downloader:1.1.0'
+     //fab_menu
+     implementation 'com.github.clans:fab:1.6.4'
+ 
+-    implementation 'com.google.android.gms:play-services-location:16.0.0'
+-    implementation 'com.google.android.gms:play-services-maps:16.0.0'
+-    implementation 'com.google.guava:guava:23.3-android'
++    implementation 'com.google.android.gms:play-services-location:17.0.0'
++    implementation 'com.google.android.gms:play-services-maps:17.0.0'
++    implementation 'com.google.guava:guava:24.1-jre'
+ 
+     testImplementation 'junit:junit:4.12'
+-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
++    androidTestImplementation 'androidx.test:runner:1.2.0'
++    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+     //google nearby api
+-    implementation 'com.google.android.gms:play-services-nearby:16.0.0'
++    implementation 'com.google.android.gms:play-services-nearby:17.0.0'
+ }
+Index: app/src/main/java/com/mist/sample/wakeup/activity/MainActivity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.mist.sample.wakeup.activity;\n\nimport android.os.Bundle;\nimport android.support.design.widget.Snackbar;\nimport android.support.v4.app.Fragment;\nimport android.support.v7.app.AppCompatActivity;\n\nimport com.mist.sample.wakeup.R;\nimport com.mist.sample.wakeup.fragment.AddTokenDialogFragment;\nimport com.mist.sample.wakeup.fragment.HomeFragment;\nimport com.mist.sample.wakeup.fragment.MapFragment;\nimport com.mist.sample.wakeup.utils.SharedPrefUtils;\n\npublic class MainActivity extends AppCompatActivity implements HomeFragment.SdkTokenReceivedListener,\n        AddTokenDialogFragment.SdkTokenSavedListener {\n\n    private static final String TAG = MainActivity.class.getSimpleName();\n\n    @Override\n    protected void onCreate(Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        setContentView(R.layout.activity_main);\n        if (getSupportActionBar() != null) {\n            getSupportActionBar().setTitle(R.string.app_title_bar_name);\n            //setting up the home fragment\n            setUpHomeFragment();\n        }\n        SharedPrefUtils.setShouldShowWelcome(this, true);\n        SharedPrefUtils.setIsAppAlive(this,true);\n    }\n\n    /**\n     * This method is just setting up the home fragment\n     */\n    private void setUpHomeFragment() {\n        Fragment tokenFragment = getSupportFragmentManager().\n                findFragmentByTag(HomeFragment.TAG);\n\n        if (tokenFragment == null) {\n            getSupportFragmentManager().beginTransaction().\n                    add(R.id.frame_fragment,\n                            HomeFragment.newInstance(), HomeFragment.TAG).\n                    addToBackStack(HomeFragment.TAG).\n                    commit();\n        }\n    }\n\n\n    @Override\n    public void onBackPressed() {\n        if (getSupportFragmentManager().getBackStackEntryCount() == 1) {\n            finish();\n        } else if (getSupportFragmentManager().getBackStackEntryCount() > 1) {\n            getSupportFragmentManager().popBackStack();\n            getSupportFragmentManager().getBackStackEntryCount();\n        } else {\n            super.onBackPressed();\n        }\n    }\n\n\n    /**\n     * This method is settingup the Map scrren with passing the SDK token needed by it for Mist SDK to start working\n     *\n     * @param sdkToken sdk token used for enrollment\n     */\n    private void setUpMapFragment(String sdkToken) {\n        Fragment mapFragment = getSupportFragmentManager().\n                findFragmentByTag(MapFragment.TAG);\n\n        if (mapFragment == null) {\n            getSupportFragmentManager().\n                    beginTransaction().\n                    replace(R.id.frame_fragment,\n                            MapFragment.newInstance(sdkToken), MapFragment.TAG).\n                    addToBackStack(MapFragment.TAG).\n                    commit();\n        }\n    }\n\n    @Override\n    public void onSdkTokenSaved(String token) {\n        Snackbar.make(findViewById(android.R.id.content), R.string.sdk_token_saved, Snackbar.LENGTH_LONG).show();\n    }\n\n    @Override\n    public void OnSdkTokenReceived(String sdkToken) {\n        setUpMapFragment(sdkToken);\n    }\n\n    @Override\n    protected void onDestroy() {\n        SharedPrefUtils.setIsAppAlive(this, false);\n        SharedPrefUtils.setShouldShowWelcome(this, true);\n        super.onDestroy();\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/mist/sample/wakeup/activity/MainActivity.java	(revision 54e78aaa4f5da63edd592c0f387078d1e03db082)
++++ app/src/main/java/com/mist/sample/wakeup/activity/MainActivity.java	(date 1565084459000)
+@@ -1,9 +1,9 @@
+ package com.mist.sample.wakeup.activity;
+ 
+ import android.os.Bundle;
+-import android.support.design.widget.Snackbar;
+-import android.support.v4.app.Fragment;
+-import android.support.v7.app.AppCompatActivity;
++import com.google.android.material.snackbar.Snackbar;
++import androidx.fragment.app.Fragment;
++import androidx.appcompat.app.AppCompatActivity;
+ 
+ import com.mist.sample.wakeup.R;
+ import com.mist.sample.wakeup.fragment.AddTokenDialogFragment;
+@@ -94,4 +94,11 @@
+         SharedPrefUtils.setShouldShowWelcome(this, true);
+         super.onDestroy();
+     }
++
++    @Override
++    protected void onStop() {
++        SharedPrefUtils.setIsAppAlive(this, false);
++        SharedPrefUtils.setShouldShowWelcome(this, true);
++        super.onStop();
++    }
+ }
+Index: app/src/main/java/com/mist/sample/wakeup/utils/Utils.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.mist.sample.wakeup.utils;\n\nimport android.annotation.TargetApi;\nimport android.app.NotificationChannel;\nimport android.app.NotificationManager;\nimport android.app.PendingIntent;\nimport android.app.job.JobInfo;\nimport android.app.job.JobScheduler;\nimport android.content.ComponentName;\nimport android.content.Context;\nimport android.graphics.BitmapFactory;\nimport android.graphics.Color;\nimport android.location.LocationManager;\nimport android.media.RingtoneManager;\nimport android.net.ConnectivityManager;\nimport android.net.NetworkInfo;\nimport android.net.Uri;\nimport android.os.Build;\nimport android.support.v4.app.NotificationCompat;\nimport android.text.TextUtils;\n\nimport com.mist.sample.wakeup.R;\nimport com.mist.sample.wakeup.service.MistSdkBackgroundService;\n\n/**\n * Created by anubhava on 26/03/18.\n */\n\npublic class Utils {\n\n    public static final int MIST_SDK_JOB_ID = 100;\n    public static final String NOTIFICATION_CHANNEL_ID = \"mist_notification\";\n    public static final String NOTIFICATION_CHANNEL_NAME = \"Proximity\";\n    public static final String NOTIFICATION_CHANNEL_DESC = \"You will get the notification when you are in proximity of you org beacons\";\n    public static final String WELCOME_MESSAGE = \"Welcome\";\n    public static final int WELCOME_NOTIFICATION_ID = 99;\n    public static final String TOKEN_PREF_KEY_NAME = \"sdkToken\";\n\n    /**\n     * Check Internet is on or off\n     */\n\n    public static boolean isNetworkAvailable(Context context) {\n        boolean isNet = false;\n        if (context != null) {\n            ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);\n            if (connectivityManager != null) {\n                NetworkInfo result = connectivityManager.getActiveNetworkInfo();\n                if (result != null && result.isConnectedOrConnecting()) {\n                    isNet = true;\n                }\n            }\n        }\n        return isNet;\n    }\n\n    /*checking if location service\n      is enabled */\n\n    public static boolean isLocationServiceEnabled(Context context) {\n        boolean gps_enabled = false, network_enabled = false;\n\n        LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);\n        if (locationManager != null) {\n            try {\n                gps_enabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);\n            } catch (Exception ex) {\n                //do nothing...\n            }\n\n            try {\n                network_enabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);\n            } catch (Exception ex) {\n                //do nothing...\n            }\n        }\n        return gps_enabled || network_enabled;\n    }\n\n    public static String getEnvironment(String envType) {\n        String env;\n        // set the environment string to return\n        if (envType.equalsIgnoreCase(\"P\")) {\n            env = \"Production\";\n        } else if (envType.equalsIgnoreCase(\"E\")) {\n            env = \"EU\";\n        } else if (envType.equalsIgnoreCase(\"K\")) {\n            env = \"Kalam\";\n        } else if (envType.equalsIgnoreCase(\"S\")) {\n            env = \"Staging\";\n        } else {\n            env = \"Production\";\n        }\n        // return the environment string\n        return env;\n    }\n\n    public static boolean isEmptyString(String value) {\n        return TextUtils.isEmpty(value) || value.equalsIgnoreCase(\"null\");\n    }\n\n    // schedule the start of the service\n    public static void scheduleJob(Context context) throws NullPointerException {\n        ComponentName serviceComponent = new ComponentName(context, MistSdkBackgroundService.class);\n        JobInfo.Builder builder = new JobInfo.Builder(MIST_SDK_JOB_ID, serviceComponent);\n        builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);// require unmetered network\n        builder.setPersisted(true);\n\n        JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);\n        if (jobScheduler != null) {\n            MistSdkBackgroundService.needJobReschedule(true);\n            jobScheduler.schedule(builder.build());\n        } else {\n            throw new NullPointerException(\"JobScheduler Service is null\");\n        }\n    }\n\n    // stop scheduled job\n    public static void stopScheduledJob(Context context) throws NullPointerException {\n        JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);\n        if (jobScheduler != null) {\n            MistSdkBackgroundService.needJobReschedule(false);\n            jobScheduler.cancel(MIST_SDK_JOB_ID);\n        } else {\n            throw new NullPointerException(\"JobScheduler Service is null\");\n        }\n    }\n\n    public static void sendNotification(Context context, PendingIntent contentIntent) {\n        NotificationManager mNotificationManager = (NotificationManager)\n                context.getSystemService(Context.NOTIFICATION_SERVICE);\n        //Define sound URI\n        Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);\n        if (Build.VERSION.SDK_INT > 25) {\n            registerNotificationChannel(context, NOTIFICATION_CHANNEL_NAME, NOTIFICATION_CHANNEL_DESC);\n        }\n        NotificationCompat.Builder mBuilder =\n                new NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)\n                        .setSmallIcon(R.drawable.small_notification)\n                        .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher))\n                        .setContentText(WELCOME_MESSAGE)\n                        .setLights(Color.RED, 3000, 3000)\n                        .setSound(soundUri);\n        mBuilder.setContentIntent(contentIntent);\n        mBuilder.setAutoCancel(true);\n        mBuilder.setPriority(NotificationCompat.PRIORITY_DEFAULT);\n        if (mNotificationManager != null) {\n            mNotificationManager.notify(WELCOME_NOTIFICATION_ID, mBuilder.build());\n        }\n    }\n\n    @TargetApi(Build.VERSION_CODES.O)\n    public static void registerNotificationChannel(Context context, String channelName, String channelDescription) {\n        NotificationManager mNotificationManager =\n                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);\n        int importance = NotificationManager.IMPORTANCE_HIGH;\n        NotificationChannel mChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, importance);\n        // Configure the notification channel.\n        mChannel.setDescription(channelDescription);\n        mChannel.enableLights(true);\n        // Sets the notification light color for notifications posted to this\n        // channel, if the device supports this feature.\n        mChannel.setLightColor(Color.RED);\n        mChannel.enableVibration(true);\n        mChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});\n        if (mNotificationManager != null) {\n            mNotificationManager.createNotificationChannel(mChannel);\n        }\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/mist/sample/wakeup/utils/Utils.java	(revision 54e78aaa4f5da63edd592c0f387078d1e03db082)
++++ app/src/main/java/com/mist/sample/wakeup/utils/Utils.java	(date 1565087189000)
+@@ -16,7 +16,7 @@
+ import android.net.NetworkInfo;
+ import android.net.Uri;
+ import android.os.Build;
+-import android.support.v4.app.NotificationCompat;
++import androidx.core.app.NotificationCompat;
+ import android.text.TextUtils;
+ 
+ import com.mist.sample.wakeup.R;
+@@ -109,6 +109,7 @@
+         JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+         if (jobScheduler != null) {
+             MistSdkBackgroundService.needJobReschedule(true);
++
+             jobScheduler.schedule(builder.build());
+         } else {
+             throw new NullPointerException("JobScheduler Service is null");
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"NullableNotNullManager\">\n    <option name=\"myDefaultNullable\" value=\"android.support.annotation.Nullable\" />\n    <option name=\"myDefaultNotNull\" value=\"android.support.annotation.NonNull\" />\n    <option name=\"myNullables\">\n      <value>\n        <list size=\"5\">\n          <item index=\"0\" class=\"java.lang.String\" itemvalue=\"org.jetbrains.annotations.Nullable\" />\n          <item index=\"1\" class=\"java.lang.String\" itemvalue=\"javax.annotation.Nullable\" />\n          <item index=\"2\" class=\"java.lang.String\" itemvalue=\"javax.annotation.CheckForNull\" />\n          <item index=\"3\" class=\"java.lang.String\" itemvalue=\"edu.umd.cs.findbugs.annotations.Nullable\" />\n          <item index=\"4\" class=\"java.lang.String\" itemvalue=\"android.support.annotation.Nullable\" />\n        </list>\n      </value>\n    </option>\n    <option name=\"myNotNulls\">\n      <value>\n        <list size=\"4\">\n          <item index=\"0\" class=\"java.lang.String\" itemvalue=\"org.jetbrains.annotations.NotNull\" />\n          <item index=\"1\" class=\"java.lang.String\" itemvalue=\"javax.annotation.Nonnull\" />\n          <item index=\"2\" class=\"java.lang.String\" itemvalue=\"edu.umd.cs.findbugs.annotations.NonNull\" />\n          <item index=\"3\" class=\"java.lang.String\" itemvalue=\"android.support.annotation.NonNull\" />\n        </list>\n      </value>\n    </option>\n  </component>\n  <component name=\"ProjectRootManager\" version=\"2\" languageLevel=\"JDK_1_7\" project-jdk-name=\"1.8\" project-jdk-type=\"JavaSDK\">\n    <output url=\"file://$PROJECT_DIR$/build/classes\" />\n  </component>\n  <component name=\"ProjectType\">\n    <option name=\"id\" value=\"Android\" />\n  </component>\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/misc.xml	(revision 54e78aaa4f5da63edd592c0f387078d1e03db082)
++++ .idea/misc.xml	(date 1565082791000)
+@@ -5,27 +5,37 @@
+     <option name="myDefaultNotNull" value="android.support.annotation.NonNull" />
+     <option name="myNullables">
+       <value>
+-        <list size="5">
++        <list size="10">
+           <item index="0" class="java.lang.String" itemvalue="org.jetbrains.annotations.Nullable" />
+           <item index="1" class="java.lang.String" itemvalue="javax.annotation.Nullable" />
+           <item index="2" class="java.lang.String" itemvalue="javax.annotation.CheckForNull" />
+           <item index="3" class="java.lang.String" itemvalue="edu.umd.cs.findbugs.annotations.Nullable" />
+           <item index="4" class="java.lang.String" itemvalue="android.support.annotation.Nullable" />
++          <item index="5" class="java.lang.String" itemvalue="androidx.annotation.Nullable" />
++          <item index="6" class="java.lang.String" itemvalue="androidx.annotation.RecentlyNullable" />
++          <item index="7" class="java.lang.String" itemvalue="org.checkerframework.checker.nullness.qual.Nullable" />
++          <item index="8" class="java.lang.String" itemvalue="org.checkerframework.checker.nullness.compatqual.NullableDecl" />
++          <item index="9" class="java.lang.String" itemvalue="org.checkerframework.checker.nullness.compatqual.NullableType" />
+         </list>
+       </value>
+     </option>
+     <option name="myNotNulls">
+       <value>
+-        <list size="4">
++        <list size="9">
+           <item index="0" class="java.lang.String" itemvalue="org.jetbrains.annotations.NotNull" />
+           <item index="1" class="java.lang.String" itemvalue="javax.annotation.Nonnull" />
+           <item index="2" class="java.lang.String" itemvalue="edu.umd.cs.findbugs.annotations.NonNull" />
+           <item index="3" class="java.lang.String" itemvalue="android.support.annotation.NonNull" />
++          <item index="4" class="java.lang.String" itemvalue="androidx.annotation.NonNull" />
++          <item index="5" class="java.lang.String" itemvalue="androidx.annotation.RecentlyNonNull" />
++          <item index="6" class="java.lang.String" itemvalue="org.checkerframework.checker.nullness.qual.NonNull" />
++          <item index="7" class="java.lang.String" itemvalue="org.checkerframework.checker.nullness.compatqual.NonNullDecl" />
++          <item index="8" class="java.lang.String" itemvalue="org.checkerframework.checker.nullness.compatqual.NonNullType" />
+         </list>
+       </value>
+     </option>
+   </component>
+-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" project-jdk-name="1.8" project-jdk-type="JavaSDK">
++  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+     <output url="file://$PROJECT_DIR$/build/classes" />
+   </component>
+   <component name="ProjectType">
+Index: .idea/gradle.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"GradleSettings\">\n    <option name=\"linkedExternalProjectsSettings\">\n      <GradleProjectSettings>\n        <option name=\"distributionType\" value=\"DEFAULT_WRAPPED\" />\n        <option name=\"externalProjectPath\" value=\"$PROJECT_DIR$\" />\n        <option name=\"modules\">\n          <set>\n            <option value=\"$PROJECT_DIR$\" />\n            <option value=\"$PROJECT_DIR$/app\" />\n          </set>\n        </option>\n        <option name=\"resolveModulePerSourceSet\" value=\"false\" />\n      </GradleProjectSettings>\n    </option>\n  </component>\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/gradle.xml	(revision 54e78aaa4f5da63edd592c0f387078d1e03db082)
++++ .idea/gradle.xml	(date 1565081985000)
+@@ -3,6 +3,9 @@
+   <component name="GradleSettings">
+     <option name="linkedExternalProjectsSettings">
+       <GradleProjectSettings>
++        <compositeConfiguration>
++          <compositeBuild compositeDefinitionSource="SCRIPT" />
++        </compositeConfiguration>
+         <option name="distributionType" value="DEFAULT_WRAPPED" />
+         <option name="externalProjectPath" value="$PROJECT_DIR$" />
+         <option name="modules">
+Index: app/src/androidTest/java/com/mist/sample/wakeup/ExampleInstrumentedTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.mist.sample.wakeup;\n\nimport android.content.Context;\nimport android.support.test.InstrumentationRegistry;\nimport android.support.test.runner.AndroidJUnit4;\n\nimport org.junit.Test;\nimport org.junit.runner.RunWith;\n\nimport static org.junit.Assert.*;\n\n/**\n * Instrumented test, which will execute on an Android device.\n *\n * @see <a href=\"http://d.android.com/tools/testing\">Testing documentation</a>\n */\n@RunWith(AndroidJUnit4.class)\npublic class ExampleInstrumentedTest {\n    @Test\n    public void useAppContext() throws Exception {\n        // Context of the app under test.\n        Context appContext = InstrumentationRegistry.getTargetContext();\n\n        assertEquals(\"com.example.anubhava.myapplication\", appContext.getPackageName());\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/androidTest/java/com/mist/sample/wakeup/ExampleInstrumentedTest.java	(revision 54e78aaa4f5da63edd592c0f387078d1e03db082)
++++ app/src/androidTest/java/com/mist/sample/wakeup/ExampleInstrumentedTest.java	(date 1565081985000)
+@@ -1,8 +1,8 @@
+ package com.mist.sample.wakeup;
+ 
+ import android.content.Context;
+-import android.support.test.InstrumentationRegistry;
+-import android.support.test.runner.AndroidJUnit4;
++import androidx.test.InstrumentationRegistry;
++import androidx.test.runner.AndroidJUnit4;
+ 
+ import org.junit.Test;
+ import org.junit.runner.RunWith;
+Index: build.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>// Top-level build file where you can add configuration options common to all sub-projects/modules.\n\nbuildscript {\n    \n    repositories {\n        google()\n        jcenter()\n    }\n    dependencies {\n        classpath 'com.android.tools.build:gradle:3.0.1'\n        \n\n        // NOTE: Do not place your application dependencies here; they belong\n        // in the individual module build.gradle files\n    }\n}\n\nallprojects {\n    repositories {\n        google()\n        jcenter()\n        flatDir {\n            dirs 'libs'\n        }\n    }\n}\n\ntask clean(type: Delete) {\n    delete rootProject.buildDir\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- build.gradle	(revision 54e78aaa4f5da63edd592c0f387078d1e03db082)
++++ build.gradle	(date 1565081985000)
+@@ -7,7 +7,7 @@
+         jcenter()
+     }
+     dependencies {
+-        classpath 'com.android.tools.build:gradle:3.0.1'
++        classpath 'com.android.tools.build:gradle:3.4.2'
+         
+ 
+         // NOTE: Do not place your application dependencies here; they belong
+Index: gradle.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+># Project-wide Gradle settings.\n\n# IDE (e.g. Android Studio) users:\n# Gradle settings configured through the IDE *will override*\n# any settings specified in this file.\n\n# For more details on how to configure your build environment visit\n# http://www.gradle.org/docs/current/userguide/build_environment.html\n\n# Specifies the JVM arguments used for the daemon process.\n# The setting is particularly useful for tweaking memory settings.\norg.gradle.jvmargs=-Xmx1536m\n\n# When configured, Gradle will run in incubating parallel mode.\n# This option should only be used with decoupled projects. More details, visit\n# http://www.gradle.org/docs/current/userguide/multi_project_builds.html#sec:decoupled_projects\n# org.gradle.parallel=true\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- gradle.properties	(revision 54e78aaa4f5da63edd592c0f387078d1e03db082)
++++ gradle.properties	(date 1565081985000)
+@@ -9,6 +9,8 @@
+ 
+ # Specifies the JVM arguments used for the daemon process.
+ # The setting is particularly useful for tweaking memory settings.
++android.enableJetifier=true
++android.useAndroidX=true
+ org.gradle.jvmargs=-Xmx1536m
+ 
+ # When configured, Gradle will run in incubating parallel mode.

@@ -1,6 +1,6 @@
 package com.mist.sample.wakeup.utils;
 
-import android.app.Application;
+import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -11,7 +11,6 @@ import com.mist.android.MSTCentralManagerIndoorOnlyListener;
 import com.mist.android.MSTOrgCredentialsCallback;
 import com.mist.android.MSTOrgCredentialsManager;
 import com.mist.android.model.AppModeParams;
-import com.mist.sample.wakeup.app.MainApplication;
 import com.mist.sample.wakeup.model.OrgData;
 
 import java.lang.ref.WeakReference;
@@ -32,14 +31,13 @@ import java.util.Date;
 public class MistManager implements MSTOrgCredentialsCallback {
 
     private static final String TAG = MistManager.class.getSimpleName();
-    private static WeakReference<Application> mApp;
+    private static WeakReference<Context> contextWeakReference;
     private static MistManager mistManager;
     private String sdkToken;
     private String envType;
     private MSTCentralManagerIndoorOnlyListener indoorOnlyListener;
     private AppMode appMode = AppMode.FOREGROUND;
     private static OrgData orgData;
-    private MSTOrgCredentialsManager mstOrgCredentialsManager;
     private volatile MSTCentralManager mstCentralManager;
     private fragmentInteraction fragmentInteractionListener;
 
@@ -53,16 +51,16 @@ public class MistManager implements MSTOrgCredentialsCallback {
     public interface fragmentInteraction {
         void onOrgDataReceived();
     }
-	
- /**
+
+    /**
      * Custructor for creating singleton instance of the interactor class
      *
-     * @param mainApplication application instance needed by Mist SDK
+     * @param context application instance needed by Mist SDK
      * @return
      */
-	 
-    public static MistManager newInstance(MainApplication mainApplication) {
-        mApp = new WeakReference<Application>(mainApplication);
+
+    public static MistManager newInstance(Context context) {
+        contextWeakReference = new WeakReference<Context>(context);
         if (mistManager == null) {
             mistManager = new MistManager();
         }
@@ -82,15 +80,12 @@ public class MistManager implements MSTOrgCredentialsCallback {
             this.sdkToken = sdkToken;
             this.envType = String.valueOf(sdkToken.charAt(0));
             this.indoorOnlyListener = indoorOnlyListener;
-            if(appMode !=null) {
+            if (appMode != null) {
                 this.appMode = appMode;
             }
-            orgData = SharedPrefUtils.readConfig(mApp.get(), sdkToken);
+            orgData = SharedPrefUtils.readConfig(contextWeakReference.get(), sdkToken);
             if (orgData == null || orgData.getSdkSecret() == null || orgData.getSdkSecret().isEmpty()) {
-                if (mstOrgCredentialsManager == null) {
-                    mstOrgCredentialsManager = new MSTOrgCredentialsManager(mApp.get(), this);
-                }
-                mstOrgCredentialsManager.enrollDeviceWithToken(sdkToken);
+                MSTOrgCredentialsManager.enrollDeviceWithToken(contextWeakReference.get(), sdkToken, this);
 
             } else {
                 connect(indoorOnlyListener, appMode);
@@ -108,16 +103,15 @@ public class MistManager implements MSTOrgCredentialsCallback {
      */
     private synchronized void connect(MSTCentralManagerIndoorOnlyListener indoorOnlyListener, AppMode appMode) {
         if (mstCentralManager == null) {
-            mstCentralManager = new MSTCentralManager(mApp.get(),
-                    orgData.getOrgId(), orgData.getSdkSecret(), indoorOnlyListener);
+            mstCentralManager = new MSTCentralManager(contextWeakReference.get(),
+                    orgData.getOrgId(), orgData.getSdkSecret());
             mstCentralManager.setEnvironment(Utils.getEnvironment(envType));
             if (appMode.equals(AppMode.FOREGROUND)) {
-                setAppMode(new AppModeParams(AppMode.FOREGROUND, BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY,
-                        true, 0.5, 1));
+                setAppMode(Utils.getConfiguredAppModeParams(AppMode.FOREGROUND,BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY));
             } else {
-                setAppMode(new AppModeParams(AppMode.BACKGROUND, BatteryUsage.LOW_BATTERY_USAGE_LOW_ACCURACY,
-                        true, 0.5, 1));
+                setAppMode(Utils.getConfiguredAppModeParams(AppMode.BACKGROUND,BatteryUsage.LOW_BATTERY_USAGE_LOW_ACCURACY));
             }
+            mstCentralManager.setMSTCentralManagerIndoorOnlyListener(indoorOnlyListener);
             mstCentralManager.start();
         } else {
             reconnect();
@@ -168,8 +162,8 @@ public class MistManager implements MSTOrgCredentialsCallback {
      */
     private void saveConfig(String orgName, String orgID, String sdkSecret, String envType) {
         orgData = new OrgData(orgName, orgID, sdkSecret, envType);
-        SharedPrefUtils.saveConfig(mApp.get(), orgData, sdkToken);
-        if(fragmentInteractionListener!=null){
+        SharedPrefUtils.saveConfig(contextWeakReference.get(), orgData, sdkToken);
+        if (fragmentInteractionListener != null) {
             fragmentInteractionListener.onOrgDataReceived();
         }
     }

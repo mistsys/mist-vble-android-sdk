@@ -43,16 +43,11 @@ import com.google.android.gms.nearby.messages.Strategy;
 import com.google.android.gms.nearby.messages.SubscribeOptions;
 import com.mist.android.AppMode;
 import com.mist.android.BatteryUsage;
-import com.mist.android.MSTAsset;
-import com.mist.android.MSTBeacon;
 import com.mist.android.MSTCentralManagerIndoorOnlyListener;
 import com.mist.android.MSTCentralManagerStatusCode;
-import com.mist.android.MSTClient;
 import com.mist.android.MSTMap;
 import com.mist.android.MSTPoint;
 import com.mist.android.MSTVirtualBeacon;
-import com.mist.android.MSTZone;
-import com.mist.android.model.AppModeParams;
 import com.mist.sample.wakeup.R;
 import com.mist.sample.wakeup.app.MainApplication;
 import com.mist.sample.wakeup.model.OrgData;
@@ -69,7 +64,6 @@ import com.squareup.picasso.Picasso;
 import org.json.JSONArray;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.UUID;
 
 import butterknife.BindView;
@@ -189,9 +183,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         //disconnecting the Mist sdk, to make sure there is no prior active instance
         MistManager.newInstance(mainApplication).disconnect();
         MistManager.newInstance(mainApplication).
-                setAppMode(new AppModeParams(AppMode.FOREGROUND,
-                        BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY,
-                        true, 0.5, 1));
+                setAppMode(Utils.getConfiguredAppModeParams(AppMode.FOREGROUND,BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY));
 
         //initializing the Mist sdk
         initMISTSDK();
@@ -204,9 +196,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         //stopping the Mist sdk
         MistManager.newInstance(mainApplication).disconnect();
         MistManager.newInstance(mainApplication).
-                setAppMode(new AppModeParams(AppMode.BACKGROUND,
-                        BatteryUsage.LOW_BATTERY_USAGE_LOW_ACCURACY,
-                        true, 0.5, 1));
+                setAppMode(Utils.getConfiguredAppModeParams(AppMode.BACKGROUND,BatteryUsage.LOW_BATTERY_USAGE_LOW_ACCURACY));
         sdkHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -374,20 +364,12 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
-    @Override
-    public void onBeaconDetected(MSTBeacon[] beaconArray, String region, Date dateUpdated) {
-
-    }
 
     @Override
     public void onBeaconDetected(JSONArray beaconArray, Date dateUpdated) {
 
     }
 
-    @Override
-    public void onBeaconListUpdated(HashMap<String, HashMap<Integer, Integer[]>> beaconList, Date dateUpdated) {
-
-    }
 
     /**
      * This callback provide the location of the device
@@ -481,20 +463,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     }
 
-    @Override
-    public void onZoneStatsUpdated(MSTZone[] zones, Date dateUpdated) {
-
-    }
-
-    @Override
-    public void onClientUpdated(MSTClient[] clients, MSTZone[] zones, Date dateUpdated) {
-
-    }
-
-    @Override
-    public void onAssetUpdated(MSTAsset[] assets, MSTZone[] zones, Date dateUpdated) {
-
-    }
 
     /**
      * This callback provide the detail of map user is on
@@ -662,10 +630,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     }
 
-    @Override
-    public void onReceivedSecret(String orgName, String orgID, String sdkSecret, String error) {
-
-    }
 
     @Override
     public void receivedLogMessageForCode(String message, MSTCentralManagerStatusCode code) {

@@ -19,6 +19,9 @@ import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 
+import com.mist.android.AppMode;
+import com.mist.android.BatteryUsage;
+import com.mist.android.model.AppModeParams;
 import com.mist.sample.wakeup.R;
 import com.mist.sample.wakeup.service.MistSdkBackgroundService;
 
@@ -166,5 +169,15 @@ public class Utils {
         if (mNotificationManager != null) {
             mNotificationManager.createNotificationChannel(mChannel);
         }
+    }
+
+    /**
+     * Changes background related params here in one place
+     *
+     * @return
+     */
+    public static AppModeParams getConfiguredAppModeParams(AppMode appMode, BatteryUsage batteryUsage) {
+        return new AppModeParams(appMode, batteryUsage,
+                true, (double) 1 / 3, 1);
     }
 }

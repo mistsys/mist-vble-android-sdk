@@ -6,7 +6,6 @@ import android.util.Log;
 
 import com.mist.android.AppMode;
 import com.mist.android.BatteryUsage;
-import com.mist.android.model.AppModeParams;
 import com.mist.sample.wakeup.app.MainApplication;
 import com.mist.sample.wakeup.utils.MistManager;
 import com.mist.sample.wakeup.utils.SharedPrefUtils;
@@ -41,9 +40,7 @@ public class MistSdkBackgroundService extends JobService {
                     init(sdkToken, null, AppMode.BACKGROUND);
 
             MistManager.newInstance((MainApplication) getApplication()).
-                    setAppMode(new AppModeParams(AppMode.BACKGROUND,
-                            BatteryUsage.LOW_BATTERY_USAGE_LOW_ACCURACY,
-                            true, 0.5, 1));
+                    setAppMode(Utils.getConfiguredAppModeParams(AppMode.BACKGROUND,BatteryUsage.LOW_BATTERY_USAGE_LOW_ACCURACY));
         }
     }
 
