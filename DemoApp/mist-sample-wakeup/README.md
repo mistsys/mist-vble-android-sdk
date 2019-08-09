@@ -46,7 +46,7 @@ This application depicts the wakeup feature targeted for the mobile client, usin
          * Tap the settings → Tap + (Add SDK Token)
          * Add the Secret key in the text field and click the ENTER button below.
          
-![Your token goes here](/secret_key.png)
+![Your token goes here](./secret_key.png)
        
 ### 6.) Please make sure you have enabled bluetooth, mobile data / wifi, and location services.
 ### 7.) Click on Load Map. You will receive a welcome notification.
