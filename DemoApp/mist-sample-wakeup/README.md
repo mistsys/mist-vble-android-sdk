@@ -40,10 +40,13 @@ This application depicts the wakeup feature targeted for the mobile client, usin
         ```
         public static String sdkToken = "PPRsreycFg12345sHAKSTAH71gVDULVC";
         ```
-        * Enter the secret key in the application's UI. This overrides the baked in key in code.
-            * Run the application
-            * Tap the settings → Tap + (Add SDK Token)
-            * Add the Secret key in the text field and click the ENTER button below.
+        
+   * Enter the secret key in the application's UI. This overrides the baked in key in code.
+        * Run the application
+         * Tap the settings → Tap + (Add SDK Token)
+         * Add the Secret key in the text field and click the ENTER button below.
+         
+![Your token goes here](/secret_key.png)
        
 ### 6.) Please make sure you have enabled bluetooth, mobile data / wifi, and location services.
 ### 7.) Click on Load Map. You will receive a welcome notification.
@@ -63,6 +66,8 @@ This application depicts the wakeup feature targeted for the mobile client, usin
   * Once the SDK has connected it reports the beacons it hears and this gives the Mist portal data to use in calculating the location of the deviceGo to the Mist portal live view for the map that the AP is configured in
       * Location → Live View → (Choose the Site) → (Choose the Map)
       * At this point, a blue person icon should be displayed near the AP (green square) you are using. This confirms that the SDK is connected and the portal is getting the beacon data.   
+      
+      ![Blue person icon in map](https://github.com/mistsys/mist-vble-ios-sdk/blob/mist-sample-wakeup/DemoApp/mist-sample-wakeup/mist-sample-wakeup/blue_person.png)
 
 -------------------------------------------
 
