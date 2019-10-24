@@ -1,4 +1,10 @@
 # Android MistSDK
+Latest Release:
+
+```gradle
+'com.mist:core-sdk:2.0.64’ 
+```
+  
 
 Releases:
 [Releases](https://github.com/mistsys/mist-vble-android-sdk/releases)
