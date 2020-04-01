@@ -20,8 +20,6 @@ Mist vBLE Android SDK is also distributed as .aar file. [[Download Mist SDK]](ht
  
 **Improvements:**
 * Minor bug fixes with Android Sensor fusion optimization.
-[Releases](https://github.com/mistsys/mist-vble-android-sdk/releases)
-
 
   
 ## Integrating Mist SDK
