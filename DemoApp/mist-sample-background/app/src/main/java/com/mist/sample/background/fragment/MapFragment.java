@@ -506,18 +506,9 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         MistManager.newInstance(mainApplication).destroy();
     }
 
-    @Override
-    public void onBeaconDetected(MSTBeacon[] mstBeacons, String s, Date date) {
-        // Not needed
-    }
 
     @Override
     public void onBeaconDetected(JSONArray beaconArray, Date dateUpdated) {
-        // Not needed
-    }
-
-    @Override
-    public void onBeaconListUpdated(HashMap<String, HashMap<Integer, Integer[]>> hashMap, Date date) {
         // Not needed
     }
 
@@ -533,11 +524,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     @Override
     public void onClientInformationUpdated(String clientName) {
-        // Not needed
-    }
-
-    @Override
-    public void onReceivedSecret(String s, String s1, String s2, String s3) {
         // Not needed
     }
 
@@ -561,18 +547,5 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         // Not needed
     }
 
-    @Override
-    public void onZoneStatsUpdated(MSTZone[] mstZones, Date date) {
-        // Not needed
-    }
 
-    @Override
-    public void onClientUpdated(MSTClient[] mstClients, MSTZone[] mstZones, Date date) {
-        // Not needed
-    }
-
-    @Override
-    public void onAssetUpdated(MSTAsset[] mstAssets, MSTZone[] mstZones, Date date) {
-        // Not needed
-    }
 }

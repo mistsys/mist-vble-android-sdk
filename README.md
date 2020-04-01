@@ -2,7 +2,7 @@
 Latest Release:
 
 ```gradle
-'com.mist:core-sdk:2.0.64’ 
+implementation 'com.mist:core-sdk:2.0.110'
 ```
   
 

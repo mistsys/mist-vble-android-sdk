@@ -27,8 +27,9 @@ public class HomeFragment extends Fragment {
 
     private static final String TOKEN_PREF_KEY_NAME = "sdkToken";
     public static final String TAG = HomeFragment.class.getSimpleName();
-    // you can replace this text with you sdk token
-    public static String sdkToken = "PPRsreycFghetRLsPKHDTRH71gVDULVC";
+
+    // you can replace this text with you mobile sdk secret token
+    public static String sdkToken = "";
 
     @BindView(R.id.token_menu)
     FloatingActionMenu fabTokenMenu;
@@ -67,7 +68,8 @@ public class HomeFragment extends Fragment {
         SharedPrefUtils.saveSdkToken(getActivity(), TOKEN_PREF_KEY_NAME, sdkToken);
         if (Utils.isEmptyString(sdkToken) && getActivity() != null) {
             Snackbar.make(getActivity().findViewById(android.R.id.content), R.string.enter_sdk_token, Snackbar.LENGTH_LONG).show();
-        } else if (sdkToken.toUpperCase().charAt(0) == 'P' || sdkToken.toUpperCase().charAt(0) == 'S') {
+        } else if (sdkToken.toUpperCase().charAt(0) == 'P' || sdkToken.toUpperCase().charAt(0) == 'S' || sdkToken.toUpperCase().charAt(0) == 'E' ||sdkToken.charAt(0) == 'G'
+                || sdkToken.charAt(0) == 'g') {
             sdkTokenReceivedListener.OnSdkTokenReceived(sdkToken);
         } else {
             Toast.makeText(getActivity(), R.string.valid_sdk_token, Toast.LENGTH_SHORT).show();

@@ -310,7 +310,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
-    @Override
+    //@Override
     public void onBeaconDetected(MSTBeacon[] beaconArray, String region, Date dateUpdated) {
 
     }
@@ -320,7 +320,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     }
 
-    @Override
+    //@Override
     public void onBeaconListUpdated(HashMap<String, HashMap<Integer, Integer[]>> beaconList, Date dateUpdated) {
 
     }
@@ -394,17 +394,17 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     }
 
-    @Override
+    //@Override
     public void onZoneStatsUpdated(MSTZone[] zones, Date dateUpdated) {
 
     }
 
-    @Override
+    //@Override
     public void onClientUpdated(MSTClient[] clients, MSTZone[] zones, Date dateUpdated) {
 
     }
 
-    @Override
+    //@Override
     public void onAssetUpdated(MSTAsset[] assets, MSTZone[] zones, Date dateUpdated) {
 
     }
@@ -547,10 +547,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     }
 
-    @Override
-    public void onReceivedSecret(String orgName, String orgID, String sdkSecret, String error) {
-
-    }
 
     @Override
     public void receivedLogMessageForCode(String message, MSTCentralManagerStatusCode code) {

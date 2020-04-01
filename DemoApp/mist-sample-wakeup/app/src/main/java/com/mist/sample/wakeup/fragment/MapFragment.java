@@ -81,6 +81,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     public static final String TAG = MapFragment.class.getSimpleName();
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
     private static final String SDK_TOKEN = "sdkToken";
+
     private MainApplication mainApplication;
     private String sdkToken;
     private String floorPlanImageUrl = "";

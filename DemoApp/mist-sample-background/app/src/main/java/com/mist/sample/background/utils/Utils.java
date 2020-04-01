@@ -7,7 +7,6 @@ import android.net.NetworkInfo;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.mist.sample.background.service.MSTSDKBackgroundService;
 
 /**
  * Created by anubhava on 02/04/18.
@@ -78,10 +77,15 @@ public class Utils {
             env = "Production";
         } else if (envType.charAt(0) == 'E') {
             env = "EU";
-        } else if (envType.charAt(0) == 'K') {
-            env = "Kalam";
-        } else {
-            throw new Exception("Invalid environemnt is specified");
+        } else if (envType.charAt(0) == 'S') {
+            env = "Staging";
+        }  else if (envType.charAt(0) == 'G') {
+            env = "GCP-Production";
+        } else if (envType.charAt(0) == 'g') {
+            env = "GCP-Staging";
+        }
+        else {
+            throw new Exception("Invalid environment is specified");
         }
         return env;
     }
@@ -103,6 +107,6 @@ public class Utils {
         return (token.charAt(0) == 'P' ||
                 token.charAt(0) == 'S' ||
                 token.charAt(0) == 'E' ||
-                token.charAt(0) == 'K');
+                token.charAt(0) == 'G');
     }
 }

@@ -77,11 +77,7 @@ public class MistManager implements MSTOrgCredentialsCallback {
             }
             orgData = SharedPrefUtils.readConfig(mApp.get(), sdkToken);
             if (orgData == null || orgData.getSdkSecret() == null || orgData.getSdkSecret().isEmpty()) {
-                if (mstOrgCredentialsManager == null) {
-                    mstOrgCredentialsManager = new MSTOrgCredentialsManager(mApp.get(), this);
-                }
-                mstOrgCredentialsManager.enrollDeviceWithToken(sdkToken);
-
+                MSTOrgCredentialsManager.enrollDeviceWithToken(mApp.get(), sdkToken, this);
             } else {
                 connect(indoorOnlyListener, appMode);
             }
@@ -98,11 +94,11 @@ public class MistManager implements MSTOrgCredentialsCallback {
      */
     private synchronized void connect(MSTCentralManagerIndoorOnlyListener indoorOnlyListener, AppMode appMode) {
         if (mstCentralManager == null) {
-            mstCentralManager = new MSTCentralManager(mApp.get(),
-                    orgData.getOrgId(),
-                    orgData.getSdkSecret(),
-                    indoorOnlyListener);
-            try{
+
+            mstCentralManager = new MSTCentralManager(mApp.get(), orgData.getOrgId(), orgData.getSdkSecret());
+            mstCentralManager.setMSTCentralManagerIndoorOnlyListener(indoorOnlyListener);
+
+            try {
                 mstCentralManager.setEnvironment(Utils.getEnvironment(envType));
             } catch (Exception e) {
                 Log.e(TAG, e.getLocalizedMessage());

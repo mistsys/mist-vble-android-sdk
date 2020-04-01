@@ -10,6 +10,7 @@ import com.mist.android.MSTCentralManager;
 import com.mist.android.MSTCentralManagerIndoorOnlyListener;
 import com.mist.android.MSTOrgCredentialsCallback;
 import com.mist.android.MSTOrgCredentialsManager;
+import com.mist.android.MistLocationAdvanceListener;
 import com.mist.android.model.AppModeParams;
 import com.mist.sample.indoor_location.app.MainApplication;
 import com.mist.sample.indoor_location.model.OrgData;
@@ -36,6 +37,7 @@ public class MistManager implements MSTOrgCredentialsCallback {
     private String sdkToken;
     private String envType;
     private MSTCentralManagerIndoorOnlyListener indoorOnlyListener;
+    private MistLocationAdvanceListener advanceListener;
     private AppMode appMode = AppMode.FOREGROUND;
     private OrgData orgData;
     private MSTOrgCredentialsManager mstOrgCredentialsManager;
@@ -45,7 +47,7 @@ public class MistManager implements MSTOrgCredentialsCallback {
     }
 
     /**
-     * Custructor for creating singleton instance of the interactor class
+     * Constructor for creating singleton instance of the interactor class
      *
      * @param mainApplication application instance needed by Mist SDK
      * @return
@@ -59,28 +61,27 @@ public class MistManager implements MSTOrgCredentialsCallback {
     }
 
     /**
-     * This method will enroll the device and start the Mist SDK on successful enrollment, if we already have the deatil of enrollment response detail we can just start the SDK with those details
+     * This method will enroll the device and start the Mist SDK on successful enrollment, if we already have the detail of enrollment response detail we can just start the SDK with those details
      *
      * @param sdkToken           Token used for enrollment
      * @param indoorOnlyListener listener on which callback for location,map,notification can be heard
+     * @param advanceListener    listener on which callback for lat, lon, speed can be heard
      * @param appMode            mode of the app (Background,Foreground)
      */
     public void init(String sdkToken, MSTCentralManagerIndoorOnlyListener indoorOnlyListener,
+                     MistLocationAdvanceListener advanceListener,
                      AppMode appMode) {
         if (sdkToken != null && !sdkToken.isEmpty()) {
             this.sdkToken = sdkToken;
             this.envType = String.valueOf(sdkToken.charAt(0));
             this.indoorOnlyListener = indoorOnlyListener;
+            this.advanceListener = advanceListener;
             this.appMode = appMode;
             orgData = SharedPrefUtils.readConfig(mApp.get(), sdkToken);
             if (orgData == null || orgData.getSdkSecret() == null || orgData.getSdkSecret().isEmpty()) {
-                if (mstOrgCredentialsManager == null) {
-                    mstOrgCredentialsManager = new MSTOrgCredentialsManager(mApp.get(), this);
-                }
-                mstOrgCredentialsManager.enrollDeviceWithToken(sdkToken);
-
+                MSTOrgCredentialsManager.enrollDeviceWithToken(mApp.get(), sdkToken, this);
             } else {
-                connect(indoorOnlyListener, appMode);
+                connect(indoorOnlyListener, advanceListener, appMode);
             }
         } else {
             Toast.makeText(mApp.get(), "Empty SDK Token", Toast.LENGTH_SHORT).show();
@@ -93,10 +94,12 @@ public class MistManager implements MSTOrgCredentialsCallback {
      * @param indoorOnlyListener listener on which callback for location,map,notification can be heard
      * @param appMode            mode of the app (Background,Foreground)
      */
-    private synchronized void connect(MSTCentralManagerIndoorOnlyListener indoorOnlyListener, AppMode appMode) {
+    private synchronized void connect(MSTCentralManagerIndoorOnlyListener indoorOnlyListener, MistLocationAdvanceListener advanceListener, AppMode appMode) {
         if (mstCentralManager == null) {
-            mstCentralManager = new MSTCentralManager(mApp.get(),
-                    orgData.getOrgId(), orgData.getSdkSecret(), indoorOnlyListener);
+            mstCentralManager = new MSTCentralManager(mApp.get(), orgData.getOrgId(), orgData.getSdkSecret());
+            mstCentralManager.setMSTCentralManagerIndoorOnlyListener(indoorOnlyListener);
+            mstCentralManager.setMistLocationAdvanceListener(advanceListener);
+
             mstCentralManager.setEnvironment(Utils.getEnvironment(envType));
             if (appMode.equals(AppMode.FOREGROUND)) {
                 setAppMode(new AppModeParams(AppMode.FOREGROUND, BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY, true, 0.5, 15));
@@ -133,7 +136,7 @@ public class MistManager implements MSTOrgCredentialsCallback {
     public void onReceivedSecret(String orgName, String orgID, String sdkSecret, String error, String envType) {
         if (!TextUtils.isEmpty(sdkSecret) && !TextUtils.isEmpty(orgID) && !TextUtils.isEmpty(sdkSecret)) {
             saveConfig(orgName, orgID, sdkSecret, envType);
-            connect(indoorOnlyListener, appMode);
+            connect(indoorOnlyListener, this.advanceListener, appMode);
         } else {
             if (!Utils.isEmptyString(error)) {
                 if (indoorOnlyListener != null) {

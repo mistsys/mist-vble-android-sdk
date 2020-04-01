@@ -40,7 +40,6 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.SdkT
         }
     }
 
-
     @Override
     public void onBackPressed() {
         if (getSupportFragmentManager().getBackStackEntryCount() == 1) {
@@ -55,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.SdkT
 
 
     /**
-     * This method is settingup the Map scrren with passing the SDK token needed by it for Mist SDK to start working
+     * This method is setting up the Map screen with passing the SDK token needed by it for Mist SDK to start working
      *
      * @param sdkToken sdk token used for enrollment
      */

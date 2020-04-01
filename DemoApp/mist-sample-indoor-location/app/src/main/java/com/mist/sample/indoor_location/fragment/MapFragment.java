@@ -8,8 +8,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -45,6 +43,7 @@ import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -53,15 +52,17 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 
+
 /**
  * Created by anubhava on 26/03/18.
  */
 
-public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnlyListener {
+public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnlyListener, MistLocationAdvanceListener {
 
     public static final String TAG = MapFragment.class.getSimpleName();
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
     private static final String SDK_TOKEN = "sdkToken";
+
     private MainApplication mainApplication;
     private String sdkToken;
     private String floorPlanImageUrl = "";
@@ -89,7 +90,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     ProgressBar progressBar;
     @BindView(R.id.txt_error)
     TextView txtError;
-
 
     public static MapFragment newInstance(String sdkToken) {
         Bundle bundle = new Bundle();
@@ -121,16 +121,16 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     @Override
     public void onStart() {
         super.onStart();
-        initMISTSDK();
+        initMistSDK();
     }
 
-    private void initMISTSDK() {
+    private void initMistSDK() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && getActivity() != null &&
                 getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
                         != PackageManager.PERMISSION_GRANTED) {
             showLocationPermissionDialog();
         } else {
-            startMistSdk();
+            startMistSDK();
         }
     }
 
@@ -160,7 +160,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                 case PERMISSION_REQUEST_FINE_LOCATION:
                     if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                         Log.d(TAG, "fine location permission granted !!");
-                        startMistSdk();
+                        startMistSDK();
                     } else {
                         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                         builder.setTitle("Functionality limited");
@@ -181,11 +181,11 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     /**
      * This method checks for the availability for Internet , Location and Bluetooth and show dialog if anything is not enabled else start the Mist SDK
      */
-    private void startMistSdk() {
+    private void startMistSDK() {
         BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() && getActivity() != null &&
                 Utils.isNetworkAvailable(getActivity()) && Utils.isLocationServiceEnabled(getActivity())) {
-            runMISTSDK();
+            runMistSDK();
         } else {
             if (getActivity() != null && !Utils.isNetworkAvailable(getActivity())) {
                 showSettingsAlert(AlertType.network);
@@ -200,9 +200,9 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     }
 
     //initializing the Mist sdk with sdkToken
-    private void runMISTSDK() {
+    private void runMistSDK() {
         MistManager mistManager = MistManager.newInstance(mainApplication);
-        mistManager.init(sdkToken, this, AppMode.FOREGROUND);
+        mistManager.init(sdkToken, this, this, AppMode.FOREGROUND);
     }
 
     /**
@@ -268,20 +268,11 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
-    @Override
-    public void onBeaconDetected(MSTBeacon[] beaconArray, String region, Date dateUpdated) {
-
-    }
-
-    @Override
+    //@Override
     public void onBeaconDetected(JSONArray beaconArray, Date dateUpdated) {
 
     }
 
-    @Override
-    public void onBeaconListUpdated(HashMap<String, HashMap<Integer, Integer[]>> beaconList, Date dateUpdated) {
-
-    }
 
     /**
      * This callback provide the location of the device
@@ -292,24 +283,58 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
      */
     @Override
     public void onRelativeLocationUpdated(MSTPoint relativeLocation, MSTMap[] maps, Date dateUpdated) {
-        if (relativeLocation != null && maps != null) {
-            mstPoint = relativeLocation;
-            updateRelativeLocation();
-        }
+
     }
 
-    private void updateRelativeLocation() {
+    // Advanced Callbacks
+
+    /**
+     *  This callback provide the location of the device using DR
+     * @param var1 provide x,y of the device on particular map
+     * @param var2  Map object having details about the map
+     * @param var3 provides time stamp of the location
+     *
+     * */
+
+    @Override
+    public void onDRSnappedLocationUpdated(final MSTPoint var1, MSTMap var2, Date var3) {
         if (getActivity() != null) {
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     if (currentMap != null && addedMap) {
-                        renderBlueDot(mstPoint);
+                        renderBlueDot(var1);
                     }
                 }
             });
         }
     }
+
+    @Override
+    public void onDRRawLocationUpdated(MSTPoint var1, MSTMap var2, Date var3) {
+
+    }
+
+    public void onLESnappedLocationUpdated(MSTPoint var1, MSTMap var2, Date var3) {
+
+    }
+
+    public void onLERawLocationUpdated(MSTPoint var1, MSTMap var2, Date var3) {
+
+    }
+
+    /**
+     *  This callback provide the location details x,y along with Lat, Lon, Speed and direction
+     * @param var1 provide Json response with Raw and Snapped location details
+     * @param var2  Map object having details about the map
+     * @param var3 provides time stamp of the location
+     *
+     * */
+
+    public void onDRRelativeLocationUpdated(JSONObject var1, MSTMap var2, Date var3) {
+      // Get Lat/Lon here
+    }
+
 
     //logic to show the blue dot for the location
     public void renderBlueDot(final MSTPoint point) {
@@ -336,6 +361,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
+    // Rendering purposes:
 
     //calculating the scale factors
     private void setupScaleFactorForFloorplan() {
@@ -373,20 +399,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     }
 
-    @Override
-    public void onZoneStatsUpdated(MSTZone[] zones, Date dateUpdated) {
-
-    }
-
-    @Override
-    public void onClientUpdated(MSTClient[] clients, MSTZone[] zones, Date dateUpdated) {
-
-    }
-
-    @Override
-    public void onAssetUpdated(MSTAsset[] assets, MSTZone[] zones, Date dateUpdated) {
-
-    }
 
     /**
      * This callback provide the detail of map user is on
@@ -394,6 +406,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
      * @param map         Map object having details about the map
      * @param dateUpdated
      */
+
     @Override
     public void onMapUpdated(MSTMap map, Date dateUpdated) {
         floorPlanImageUrl = map.getMapImageUrl();
@@ -473,10 +486,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     }
 
-    @Override
-    public void onReceivedSecret(String orgName, String orgID, String sdkSecret, String error) {
-
-    }
 
     @Override
     public void receivedLogMessageForCode(String message, MSTCentralManagerStatusCode code) {

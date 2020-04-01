@@ -21,7 +21,7 @@ public class HomeFragment extends Fragment {
 
     public static final String TAG = HomeFragment.class.getSimpleName();
 
-    public static String portalSDKToken = "PHBpcMnTmO4akRTznjkYUTUL2NWy9zAq"; // REPLACE THIS TOKEN
+    public static String portalSDKToken = "";// REPLACE THIS MOBILE SDK SECRET TOKEN HERE
     private HomeFragmentListener listner;
 
     private Unbinder unbinder;

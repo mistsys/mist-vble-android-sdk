@@ -1,11 +1,11 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 28
     defaultConfig {
         applicationId "com.mist.sample.wakeup"
-        minSdkVersion 21
-        targetSdkVersion 27
+        minSdkVersion 26
+        targetSdkVersion 28
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -23,22 +23,30 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:support-v4:28.0.0'
+    implementation 'com.android.support:design:28.0.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation 'com.android.support:design:27.1.1'
-    //mist sdk
-    //implementation 'com.mist:core-sdk:1.5.0'
-    implementation(name:'mist-mobile-sdk', ext:'aar')
-    implementation(name:'mist-mobile', ext:'aar')
-    //butterknife
+
+
+    //---Mist SDK JCenter implementation
+    implementation 'com.mist:core-sdk:2.0.110'
+    implementation "org.java-websocket:Java-WebSocket:1.4.0"
+
+    // Note: In case, you are using  Mist SDK manual installation, use the implementation below after adding the .aar files. Please comment the JCenter implementation because you can not both at the same time.
+    //implementation(name:'mistsdk-framework', ext:'aar')
+    //implementation(name:'mist-mobile', ext:'aar')
+
+    //Butter knife
     implementation 'com.jakewharton:butterknife:8.8.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
-    implementation 'com.google.code.gson:gson:2.8.2'
+    implementation 'com.google.code.gson:gson:2.8.5'
 
     //picasso
     implementation 'com.squareup.picasso:picasso:2.5.2'
-    implementation 'com.squareup.okhttp3:okhttp:3.10.0'
+    implementation 'com.squareup.okhttp3:okhttp:3.12.1'
     implementation 'com.jakewharton.picasso:picasso2-okhttp3-downloader:1.1.0'
     //fab_menu
     implementation 'com.github.clans:fab:1.6.4'

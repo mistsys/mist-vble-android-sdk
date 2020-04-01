@@ -55,16 +55,18 @@ public class Utils {
     }
 
     public static String getEnvironment(String envType) {
-        String env;
+        String env = "";
         // set the environment string to return
         if (envType.equalsIgnoreCase("P")) {
             env = "Production";
         } else if (envType.equalsIgnoreCase("E")) {
             env = "EU";
-        } else if (envType.equalsIgnoreCase("K")) {
-            env = "Kalam";
-        } else {
-            env = "Production";
+        } else if (envType.equalsIgnoreCase("S")) {
+            env = "Staging";
+        } else if (envType.equals("G")) {
+            env = "GCP-Production";
+        } else if (envType.equals("g")) {
+            env = "GCP-Staging";
         }
         // return the environment string
         return env;

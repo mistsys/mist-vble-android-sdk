@@ -281,20 +281,12 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         }
     }
 
-    @Override
-    public void onBeaconDetected(MSTBeacon[] beaconArray, String region, Date dateUpdated) {
-
-    }
 
     @Override
     public void onBeaconDetected(JSONArray beaconArray, Date dateUpdated) {
 
     }
 
-    @Override
-    public void onBeaconListUpdated(HashMap<String, HashMap<Integer, Integer[]>> beaconList, Date dateUpdated) {
-
-    }
 
     /**
      * This callback provide the location of the device
@@ -387,20 +379,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     }
 
-    @Override
-    public void onZoneStatsUpdated(MSTZone[] zones, Date dateUpdated) {
-
-    }
-
-    @Override
-    public void onClientUpdated(MSTClient[] clients, MSTZone[] zones, Date dateUpdated) {
-
-    }
-
-    @Override
-    public void onAssetUpdated(MSTAsset[] assets, MSTZone[] zones, Date dateUpdated) {
-
-    }
 
     /**
      * This callback provide the detail of map user is on
@@ -411,7 +389,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     @Override
     public void onMapUpdated(MSTMap map, Date dateUpdated) {
         floorPlanImageUrl = map.getMapImageUrl();
-        Log.d(TAG, floorPlanImageUrl);
+        //Log.d(TAG, floorPlanImageUrl);
         if (getActivity() != null && (floorPlanImage.getDrawable() == null || this.currentMap == null || !this.currentMap.getMapId().equals(map.getMapId()))) {
             // Set the current map
             this.currentMap = map;
@@ -583,11 +561,6 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     @Override
     public void onClientInformationUpdated(String clientName) {
-
-    }
-
-    @Override
-    public void onReceivedSecret(String orgName, String orgID, String sdkSecret, String error) {
 
     }
 
