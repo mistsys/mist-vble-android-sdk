@@ -1,24 +1,35 @@
-# Android MistSDK
-Latest Release:
-
-```gradle
-implementation 'com.mist:core-sdk:2.0.110'
-```
-  
-
-Releases:
-[Releases](https://github.com/mistsys/mist-vble-android-sdk/releases)
+# Android MistSDK      
 
 ## Overview
 Mist SDK will provide you the indoor bluedot experience using Mist’s 16 vBLE antenna array Access point. Using this SDK you will know where the user is and can provide proximity related notification using Mist patented vBeacon technology.
 
-## Download
-Mist vBLE Android SDK is distributed as .aar file. [Download Link](https://github.com/mistsys/mist-vble-android-sdk/tree/master/Library)
+## Latest Release:
+Add the following dependency with the latest version of the Mist SDK in the build.gradle file:
+```gradle
+implementation 'com.mist:core-sdk:2.0.110'
+```
+OR     
+
+Mist vBLE Android SDK is also distributed as .aar file. [[Download Mist SDK]](https://github.com/mistsys/mist-vble-android-sdk/tree/master/Library) 
+ 
+ 
+## Release Notes:       
+**New:**
+* Upgraded the cipher suite for websocket connection to provide support in Android 10. 
+* SSL Upgrade.
+ 
+**Improvements:**
+* Minor bug fixes with Android Sensor fusion optimization.
+[Releases](https://github.com/mistsys/mist-vble-android-sdk/releases)
+
+
   
 ## Integrating Mist SDK
-To integrate Mist vBLE Android SDK in your app, please follow the instructions available at [Integration Guide](https://github.com/mistsys/mist-vble-android-sdk/wiki)
+To integrate Mist vBLE Android SDK in your app, please follow the instructions available at [Integration Guide in Wiki section](https://github.com/mistsys/mist-vble-android-sdk/wiki)
 
-To check Release Notes please visit our [Wiki Section](https://github.com/mistsys/mist-vble-android-sdk/wiki/Release-Notes)
+## Sample Apps:
+For more detail, you can see the implementation in the sample app [here](https://github.com/mistsys/mist-vble-android-sdk/tree/master/DemoApp).
+
 
 ## Contact Us
 For more information, please visit [www.mist.com](https://www.mist.com/). For questions or assistance, please email us at support@mist.com.
