@@ -29,6 +29,7 @@ For running this application you need SDK Token, which can be obtained from the 
     
 ### Main callbacks leveraged for this sample app
     onRelativeLocationUpdated : for location details
+    onDRSnappedLocationUpdated : for DR snapped path from MSTPoint object
     onMapUpdated : for map details
 
 ### More details
