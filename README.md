@@ -1,4 +1,4 @@
-# Android MistSDK [BETA]      
+# Android MistSDK [Beta]      
 
 ## Overview
 Mist SDK will provide you the indoor bluedot experience using Mist’s 16 vBLE antenna array Access point. Using this SDK you will know where the user is and can provide proximity related notification using Mist patented vBeacon technology.
