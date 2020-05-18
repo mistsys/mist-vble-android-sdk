@@ -15,18 +15,11 @@ Mist vBLE Android SDK is also distributed as .aar file. [[Download Mist SDK]](ht
  
 ## Release Notes:       
 **New:**
-* Upgraded the cipher suite for websocket connection to provide support in Android 10. 
-* SSL Upgrade.
- 
-**Improvements:**
-* Minor bug fixes with Android Sensor fusion optimization.
+* Support to enroll Orgs on Google Cloud environment, in addition to AWS.
 
-  
-## Integrating Mist SDK
-To integrate Mist vBLE Android SDK in your app, please follow the instructions available at [Integration Guide in Wiki section](https://github.com/mistsys/mist-vble-android-sdk/wiki)
 
 ## Sample Apps:
-For more detail, you can see the implementation in the sample app [here](https://github.com/mistsys/mist-vble-android-sdk/tree/master/DemoApp).
+For more detail, you can see the implementation in the sample app [here](https://github.com/mistsys/mist-vble-android-sdk/tree/beta/DemoApp).
 
 
 ## Contact Us
