@@ -71,8 +71,7 @@ public class Utils {
      * @return
      */
     public static String getEnvironment(String envType) throws Exception {
-        String env;
-        envType = envType.toUpperCase();
+        String env="";
         if (envType.charAt(0) == 'P'){
             env = "Production";
         } else if (envType.charAt(0) == 'E') {
@@ -80,9 +79,9 @@ public class Utils {
         } else if (envType.charAt(0) == 'S') {
             env = "Staging";
         }  else if (envType.charAt(0) == 'G') {
-            env = "GCP-Production";
+            env = "G";
         } else if (envType.charAt(0) == 'g') {
-            env = "GCP-Staging";
+            env = "g";
         }
         else {
             throw new Exception("Invalid environment is specified");
@@ -103,6 +102,11 @@ public class Utils {
     public static boolean isValidToken(String token) {
         if (TextUtils.isEmpty(token))
             return false;
+
+        if(token.charAt(0) == 'g') {
+            return (token.charAt(0) == 'g');
+        }
+
         token = token.toUpperCase();
         return (token.charAt(0) == 'P' ||
                 token.charAt(0) == 'S' ||

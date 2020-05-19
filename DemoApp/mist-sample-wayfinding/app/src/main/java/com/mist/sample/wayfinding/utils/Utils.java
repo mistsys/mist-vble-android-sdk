@@ -56,6 +56,7 @@ public class Utils {
 
     public static String getEnvironment(String envType) {
         String env = "";
+
         // set the environment string to return
         if (envType.equalsIgnoreCase("P")) {
             env = "Production";
@@ -64,9 +65,9 @@ public class Utils {
         } else if (envType.equalsIgnoreCase("S")) {
             env = "Staging";
         } else if (envType.equals("G")) {
-            env = "GCP-Production";
+            env = "G";
         } else if (envType.equals("g")) {
-            env = "GCP-Staging";
+            env = "g";
         }
         // return the environment string
         return env;

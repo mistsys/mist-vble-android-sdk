@@ -65,7 +65,7 @@ public class HomeFragment extends Fragment {
         sdkToken = TextUtils.isEmpty(SharedPrefUtils.readSdkToken(getActivity(), TOKEN_PREF_KEY_NAME))?sdkToken:SharedPrefUtils.readSdkToken(getActivity(), TOKEN_PREF_KEY_NAME);
         if (Utils.isEmptyString(sdkToken) && getActivity() != null) {
             Snackbar.make(getActivity().findViewById(android.R.id.content), R.string.enter_sdk_token, Snackbar.LENGTH_LONG).show();
-        } else if (sdkToken.toUpperCase().charAt(0) == 'P' || sdkToken.toUpperCase().charAt(0) == 'S' || sdkToken.toUpperCase().charAt(0) == 'E' || sdkToken.toUpperCase().charAt(0) == 'G' || sdkToken.charAt(0) == 'g') {
+        } else if (sdkToken.toUpperCase().charAt(0) == 'P' || sdkToken.toUpperCase().charAt(0) == 'S' || sdkToken.toUpperCase().charAt(0) == 'E' || sdkToken.charAt(0) == 'G' || sdkToken.charAt(0) == 'g') {
             sdkTokenReceivedListener.OnSdkTokenReceived(sdkToken);
         } else {
             Toast.makeText(getActivity(), R.string.valid_sdk_token, Toast.LENGTH_SHORT).show();
