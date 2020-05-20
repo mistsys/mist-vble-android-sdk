@@ -32,14 +32,12 @@ dependencies {
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
 
     //---Mist SDK JCenter implementation
-//    implementation 'com.mist:core-sdk:2.0.110'
+    implementation 'com.mist:core-sdk-beta:2.0.113'
     implementation "org.java-websocket:Java-WebSocket:1.4.0"
 
     // Note: In case, you are using  Mist SDK manual installation, use the implementation below after adding the .aar files. Please comment the JCenter implementation because you can not both at the same time.
-    //GCP Support in android SDK
-    // DR version : 4bacf0f1f608fbb9fb07fa614a2ddb6c376b4c4b
-    implementation(name:'mistsdk-framework', ext:'aar')
-    implementation(name:'mist-mobile', ext:'aar')
+    //implementation(name:'mistsdk-framework', ext:'aar')
+    //implementation(name:'mist-mobile', ext:'aar')
 
     //Butter knife
     implementation 'com.jakewharton:butterknife:8.8.1'

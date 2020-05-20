@@ -81,7 +81,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     public static final String TAG = MapFragment.class.getSimpleName();
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
     private static final String SDK_TOKEN = "sdkToken";
-
+    //"sdkToken";
     private MainApplication mainApplication;
     private String sdkToken;
     private String floorPlanImageUrl = "";
@@ -705,6 +705,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
         OrgData orgData = SharedPrefUtils.readConfig(getActivity().getApplicationContext(), sdkToken);
 
+
         if (orgData != null) {
             orgId = orgData.getOrgId();
             subOrgId = orgId.substring(0, orgId.length() - 2);
@@ -731,19 +732,20 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
                     .setFilter(filter)
                     .build();
 
-            Nearby.Messages.subscribe(googleApiClient, getPendingIntent(), options)
-                    .setResultCallback(new ResultCallback<Status>() {
-                        @Override
-                        public void onResult(@NonNull Status status) {
-                            if (status.isSuccess()) {
-                                Log.d(TAG, "Successfully Subscribed");
-                                getActivity().startService(getBackgroundSubscribeServiceIntent());
-                            } else {
-                                Log.d(TAG, "Operation Failed, Error : " +
-                                        NearbyMessagesStatusCodes.getStatusCodeString(status.getStatusCode()));
+                Nearby.Messages.subscribe(googleApiClient, getPendingIntent(), options)
+                        .setResultCallback(new ResultCallback<Status>() {
+                            @Override
+                            public void onResult(@NonNull Status status) {
+                                if (status.isSuccess()) {
+                                    Log.d(TAG, "Successfully Subscribed");
+                                    getActivity().startService(getBackgroundSubscribeServiceIntent());
+                                } else {
+                                    Log.d(TAG, "Operation Failed, Error : " +
+                                            NearbyMessagesStatusCodes.getStatusCodeString(status.getStatusCode()));
+                                }
                             }
-                        }
-                    });
+                        });
+
         }
     }
 
