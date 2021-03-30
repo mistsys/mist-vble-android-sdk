@@ -69,7 +69,6 @@ public class Utils {
         else if (envType.equalsIgnoreCase("g")) {
             env = "GCP-Staging";
         }
-
         // return the environment string
         return env;
     }

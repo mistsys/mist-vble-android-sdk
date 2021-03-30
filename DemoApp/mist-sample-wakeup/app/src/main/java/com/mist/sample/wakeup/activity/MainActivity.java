@@ -1,10 +1,9 @@
 package com.mist.sample.wakeup.activity;
 
 import android.os.Bundle;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
-
+import com.google.android.material.snackbar.Snackbar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 
 import com.mist.sample.wakeup.R;
 import com.mist.sample.wakeup.fragment.AddTokenDialogFragment;

@@ -2,10 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Android-External-Sample-Apps-mist-sample-wakeup.iml" filepath="$PROJECT_DIR$/Android-External-Sample-Apps-mist-sample-wakeup.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/mist-sample-wakeup.iml" filepath="$PROJECT_DIR$/mist-sample-wakeup.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/mist-sample-wakeup-app.iml" filepath="$PROJECT_DIR$/app/mist-sample-wakeup-app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/mist-sample-wakeup.iml" filepath="$PROJECT_DIR$/.idea/mist-sample-wakeup.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/mist-sample-wakeup.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/mist-sample-wakeup.app.iml" />
     </modules>
   </component>
 </project>

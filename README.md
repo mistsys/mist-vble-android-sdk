@@ -6,7 +6,7 @@ Mist SDK will provide you the indoor bluedot experience using Mist’s 16 vBLE a
 ## Latest Release:
 Add the following dependency with the latest version of the Mist SDK in the build.gradle file:
 ```gradle
-implementation 'com.mist:core-sdk:2.0.110'
+implementation 'com.mist:core-sdk:2.1.29'
 ```
 OR     
 
@@ -15,11 +15,11 @@ Mist vBLE Android SDK is also distributed as .aar file. [[Download Mist SDK]](ht
  
 ## Release Notes:       
 **New:**
-* Upgraded the cipher suite for websocket connection to provide support in Android 10. 
-* SSL Upgrade.
+* Support to enroll Org on Google Cloud Environment, in addition to AWS.
  
 **Improvements:**
-* Minor bug fixes with Android Sensor fusion optimization.
+* Enhancements in SDK to improve the location and direction accuracy based on-device sensor data.     
+* Minor bug fixes.    
 
   
 ## Integrating Mist SDK
