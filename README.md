@@ -3,18 +3,19 @@
 ## Overview
 Mist SDK will provide you the indoor bluedot experience using Mist’s 16 vBLE antenna array Access point. Using this SDK you will know where the user is and can provide proximity related notification using Mist patented vBeacon technology.
 
-## Beta Release: [ ![Download](https://api.bintray.com/packages/mist/location/core-sdk-beta/images/download.svg?version=2.0.113) ](https://bintray.com/mist/location/core-sdk-beta/2.0.113/link)
-Add the following dependency with the latest version of the Mist SDK in the build.gradle file:
-```gradle
-implementation 'com.mist:core-sdk-beta:2.0.113'
-```
-OR     
+## Beta Release:    
 
 Mist vBLE Android SDK is also distributed as .aar file. [[Download Mist SDK]](https://github.com/mistsys/mist-vble-android-sdk/tree/beta/Library) 
- 
+
+Add following into App/build.gradle
+
+```
+implementation(name:'mistsdk-framework', ext:'aar')
+implementation(name:'mist-mobile', ext:'aar')
+```
  
 ## Release Notes:       
-* Support to enroll Orgs on Google Cloud environment, in addition to AWS.
+* Support to enroll Org on AWS East Environment.
 
 
 ## Sample Apps:
