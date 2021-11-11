@@ -12,12 +12,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
+import android.app.AlertDialog;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -30,6 +25,13 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.core.content.ContextCompat;
+
+
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
@@ -81,7 +83,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     public static final String TAG = MapFragment.class.getSimpleName();
     private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
     private static final String SDK_TOKEN = "sdkToken";
-    //"sdkToken";
+
     private MainApplication mainApplication;
     private String sdkToken;
     private String floorPlanImageUrl = "";
@@ -154,6 +156,13 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         if (havePermissions()) {
             buildGoogleApiClient();
         }
+        else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                    getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                            != PackageManager.PERMISSION_GRANTED) {
+                showLocationPermissionDialog();
+            }
+        }
         zoomLayout.setListener(this);
     }
 
@@ -171,9 +180,9 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         super.onStart();
 
         //connecting to the google api client
-        if (googleApiClient != null && !googleApiClient.isConnected()) {
-            googleApiClient.connect();
-        }
+//        if (googleApiClient != null && !googleApiClient.isConnected()) {
+//            googleApiClient.connect();
+//        }
 
         try {
             //stopping the scheduled job when the app comes to the foreground
@@ -218,9 +227,7 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     }
 
     private void initMISTSDK() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && getActivity() != null &&
-                getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED) {
+        if (getActivity() != null && getActivity().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             showLocationPermissionDialog();
         } else {
             startMistSdk();
@@ -700,52 +707,57 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
      * Register the iBeacons for which we need the callback from OS when entered the region
      */
     private void subscribe() {
+        {
+            try {
+                String orgId = null, subOrgId = null;
+                if (getActivity() != null) {
+                    //OrgData orgData = SharedPrefUtils.readConfig(getActivity().getApplicationContext(), MapFragment.sdkToken);
+                    OrgData orgData = SharedPrefUtils.readConfig(getActivity().getApplicationContext(), sdkToken);
+                    if (orgData != null) {
+                        orgId = orgData.getOrgId();
+                        subOrgId = orgId.substring(0, orgId.length() - 2);
 
-        String orgId = null, subOrgId = null;
+                        MessageFilter filter = new MessageFilter.Builder()
+                                .includeIBeaconIds(UUID.fromString(orgId), null, null)
+                                .includeIBeaconIds(UUID.fromString(subOrgId + "00"), null, null)
+                                .includeIBeaconIds(UUID.fromString(subOrgId + "01"), null, null)
+                                .includeIBeaconIds(UUID.fromString(subOrgId + "02"), null, null)
+                                .includeIBeaconIds(UUID.fromString(subOrgId + "03"), null, null)
+                                .includeIBeaconIds(UUID.fromString(subOrgId + "04"), null, null)
+                                .includeIBeaconIds(UUID.fromString(subOrgId + "05"), null, null)
+                                .includeIBeaconIds(UUID.fromString(subOrgId + "06"), null, null)
+                                .includeIBeaconIds(UUID.fromString(subOrgId + "07"), null, null)
+                                .includeIBeaconIds(UUID.fromString(subOrgId + "08"), null, null)
+                                .includeIBeaconIds(UUID.fromString(subOrgId + "0a"), null, null)
+                                .includeIBeaconIds(UUID.fromString(subOrgId + "0b"), null, null)
+                                .includeIBeaconIds(UUID.fromString(subOrgId + "0c"), null, null)
+                                .includeIBeaconIds(UUID.fromString(subOrgId + "0d"), null, null)
+                                .build();
 
-        OrgData orgData = SharedPrefUtils.readConfig(getActivity().getApplicationContext(), sdkToken);
-
-
-        if (orgData != null) {
-            orgId = orgData.getOrgId();
-            subOrgId = orgId.substring(0, orgId.length() - 2);
-
-            MessageFilter filter = new MessageFilter.Builder()
-                    .includeIBeaconIds(UUID.fromString(orgId), null, null)
-                    .includeIBeaconIds(UUID.fromString(subOrgId + "00"), null, null)
-                    .includeIBeaconIds(UUID.fromString(subOrgId + "01"), null, null)
-                    .includeIBeaconIds(UUID.fromString(subOrgId + "02"), null, null)
-                    .includeIBeaconIds(UUID.fromString(subOrgId + "03"), null, null)
-                    .includeIBeaconIds(UUID.fromString(subOrgId + "04"), null, null)
-                    .includeIBeaconIds(UUID.fromString(subOrgId + "05"), null, null)
-                    .includeIBeaconIds(UUID.fromString(subOrgId + "06"), null, null)
-                    .includeIBeaconIds(UUID.fromString(subOrgId + "07"), null, null)
-                    .includeIBeaconIds(UUID.fromString(subOrgId + "08"), null, null)
-                    .includeIBeaconIds(UUID.fromString(subOrgId + "0a"), null, null)
-                    .includeIBeaconIds(UUID.fromString(subOrgId + "0b"), null, null)
-                    .includeIBeaconIds(UUID.fromString(subOrgId + "0c"), null, null)
-                    .includeIBeaconIds(UUID.fromString(subOrgId + "0d"), null, null)
-                    .build();
-
-            SubscribeOptions options = new SubscribeOptions.Builder()
-                    .setStrategy(Strategy.BLE_ONLY)
-                    .setFilter(filter)
-                    .build();
-
-                Nearby.Messages.subscribe(googleApiClient, getPendingIntent(), options)
-                        .setResultCallback(new ResultCallback<Status>() {
-                            @Override
-                            public void onResult(@NonNull Status status) {
-                                if (status.isSuccess()) {
-                                    Log.d(TAG, "Successfully Subscribed");
-                                    getActivity().startService(getBackgroundSubscribeServiceIntent());
-                                } else {
-                                    Log.d(TAG, "Operation Failed, Error : " +
-                                            NearbyMessagesStatusCodes.getStatusCodeString(status.getStatusCode()));
-                                }
-                            }
-                        });
-
+                        SubscribeOptions options = new SubscribeOptions.Builder()
+                                .setStrategy(Strategy.BLE_ONLY)
+                                .setFilter(filter)
+                                .build();
+                        Nearby.Messages.unsubscribe(googleApiClient, getPendingIntent());
+                        Nearby.Messages.subscribe(googleApiClient, getPendingIntent(), options)
+                                .setResultCallback(new ResultCallback<Status>() {
+                                    @Override
+                                    public void onResult(@NonNull Status status) {
+                                        if (status.isSuccess()) {
+                                            Log.d(TAG, "Successfully Subscribed");
+                                            if (getActivity() != null)
+                                                getActivity().startService(getBackgroundSubscribeServiceIntent());
+                                        } else {
+                                            Log.d(TAG, "Operation Failed, Error : " +
+                                                    NearbyMessagesStatusCodes.getStatusCodeString(status.getStatusCode()));
+                                        }
+                                    }
+                                });
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, e.getMessage());
+            }
         }
     }
 

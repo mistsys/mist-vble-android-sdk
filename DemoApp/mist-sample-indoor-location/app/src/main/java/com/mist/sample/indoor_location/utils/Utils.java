@@ -63,13 +63,15 @@ public class Utils {
         } else if (envType.equalsIgnoreCase("S")) {
             env = "Staging";
         }
-        else if (envType.equals("G")) {
-            env = "G";
+        else if (envType.equalsIgnoreCase("G")) {
+            env = "GCP-Production";
         }
-        else if (envType.equals("g")) {
-            env = "g";
+        else if (envType.equalsIgnoreCase("g")) {
+            env = "GCP-Staging";
         }
-
+        else if (envType.equalsIgnoreCase("M")) {
+            env = "M";
+        }
         // return the environment string
         return env;
     }

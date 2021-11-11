@@ -2,10 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/DemoApp-mist-sample-background.iml" filepath="$PROJECT_DIR$/DemoApp-mist-sample-background.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/mist-sample-background.iml" filepath="$PROJECT_DIR$/mist-sample-background.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/mist-sample-background-app.iml" filepath="$PROJECT_DIR$/app/mist-sample-background-app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/mist-sample-background.iml" filepath="$PROJECT_DIR$/.idea/mist-sample-background.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/mist-sample-background.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/mist-sample-background.app.iml" />
     </modules>
   </component>
 </project>

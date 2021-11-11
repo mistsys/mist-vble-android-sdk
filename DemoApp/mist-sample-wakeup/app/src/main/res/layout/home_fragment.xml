@@ -14,7 +14,7 @@
         android:background="@drawable/custom_button"
         android:text="@string/load_map" />
 
-    <android.support.design.widget.CoordinatorLayout
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -40,5 +40,5 @@
                 fab:fab_size="mini" />
 
         </com.github.clans.fab.FloatingActionMenu>
-    </android.support.design.widget.CoordinatorLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </RelativeLayout>

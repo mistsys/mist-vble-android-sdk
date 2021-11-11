@@ -16,8 +16,9 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
-import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
+
+import androidx.core.app.NotificationCompat;
 
 import com.mist.android.AppMode;
 import com.mist.android.BatteryUsage;
@@ -87,12 +88,16 @@ public class Utils {
             env = "Production";
         } else if (envType.equalsIgnoreCase("E")) {
             env = "EU";
+        } else if (envType.equalsIgnoreCase("K")) {
+            env = "Kalam";
         } else if (envType.equalsIgnoreCase("S")) {
             env = "Staging";
         } else if (envType.equals("G")) {
-            env = "G";
+            env = "GCP-Production";
         }else if (envType.equals("g")) {
-            env = "g";
+            env = "GCP-Staging";
+        }else if (envType.equals("M")) {
+            env = "M";
         }
         // return the environment string
         return env;

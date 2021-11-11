@@ -2,17 +2,17 @@ package com.mist.sample.wakeup.fragment;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.github.clans.fab.FloatingActionMenu;
 import com.mist.sample.wakeup.R;
 import com.mist.sample.wakeup.utils.SharedPrefUtils;
@@ -68,8 +68,8 @@ public class HomeFragment extends Fragment {
         SharedPrefUtils.saveSdkToken(getActivity(), TOKEN_PREF_KEY_NAME, sdkToken);
         if (Utils.isEmptyString(sdkToken) && getActivity() != null) {
             Snackbar.make(getActivity().findViewById(android.R.id.content), R.string.enter_sdk_token, Snackbar.LENGTH_LONG).show();
-        } else if (sdkToken.toUpperCase().charAt(0) == 'P' || sdkToken.toUpperCase().charAt(0) == 'S' || sdkToken.toUpperCase().charAt(0) == 'E' || sdkToken.charAt(0) == 'G'
-                || sdkToken.charAt(0) == 'g') {
+        } else if (sdkToken.toUpperCase().charAt(0) == 'P' || sdkToken.toUpperCase().charAt(0) == 'S' || sdkToken.toUpperCase().charAt(0) == 'E' ||sdkToken.charAt(0) == 'G'
+                || sdkToken.charAt(0) == 'g' || sdkToken.charAt(0) == 'M') {
             sdkTokenReceivedListener.OnSdkTokenReceived(sdkToken);
         } else {
             Toast.makeText(getActivity(), R.string.valid_sdk_token, Toast.LENGTH_SHORT).show();
