@@ -6,7 +6,7 @@ Mist SDK will provide you the indoor bluedot experience using Mist’s 16 vBLE a
 ## Latest Release:
 Add the following dependency with the latest version of the Mist SDK in the build.gradle file:
 ```gradle
-implementation 'com.mist:core-sdk:2.1.29'
+implementation 'com.mist:core-sdk:2.2.0'
 ```
 OR     
 
