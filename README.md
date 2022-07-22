@@ -15,10 +15,7 @@ Mist vBLE Android SDK is also distributed as .aar file. [[Download Mist SDK]](ht
  
 ## Release Notes:       
 **New:**
-* Support to enroll Org on Google Cloud Environment, in addition to AWS.
- 
-**Improvements:**
-* Enhancements in SDK to improve the location and direction accuracy based on-device sensor data.     
+* Support to enroll Org on AWS East.     
 * Minor bug fixes.    
 
   
