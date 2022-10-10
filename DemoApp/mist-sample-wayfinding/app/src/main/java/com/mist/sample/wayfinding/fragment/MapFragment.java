@@ -37,6 +37,8 @@ import com.mist.android.MSTMap;
 import com.mist.android.MSTPoint;
 import com.mist.android.MSTVirtualBeacon;
 import com.mist.android.MSTZone;
+import com.mist.android.ErrorType;
+
 import com.mist.sample.wayfinding.R;
 import com.mist.sample.wayfinding.app.MainApplication;
 import com.mist.sample.wayfinding.wayfindingpath.DrawLine;
@@ -410,6 +412,8 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
 
     }
 
+
+
     /**
      * This callback provide the detail of map user is on
      *
@@ -558,6 +562,14 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     }
 
     //callback for error
+    @Override
+    public void didErrorOccurWithType(ErrorType errorType, String details) {
+        Log.e(TAG, details);
+        if (errorType == ErrorType.ErrorTypeAuthFailure) {
+            //Re-enroll
+        }
+    }
+    
     @Override
     public void onMistErrorReceived(String message, Date date) {
         progressBar.setVisibility(View.GONE);

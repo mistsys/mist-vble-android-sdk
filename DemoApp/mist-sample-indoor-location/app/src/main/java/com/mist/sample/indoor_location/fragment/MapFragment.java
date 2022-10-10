@@ -20,6 +20,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -31,6 +32,7 @@ import com.mist.android.MSTMap;
 import com.mist.android.MSTPoint;
 import com.mist.android.MSTVirtualBeacon;
 import com.mist.android.MistLocationAdvanceListener;
+import com.mist.android.ErrorType;
 import com.mist.sample.indoor_location.R;
 import com.mist.sample.indoor_location.app.MainApplication;
 import com.mist.sample.indoor_location.utils.MistManager;
@@ -496,6 +498,14 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
         progressBar.setVisibility(View.GONE);
         txtError.setVisibility(View.VISIBLE);
         txtError.setText(message);
+    }
+
+    @Override
+    public void didErrorOccurWithType(ErrorType errorType, String details) {
+        Log.e(TAG, details);
+        if (errorType == ErrorType.ErrorTypeAuthFailure) {
+            //Re-enroll device on expiration or invalid token
+        }
     }
 
     @Override

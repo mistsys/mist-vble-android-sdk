@@ -36,6 +36,8 @@ import com.mist.android.MSTPoint;
 import com.mist.android.MSTVirtualBeacon;
 import com.mist.android.MSTZone;
 import com.mist.android.MistLocationAdvanceListener;
+import com.mist.android.ErrorType;
+
 import com.mist.sample.notification.R;
 import com.mist.sample.notification.app.MainApplication;
 import com.mist.sample.notification.utils.MistManager;
@@ -569,6 +571,16 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     }
 
     //callback for error
+
+    @Override
+    public void didErrorOccurWithType(ErrorType errorType, String details) {
+        Log.e(TAG, details);
+        if (errorType == ErrorType.ErrorTypeAuthFailure) {
+            //Re-enroll device on expiration or invalid token
+        }
+    }
+
+
     @Override
     public void onMistErrorReceived(String message, Date date) {
         progressBar.setVisibility(View.GONE);

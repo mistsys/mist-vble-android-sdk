@@ -27,6 +27,7 @@ import androidx.fragment.app.Fragment;
 
 import com.mist.android.AppMode;
 import com.mist.android.BatteryUsage;
+import com.mist.android.ErrorType;
 import com.mist.android.MSTAsset;
 import com.mist.android.MSTBeacon;
 import com.mist.android.MSTCentralManagerIndoorOnlyListener;
@@ -547,6 +548,12 @@ public class MapFragment extends Fragment implements MSTCentralManagerIndoorOnly
     public void onPressureUpdated(double pressure, Date dateUpdated) {
         // Not needed
     }
-
+    @Override
+    public void didErrorOccurWithType(ErrorType errorType, String details) {
+        Log.e(TAG, details);
+        if (errorType == ErrorType.ErrorTypeAuthFailure) {
+            //Re-enroll device on expiration or invalid token
+        }
+    }
 
 }
