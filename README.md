@@ -11,14 +11,22 @@ Mist vBLE Android SDK is also distributed as .aar file. [[Download Mist SDK]](ht
 ## Release Notes:       
 **New:**
 Release Note:
-*  
+*  Mist SDK- reduce file size
 
   
 ## Integrating Mist SDK
-To integrate Mist vBLE Android SDK in your app, please follow the instructions available at [Integration Guide in Wiki section](https://github.com/mistsys/mist-vble-android-sdk/wiki)
+* Download mist-framework.aar' from [here](https://github.com/mistsys/mist-vble-android-sdk/tree/non-dr/Library).    
+* Add following to app/build.gradle in dependencies.            
+`implementation(name:'mist-framework', ext:'aar')`
 
-## Sample Apps:
-For more detail, you can see the implementation in the sample app [here](https://github.com/mistsys/mist-vble-android-sdk/tree/master/DemoApp).
+* [Initialize MSTCentralManager](https://github.com/mistsys/mist-vble-android-sdk/wiki#initialize-mistsdk)
+
+* [Get map information](https://github.com/mistsys/mist-vble-android-sdk/wiki#getting-map-info)
+
+* [Get Location information](https://github.com/mistsys/mist-vble-android-sdk/wiki#getting-location-info)
+
+## Sample App:
+For more detail, you can see the implementation in the sample app [here](https://github.com/mistsys/mist-vble-android-sdk/tree/non-dr/DemoApp).
 
 
 ## Contact Us
