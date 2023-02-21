@@ -15,7 +15,7 @@ Release Note:
 
   
 ## Integrating Mist SDK
-* Download mist-framework.aar' from [here](https://github.com/mistsys/mist-vble-android-sdk/tree/non-dr/Library).    
+* Download mist-framework.aar from [here](https://github.com/mistsys/mist-vble-android-sdk/tree/non-dr/Library).    
 * Add following to app/build.gradle in dependencies.            
 `implementation(name:'mist-framework', ext:'aar')`
 
