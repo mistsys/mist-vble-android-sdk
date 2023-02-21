@@ -36,12 +36,12 @@ dependencies {
 
 
     //---Mist SDK JCenter implementation
-    implementation 'com.mist:core-sdk:2.3.0'
+    //implementation 'com.mist:core-sdk:2.3.0'
     implementation "org.java-websocket:Java-WebSocket:1.4.0"
     implementation 'com.neovisionaries:nv-websocket-client:2.14'
 
     // Note: In case, you are using  Mist SDK manual installation, use the implementation below after adding the .aar files. Please comment the JCenter implementation because you can not both at the same time.
-//    implementation(name:'mist-framework', ext:'aar')
+    implementation(name:'mist-framework', ext:'aar')
 //    implementation(name:'mist-mobile', ext:'aar')
 
     implementation 'com.google.android.gms:play-services-location:16.0.0'

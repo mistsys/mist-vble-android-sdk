@@ -1,9 +1,0 @@
-<changelist name="latest_version_of_libraries" date="1565087923422" recycled="false">
-  <option name="PATH" value="$PROJECT_DIR$/.idea/shelf/latest_version_of_libraries/shelved.patch" />
-  <option name="DESCRIPTION" value="latest version of libraries" />
-  <binary>
-    <option name="BEFORE_PATH" value=".idea/caches/build_file_checksums.ser" />
-    <option name="AFTER_PATH" value=".idea/caches/build_file_checksums.ser" />
-    <option name="SHELVED_PATH" value="$PROJECT_DIR$/.idea/shelf/latest_version_of_libraries/build_file_checksums.ser" />
-  </binary>
-</changelist>
