@@ -1,28 +1,32 @@
-# Android MistSDK      
+# Mist Location SDK Android
 
 ## Overview
-Mist SDK will provide you the indoor bluedot experience using Mist’s 16 vBLE antenna array Access point. Using this SDK you will know where the user is and can provide proximity related notification using Mist patented vBeacon technology.
+The Mist Location SDK provide applications the indoor bluedot experience using Mist’s 16 vBLE antenna array Access point. This technology allows your application to provide indoor location information and proximity related notification using Mist patented *vBeacon technology*.
 
-## Beta Release:    
+## Latest Release
+* Mist Location SDK Android is distributed via framework file:            
 
-Mist vBLE Android SDK is also distributed as .aar file. [[Download Mist SDK]](https://github.com/mistsys/mist-vble-android-sdk/tree/beta/Library) 
+  * latest version is 3.0.1* [[Download Link]](https://github.com/mistsys/mist-vble-android-sdk/releases/tag/3.0.1)  
 
-Add following into App/build.gradle
+OR
 
+* Add the following dependency with the latest version of the Mist SDK in the build.gradle file:
+```gradle
+implementation 'com.mist:core-sdk-beta:3.0.1'
 ```
-implementation(name:'mistsdk-framework', ext:'aar')
-implementation(name:'mist-mobile', ext:'aar')
-```
- 
-## Release Notes:       
-* Support to enroll Org on AWS East Environment.
- 
   
-## Integrating Mist SDK
-To integrate Mist vBLE Android SDK in your app, please follow the instructions available at [Integration Guide in Wiki section](https://github.com/mistsys/mist-vble-android-sdk/wiki)
 
-## Sample Apps:
-For more detail, you can see the implementation in the sample app [here](https://github.com/mistsys/mist-vble-android-sdk/tree/beta/DemoApp).
+## Release Notes [Beta]
+* In this version we are introducing a new simpler and easier way to integrate our location SDK into your application. Implementation requires less steps and less code to accomplish. Please see our updated integration guide [here](https://github.com/mistsys/mist-vble-android-sdk/wiki)
+
+## Integrating 
+To integrate Mist Location SDK for Android in your app, please follow the instructions available in the [Integration Guide](https://github.com/mistsys/mist-vble-android-sdk/wiki)
+
+## Sample Apps
+For more detail, please check the implementation in the sample apps. 
+
+## Previous Releases
+[[Releases]](https://github.com/mistsys/mist-vble-android-sdk/releases) 
 
 
 ## Contact Us
