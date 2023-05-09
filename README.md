@@ -23,8 +23,8 @@ Release Note:
 3. SDK can experience error anywhere in the lifecycle due to numerous reasons on the network. To increase the reliability and reduce the operational cost, we have added backoff where SDK will pause for given amount of time before before retrying the connection again.      
 
   
-## Integrating Mist SDK
-To integrate Mist vBLE Android SDK in your app, please follow the instructions available at [Integration Guide in Wiki section](https://github.com/mistsys/mist-vble-android-sdk/wiki)
+## Integrating Mist SDK Legacy [Deprecated]
+[Legacy Integration Document](https://github.com/mistsys/mist-vble-android-sdk/wiki/Legacy-SDK-Integration-Document-%5BDeprecated%5D)
 
 ## Sample Apps:
 For more detail, you can see the implementation in the sample app [here](https://github.com/mistsys/mist-vble-android-sdk/tree/master/DemoApp).
