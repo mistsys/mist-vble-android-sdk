@@ -25,13 +25,14 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    namespace 'com.mist.sample.samplelocationbackgroundandbluedot'
 }
 
 dependencies {
 
 
     //For Mist SDK
-    implementation 'com.mist:core-sdk:3.0.3'
+    implementation 'com.mist:core-sdk:3.0.9'
 
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'com.google.android.material:material:1.6.0'

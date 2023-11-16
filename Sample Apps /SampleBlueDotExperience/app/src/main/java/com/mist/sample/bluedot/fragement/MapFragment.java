@@ -1,5 +1,5 @@
 package com.mist.sample.bluedot.fragement;
-
+import com.mist.android.*;
 import android.Manifest;
 import android.app.Application;
 import android.bluetooth.BluetoothAdapter;
@@ -40,7 +40,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 
-public class MapFragment extends Fragment implements IndoorLocationCallback {
+public class MapFragment extends Fragment implements IndoorLocationCallback ,ClientInformationCallback{
     private static MistSdkManager mistSdkManager;
     public static final String TAG = MapFragment.class.getSimpleName();
     private static final int PERMISSION_REQUEST_BLUETOOTH_LOCATION = 1;
@@ -130,7 +130,7 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
     private void startSDK(String orgSecret) {
         Log.d(TAG, "SampleBlueDot startSdk called" + orgSecret);
         if (orgSecret != null) {
-            mistSdkManager.init(orgSecret, this, null);
+            mistSdkManager.init(orgSecret, this, null, this);
             mistSdkManager.startMistSDK();
         }
     }
@@ -253,6 +253,10 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
         Log.d(TAG, "SampleBlueDot onMapUpdated called");
         floorPlanImageUrl = map.getUrl();
         Log.d(TAG, "SampleBlueDot " + floorPlanImageUrl);
+
+        // updateClientName:
+        mistSdkManager.updateClientName("NewClient");
+
         // Set the current map
         if (getActivity() != null && (floorPlanImage.getDrawable() == null || this.currentMap == null || !this.currentMap.getId().equals(map.getId()))) {
             this.currentMap = map;
@@ -263,6 +267,11 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
                 }
             });
         }
+    }
+
+    @Override
+    public void onSuccess(String clientName) {
+        Log.d("","Client name "+ clientName);
     }
 
     /**

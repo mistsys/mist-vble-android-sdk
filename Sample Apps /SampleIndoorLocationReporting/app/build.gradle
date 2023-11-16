@@ -30,7 +30,7 @@ android {
 dependencies {
 
     //Mist SDK Maven Central  implementation
-    implementation 'com.mist:core-sdk:3.0.3'
+    implementation 'com.mist:core-sdk:3.0.9'
 
     implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation 'com.google.android.material:material:1.6.0'

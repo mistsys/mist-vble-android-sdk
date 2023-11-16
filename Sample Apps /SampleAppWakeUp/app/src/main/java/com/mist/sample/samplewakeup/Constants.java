@@ -9,7 +9,8 @@ public class Constants {
     /**
      * Provide orgId for alt beacon scanning here
      */
-    public static final String ORG_ID = "6748cfa6-4e12-11e6-9188-0242ac110007";
+
+    public static final String ORG_ID = "";
     public static final long NO_VBLE_TIMEOUT_MS = 5 * 60 * 1000;
     public static final long NO_VBLE_FAIL_COUNT_LIMIT = 200;
     public static final long BEACON_SCAN_INTERVAL_LOCATION_SDK_RUNNING_MS = 10 * 60 * 1000; /* In ms*/

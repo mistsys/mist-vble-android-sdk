@@ -22,6 +22,4 @@ public class MainActivity extends PermissionHandlerActivity {
     public void startBeaconMonitor() {
         AltBeaconUtil.startBeaconMonitor(mainApplication.getBeaconManager(), mainApplication);
     }
-
-    ;
 }

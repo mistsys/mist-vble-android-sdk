@@ -12,7 +12,7 @@ OR
 
 * Add the following dependency with the latest version of the Mist SDK in the build.gradle file:
 ```gradle
-implementation 'com.mist:core-sdk:3.0.3'
+implementation 'com.mist:core-sdk:3.0.9'
 ```
   
 

@@ -33,7 +33,7 @@ dependencies {
     implementation 'org.altbeacon:android-beacon-library:2.19.5'
 
     //For Mist SDK
-    implementation 'com.mist:core-sdk:3.0.3'
+    implementation 'com.mist:core-sdk:3.0.9'
 
     implementation 'androidx.appcompat:appcompat:1.6.0'
     implementation 'com.google.android.material:material:1.6.0'
@@ -41,4 +41,5 @@ dependencies {
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+
 }

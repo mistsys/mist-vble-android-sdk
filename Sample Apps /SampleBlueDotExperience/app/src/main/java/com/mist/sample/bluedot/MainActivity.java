@@ -1,7 +1,7 @@
 package com.mist.sample.bluedot;
 
 import static com.mist.sample.bluedot.Constants.ORG_SECRET;
-
+import com.mist.android.*;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
