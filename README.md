@@ -6,7 +6,7 @@ The Mist Location SDK provide applications the indoor bluedot experience using M
 ## Latest Release
 * Mist Location SDK Android is distributed via framework file:            
 
-  * latest version is 3.0.3* [[Download Link]](https://github.com/mistsys/mist-vble-android-sdk/releases/tag/3.0.3)  
+  * latest version is 3.0.9* [[Download Link]](https://github.com/mistsys/mist-vble-android-sdk/releases/tag/3.0.9)  
 
 OR
 
