@@ -6,12 +6,13 @@ import android.util.Log
 import com.example.sampleindoorlocationreporting.NotificationHandler
 import com.mist.android.ErrorType
 import com.mist.android.IndoorLocationCallback
+import com.mist.android.MistEvent
 import com.mist.android.MistMap
 import com.mist.android.MistPoint
 import com.mist.android.MistVirtualBeacon
 import com.mist.android.VirtualBeaconCallback
 
-class SDKCallbackHandler(private val context: Context) : VirtualBeaconCallback, IndoorLocationCallback{
+class SDKCallbackHandler(private val context: Context) : IndoorLocationCallback{
 
     private val TAG : String = "SampleLocationApp"
     private val notificationHandler = NotificationHandler()
@@ -32,24 +33,29 @@ class SDKCallbackHandler(private val context: Context) : VirtualBeaconCallback, 
         /** Returns update map for the mobile client as a {@link}MSTMap object */
     }
 
-    override fun onError(errorType: ErrorType, errorMessage: String) {
-        Log.v(TAG, "onError called $errorMessage")
-        notificationHandler.sendNotification(context,errorMessage)
-        /** Notifies the host application about any errors encountered */
+    override fun onReceiveEvent(event: MistEvent) {
+        when(event){
+            is MistEvent.OnError ->{
+                Log.v(TAG, "onError called ${event.error.name}")
+                notificationHandler.sendNotification(context,event.error.name)
+            }
+
+            /**
+             * We need to implement this method as per our business logic.
+             * These methods will be called for VirtualBeaconCallback
+             * @param mistVirtualBeacon
+             */
+
+            is MistEvent.OnRangeVirtualBeacon ->{
+                Log.v(TAG, "didRangeVirtualBeacon called")
+                notificationHandler.sendNotification(context, event.virtualBeacon.message.toString())
+            }
+            is MistEvent.OnUpdateVirtualBeaconList ->{
+                Log.v(TAG, "onVirtualBeaconListUpdated called")
+                notificationHandler.sendNotification(context, "virtual beacon list updated")
+            }
+            else -> {}
+        }
     }
 
-    /**
-     * We need to implement this method as per our business logic.
-     * These methods will be called for VirtualBeaconCallback
-     * @param mistVirtualBeacon
-     */
-    override fun didRangeVirtualBeacon(mistVirtualBeacon: MistVirtualBeacon) {
-        Log.v(TAG,"didRangeVirtualBeacon called")
-        notificationHandler.sendNotification(context,mistVirtualBeacon.message)
-    }
-
-    override fun onVirtualBeaconListUpdated(virtualBeacons: Array<out MistVirtualBeacon>?) {
-        Log.v(TAG,"onVirtualBeaconListUpdated called")
-        notificationHandler.sendNotification(context,"virtual beacon list updated")
-    }
 }

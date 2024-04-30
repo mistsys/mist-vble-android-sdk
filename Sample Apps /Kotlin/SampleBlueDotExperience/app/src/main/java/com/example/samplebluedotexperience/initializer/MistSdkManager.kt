@@ -2,9 +2,14 @@ package com.example.samplebluedotexperience.initializer
 
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
+import com.mist.android.BatteryUsage
 import com.mist.android.IndoorLocationCallback
 import com.mist.android.IndoorLocationManager
 import com.mist.android.VirtualBeaconCallback
+import com.mist.android.external.config.LogLevel
+import com.mist.android.external.config.MistCallbacks
+import com.mist.android.external.config.MistConfiguration
 import java.lang.ref.WeakReference
 
 class MistSdkManager{
@@ -17,9 +22,9 @@ class MistSdkManager{
      */
 
     private var indoorLocationManager: IndoorLocationManager?=null
-    private var indoorLocationCallback:IndoorLocationCallback?=null
-    private var virtualBeaconCallback: VirtualBeaconCallback?=null
     private lateinit var contextWeakReference: WeakReference<Context>
+    private var mistConfiguration: MistConfiguration? = null
+    private var mistCallbacks : MistCallbacks? = null
     private var sdkInitializer : MistSdkManager? = null
     private var orgSecret : String? = null
 
@@ -31,26 +36,29 @@ class MistSdkManager{
         return sdkInitializer as MistSdkManager
     }
 
-    fun init(orgSecret:String, indoorLocationCallback: IndoorLocationCallback, virtualBeaconCallback: VirtualBeaconCallback?){
-        if(orgSecret.isNotEmpty()){
+    fun init(orgSecret:String, indoorLocationCallback: IndoorLocationCallback, virtualBeaconCallback: VirtualBeaconCallback?) {
+        if (orgSecret.isNotEmpty()) {
             Log.d("", "Sample Blue Dot Init $orgSecret")
-            this.orgSecret=orgSecret
-            this.indoorLocationCallback=indoorLocationCallback
-            if (virtualBeaconCallback != null) {
-                this.virtualBeaconCallback=virtualBeaconCallback
-            }
-        }
-        else{
-            restartMistSdk()
+            this.orgSecret = orgSecret
+            this.mistCallbacks = MistCallbacks(
+                indoorLocationCallback = indoorLocationCallback
+            )
+            this.mistConfiguration = MistConfiguration(
+                context = contextWeakReference.get()!!,
+                token = orgSecret,
+                enableLog = true,
+                logLevel = LogLevel.INFO,
+                batteryUsage = BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY
+            )
         }
     }
 
-    fun startMistSdk(){
-        if(indoorLocationManager==null){
-            Log.d("", "IndoorLocationManager Start$orgSecret")
-            indoorLocationManager = IndoorLocationManager.getInstance(contextWeakReference.get(),orgSecret)
-            indoorLocationManager?.setVirtualBeaconCallback(virtualBeaconCallback)
-            indoorLocationManager?.start(indoorLocationCallback)
+        fun startMistSdk(){
+            if(indoorLocationManager==null){
+                indoorLocationManager = IndoorLocationManager
+                indoorLocationManager?.mistCallbacks = mistCallbacks!!
+                mistConfiguration?.let { indoorLocationManager?.start(it)  }
+//                indoorLocationManager?.start(mistConfiguration!!)
         }
         else{
             restartMistSdk()
@@ -59,13 +67,13 @@ class MistSdkManager{
 
     @Synchronized
     fun stopMistSdk(){
-        if(indoorLocationManager!=null){
+        if (indoorLocationManager!=null){
             indoorLocationManager?.stop()
         }
     }
 
     fun destroyMistSdk(){
-        if(indoorLocationManager!=null){
+        if (indoorLocationManager!=null){
             indoorLocationManager?.stop()
         }
     }
@@ -74,7 +82,7 @@ class MistSdkManager{
     private fun restartMistSdk() {
         if(indoorLocationManager!=null){
             stopMistSdk()
-            indoorLocationManager?.start(indoorLocationCallback)
+            indoorLocationManager?.start(mistConfiguration!!)
         }
     }
 

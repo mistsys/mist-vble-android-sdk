@@ -38,7 +38,7 @@ public class LocationJobService extends JobService {
     private void doWork() {
         MistSdkManager mistSdkManager = MistSdkManager.getInstance((Application) getApplication());
         SDKCallbackHandler sdkCallbackHandler = new SDKCallbackHandler(getApplicationContext());
-        mistSdkManager.init(ORG_SECRET, sdkCallbackHandler, sdkCallbackHandler);
+        mistSdkManager.init(ORG_SECRET, sdkCallbackHandler);
         mistSdkManager.startMistSDK();
         Log.d("TAG", "SampleLocationApp: doWork() ThreadName: " + Thread.currentThread().getName());
     }

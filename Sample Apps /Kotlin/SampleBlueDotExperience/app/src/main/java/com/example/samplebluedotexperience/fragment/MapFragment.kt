@@ -13,6 +13,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.fragment.app.Fragment
@@ -20,6 +21,7 @@ import com.example.samplebluedotexperience.databinding.MapFragmentBinding
 import com.example.samplebluedotexperience.initializer.MistSdkManager
 import com.mist.android.ErrorType
 import com.mist.android.IndoorLocationCallback
+import com.mist.android.MistEvent
 import com.mist.android.MistMap
 import com.mist.android.MistPoint
 import com.squareup.picasso.Callback
@@ -104,7 +106,12 @@ class MapFragment : Fragment(), IndoorLocationCallback {
         super.onStart()
         Log.d(TAG,"SampleBlueDot onStart called")
         if(checkPermissionAndStartSDK()){
-            startSDK(orgSecret)
+            if(!orgSecret.isEmpty()){
+                startSDK(orgSecret)
+            }
+            else{
+                Toast.makeText(activity,"Empty Org Secret key!", Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -149,7 +156,9 @@ class MapFragment : Fragment(), IndoorLocationCallback {
                         checkIfBluetoothEnabled()
                         if(checkBackgroundLocation()) {
                             // Start the SDK when permissions are provided
-                            startSDK(orgSecret)
+                            if(!orgSecret.isEmpty()) {
+                                startSDK(orgSecret)
+                            }
                         }
                     } else {
                         val builder = AlertDialog.Builder(activity)
@@ -162,7 +171,9 @@ class MapFragment : Fragment(), IndoorLocationCallback {
 
                 permissionRequestBackgroundLocation -> {
                     if (grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                        startSDK(orgSecret)
+                        if(!orgSecret.isEmpty()) {
+                            startSDK(orgSecret)
+                        }
                     }
                 }
             }
@@ -235,7 +246,9 @@ class MapFragment : Fragment(), IndoorLocationCallback {
         if(activity !=null){
             requireActivity().runOnUiThread {
                 if (addedMap) {
-                    renderBlueDot(relativeLocation)
+                    if (relativeLocation != null) {
+                        renderBlueDot(relativeLocation)
+                    }
                 }
             }
         }
@@ -244,7 +257,7 @@ class MapFragment : Fragment(), IndoorLocationCallback {
     override fun onMapUpdated(map: MistMap?) {
         // Returns update map for the mobile client as a []MSTMap object
         Log.d(TAG, "SampleBlueDot onMapUpdated called")
-        floorPlanImageUrl = map!!.url
+        floorPlanImageUrl = map!!.url.toString()
         Log.d(TAG, "SampleBlueDot $floorPlanImageUrl")
         // Set the current map
         if(activity!=null && (binding.floorplanImage.drawable==null || !this.currentMap.id.equals(map.id))){
@@ -254,14 +267,15 @@ class MapFragment : Fragment(), IndoorLocationCallback {
             }
         }
     }
-    override fun onError(errorType: ErrorType?, errorMessage: String?) {
-        Log.d(TAG,"SampleBlueDot onError called $errorMessage errorType $errorType")
-        binding.floorplanbluedot.visibility = View.GONE
-        binding.floorplanImage.visibility = View.GONE
-        binding.progressBar.visibility = View.GONE
-        binding.txtError.visibility = View.VISIBLE
-        binding.txtError.text = errorMessage
-
+    override fun onError(error: ErrorType, message: String) {
+        Log.d(TAG,"SampleBlueDot onError called $message errorType $error")
+        requireActivity().runOnUiThread {
+            binding.floorplanbluedot.visibility = View.GONE
+            binding.floorplanImage.visibility = View.GONE
+            binding.progressBar.visibility = View.GONE
+            binding.txtError.visibility = View.VISIBLE
+            binding.txtError.text = message
+        }
     }
 
     /**
@@ -317,12 +331,12 @@ class MapFragment : Fragment(), IndoorLocationCallback {
 
     }
 
-    private fun renderBlueDot(point : MistPoint?) {
+    private fun renderBlueDot(point : MistPoint) {
         binding.floorplanImage.visibility = View.VISIBLE
         binding.floorplanbluedot.visibility = View.VISIBLE
         if(activity!=null){
             requireActivity().runOnUiThread {
-                if (binding.floorplanImage.drawable != null && point != null && addedMap) {
+                if (binding.floorplanImage.drawable != null && addedMap) {
                     // When rendering bluedot hiding old error text
                     binding.txtError.visibility = View.GONE
                     val xPos: Float = convertCloudPointToFloorPlanXScale(point.x)
@@ -358,13 +372,13 @@ class MapFragment : Fragment(), IndoorLocationCallback {
      * rendered in the imageview
      */
     private fun convertCloudPointToFloorPlanYScale(y: Double): Float {
-        return (y * this.scaleYFactor * currentMap.ppm).toFloat()
+        return (y * this.scaleYFactor * currentMap.ppm!!).toFloat()
     }
     /**
      * Converting the x point from meter's to pixel with the present scaling factor of the map
      * rendered in the imageview
      */
     private fun convertCloudPointToFloorPlanXScale(x: Double): Float {
-        return (x * this.scaleXFactor * currentMap.ppm).toFloat()
+        return (x * this.scaleXFactor * currentMap.ppm!!).toFloat()
     }
 }

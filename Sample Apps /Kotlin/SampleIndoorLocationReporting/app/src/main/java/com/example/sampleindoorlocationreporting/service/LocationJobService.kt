@@ -24,7 +24,7 @@ class LocationJobService : JobService() {
         val mistSdkManager = MistSdkManager()
         mistSdkManager.getInstance(application)
         val sdkCallbackHandler = SDKCallbackHandler(applicationContext)
-        mistSdkManager.init(constants.orgSecret,sdkCallbackHandler,sdkCallbackHandler,applicationContext)
+        mistSdkManager.init(constants.orgSecret,sdkCallbackHandler)
         mistSdkManager.startMistSDK()
         Log.d("TAG","SampleLocationApp: doWork() ThreadName: " + Thread.currentThread().name)
 

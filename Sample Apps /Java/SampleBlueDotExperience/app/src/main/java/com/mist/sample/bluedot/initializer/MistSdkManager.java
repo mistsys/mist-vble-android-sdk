@@ -3,14 +3,17 @@ package com.mist.sample.bluedot.initializer;
 import android.content.Context;
 import android.util.Log;
 
-import com.mist.android.ClientInformationCallback;
+import com.mist.android.BatteryUsage;
 import com.mist.android.IndoorLocationCallback;
 import com.mist.android.IndoorLocationManager;
 import com.mist.android.VirtualBeaconCallback;
+import com.mist.android.external.config.LogLevel;
+import com.mist.android.external.config.MistCallbacks;
+import com.mist.android.external.config.MistConfiguration;
 
 import java.lang.ref.WeakReference;
 
-public class MistSdkManager{
+public class MistSdkManager {
     /**
      * Required by Mist SDK for initialization
      * IndoorLocationManager
@@ -18,14 +21,11 @@ public class MistSdkManager{
      * VirtualBeaconCallback
      */
     private IndoorLocationManager indoorLocationManager;
-    private IndoorLocationCallback indoorLocationCallback;
-    private VirtualBeaconCallback virtualBeaconCallback;
-
-    private ClientInformationCallback clientInformationCallback;
-
     private static WeakReference<Context> contextWeakReference;
     private String envType, orgSecret;
     private static MistSdkManager sdkInitializer;
+    private MistConfiguration mistConfiguration;
+    private MistCallbacks mistCallbacks;
 
     private MistSdkManager() {
     }
@@ -38,24 +38,35 @@ public class MistSdkManager{
         return sdkInitializer;
     }
 
-    public void init(String orgSecret, IndoorLocationCallback indoorLocationCallback, VirtualBeaconCallback virtualBeaconCallback, ClientInformationCallback clientInformationCallback) {
+    public void init(String orgSecret, IndoorLocationCallback indoorLocationCallback, VirtualBeaconCallback virtualBeaconCallback) {
         if (orgSecret != null && !orgSecret.isEmpty()) {
             Log.d("", "SampleBlueDot init" + orgSecret);
             this.orgSecret = orgSecret;
-            this.indoorLocationCallback = indoorLocationCallback;
-            this.virtualBeaconCallback = virtualBeaconCallback;
-            this.clientInformationCallback = clientInformationCallback;
+            this.mistCallbacks = new MistCallbacks(
+                    indoorLocationCallback,
+                    null,
+                    virtualBeaconCallback,
+                    null,
+                    null
+            );
+            this.mistConfiguration = new MistConfiguration(
+                    contextWeakReference.get(),
+                    this.orgSecret,
+                    "",
+                    LogLevel.INFO,
+                    true,
+                    BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY
+            );
         }
     }
 
     public synchronized void startMistSDK() {
         if (indoorLocationManager == null) {
-            Log.d("", "indoorLocationManager start" + orgSecret);
-            indoorLocationManager = IndoorLocationManager.getInstance(contextWeakReference.get(), orgSecret);
-            indoorLocationManager.getClientInformation(clientInformationCallback);
-            indoorLocationManager.setVirtualBeaconCallback(virtualBeaconCallback);
-            indoorLocationManager.start(indoorLocationCallback);
-        } else {
+            indoorLocationManager = IndoorLocationManager.INSTANCE;
+            indoorLocationManager.setMistCallbacks(mistCallbacks);
+            indoorLocationManager.start(mistConfiguration);
+        }
+        else {
             restartMistSDK();
         }
     }
@@ -69,20 +80,13 @@ public class MistSdkManager{
     public void destroy() {
         if (indoorLocationManager != null) {
             indoorLocationManager.stop();
-            indoorLocationManager = null;
         }
-    }
-
-    public void updateClientName(String clientName){
-        indoorLocationManager.saveClientInformation(clientName,clientInformationCallback);
     }
 
     private synchronized void restartMistSDK() {
         if (indoorLocationManager != null) {
             stopMistSDK();
-            indoorLocationManager.setVirtualBeaconCallback(virtualBeaconCallback);
-            indoorLocationManager.getClientInformation(clientInformationCallback);
-            indoorLocationManager.start(indoorLocationCallback);
+            indoorLocationManager.start(mistConfiguration);
         }
     }
 }

@@ -3,12 +3,13 @@ plugins {
 }
 
 android {
-    compileSdk 33
+    compileSdk 34
+    namespace 'com.mist.samplelocationbackground'
 
     defaultConfig {
         applicationId "com.mist.samplelocationbackground"
         minSdk 26
-        targetSdk 33
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
@@ -30,10 +31,17 @@ android {
 dependencies {
 
     //Mist SDK Maven Central  implementation
-    implementation 'com.mist:core-sdk:3.0.9'
+    implementation 'com.mist:core-sdk:4.0.0'
 
-    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.6.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.11.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+
+    implementation 'com.google.firebase:firebase-inappmessaging-display:20.4.2'
+    implementation 'com.google.guava:guava:27.0.1-jre'
 
 }

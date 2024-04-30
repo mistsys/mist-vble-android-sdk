@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.samplebluedotindoorlocation.databinding.MapFragmentBinding
 import com.example.samplebluedotindoorlocation.initializer.MistSdkManager
@@ -76,11 +77,17 @@ class MapFragment : Fragment(),IndoorLocationCallback {
     override fun onStart() {
         super.onStart()
         Log.d(TAG,"SampleBlueDot onStart called")
-        startSDK(orgSecret)
+        if(!orgSecret.isEmpty()){
+            startSDK(orgSecret)
+        }
+        else{
+            Toast.makeText(activity,"Empty Org Secret key!", Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        //unbinder.unbind()
         _binding = null
         mistSdkManager.destroy()
     }
@@ -94,7 +101,7 @@ class MapFragment : Fragment(),IndoorLocationCallback {
         Log.d(TAG, "SampleBlueDot startSdk called $orgSecret")
         mainApplication = requireActivity().application
         if(orgSecret!=null){
-            mistSdkManager.init(orgSecret,this,null,mainApplication.applicationContext)
+            mistSdkManager.init(orgSecret,this)
             mistSdkManager.startMistSDK()
         }
     }
@@ -144,7 +151,7 @@ class MapFragment : Fragment(),IndoorLocationCallback {
     override fun onMapUpdated(map: MistMap?) {
         // Returns update map for the mobile client as a []MSTMap object
         Log.d(TAG, "SampleBlueDot onMapUpdated called")
-        floorPlanImageUrl = map!!.url
+        floorPlanImageUrl = map!!.url.toString()
         Log.d(TAG, "SampleBlueDot $floorPlanImageUrl")
         // Set the current map
         if(activity!=null && (binding.floorplanImage.drawable==null  || !this.currentMap.id.equals(map.id))){
@@ -192,13 +199,15 @@ class MapFragment : Fragment(),IndoorLocationCallback {
         })
     }
 
-    override fun onError(errorType: ErrorType?, errorMessage: String?) {
-        Log.d(TAG,"SampleBlueDot onError called" + errorMessage + "errorType " + errorType)
-        binding.floorplanBluedot.visibility = View.GONE
-        binding.floorplanImage.visibility = View.GONE
-        binding.progressBar.visibility = View.GONE
-        binding.txtError.visibility = View.VISIBLE
-        binding.txtError.text = errorMessage
+    override fun onError(error: ErrorType, message: String) {
+        Log.d(TAG,"SampleBlueDot onError called" + message + "errorType " + error)
+        requireActivity().runOnUiThread {
+            binding.floorplanBluedot.visibility = View.GONE
+            binding.floorplanImage.visibility = View.GONE
+            binding.progressBar.visibility = View.GONE
+            binding.txtError.visibility = View.VISIBLE
+            binding.txtError.text = message
+        }
     }
 
     private fun setupScaleFactorForFloorPlan() {
@@ -219,7 +228,7 @@ class MapFragment : Fragment(),IndoorLocationCallback {
      * rendered in the imageview
      */
     private fun convertCloudPointToFloorPlanYScale(y: Double): Float {
-        return (y * this.scaleYFactor * currentMap.ppm).toFloat()
+        return (y * this.scaleYFactor * currentMap.ppm!!).toFloat()
     }
 
     /**
@@ -227,6 +236,6 @@ class MapFragment : Fragment(),IndoorLocationCallback {
      * rendered in the imageview
      */
     private fun convertCloudPointToFloorPlanXScale(x: Double): Float {
-        return (x * this.scaleXFactor * currentMap.ppm).toFloat()
+        return (x * this.scaleXFactor * currentMap.ppm!!).toFloat()
     }
 }

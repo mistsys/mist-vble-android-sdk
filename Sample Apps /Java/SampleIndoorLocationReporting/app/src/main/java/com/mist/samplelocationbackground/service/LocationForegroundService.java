@@ -63,8 +63,10 @@ public class LocationForegroundService extends Service {
         if (orgSecret != null) {
             MistSdkManager mistSdkManager = MistSdkManager.getInstance(getApplicationContext());
             SDKCallbackHandler sdkCallbackHandler = new SDKCallbackHandler(getApplicationContext());
-            mistSdkManager.init(orgSecret, sdkCallbackHandler, sdkCallbackHandler);
-            mistSdkManager.startMistSDK();
+            mistSdkManager.init(orgSecret, sdkCallbackHandler);
+            if(!orgSecret.isEmpty()){
+                mistSdkManager.startMistSDK();
+            }
         }
     }
 

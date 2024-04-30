@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace 'com.example.samplebluedotexperience'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.example.samplebluedotexperience"
         minSdk 26
-        targetSdk 33
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
@@ -45,14 +45,18 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
-
-    //Mist SDK implementation
-    implementation 'com.mist:core-sdk:3.0.9'
+    implementation 'com.mist:core-sdk:4.0.0'
 
     //picasso
     // For image processing
     implementation 'com.squareup.picasso:picasso:2.5.2'
-    implementation 'com.squareup.okhttp3:okhttp:4.10.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.11.0'
     implementation 'com.jakewharton.picasso:picasso2-okhttp3-downloader:1.1.0'
 
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.11.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+
+    implementation 'com.google.firebase:firebase-inappmessaging-display:20.4.2'
+    implementation 'com.google.guava:guava:27.0.1-jre'
 }

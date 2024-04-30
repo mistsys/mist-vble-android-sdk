@@ -7,10 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -20,17 +17,14 @@ import com.mist.android.IndoorLocationCallback;
 import com.mist.android.ErrorType;
 import com.mist.android.MistMap;
 import com.mist.android.MistPoint;
-import com.mist.sample.samplelocationbackgroundandbluedot.R;
+import com.mist.sample.samplelocationbackgroundandbluedot.databinding.MapFragmentBinding;
 import com.mist.sample.samplelocationbackgroundandbluedot.initializer.MistSdkManager;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.Unbinder;
-
 public class MapFragment extends Fragment implements IndoorLocationCallback {
+    private MapFragmentBinding binding;
     private static MistSdkManager mistSdkManager;
     public static final String TAG = MapFragment.class.getSimpleName();
     private static final String SDK_TOKEN = "sdkToken";
@@ -44,15 +38,6 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
     private float floorImageLeftMargin;
     private float floorImageTopMargin; /*Stores the map information returned from mist SDK*/
     public MistMap currentMap;
-    private Unbinder unbinder;
-    @BindView(R.id.floorplan_bluedot)
-    FrameLayout floorplanBluedotView;
-    @BindView(R.id.floorplan_image)
-    ImageView floorPlanImage;
-    @BindView(R.id.progress_bar)
-    ProgressBar progressBar;
-    @BindView(R.id.txt_error)
-    TextView txtError;
 
     public static MapFragment newInstance(String sdkToken) {
         Bundle bundle = new Bundle();
@@ -76,9 +61,9 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.map_fragment, container, false);
-        unbinder = ButterKnife.bind(this, view);
-        progressBar.setVisibility(View.VISIBLE);
+        binding = MapFragmentBinding.inflate(inflater,container,false);
+        View view = binding.getRoot();
+        binding.progressBar.setVisibility(View.VISIBLE);
         return view;
     }
 
@@ -98,13 +83,18 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
     public void onStart() {
         super.onStart();
         Log.d(TAG, "SampleBlueDot onStart called");
-        startSDK(orgSecret);
+        if(!orgSecret.isEmpty()){
+            startSDK(orgSecret);
+        }
+        else {
+            Toast.makeText(getActivity(), "Org Secret not present", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        unbinder.unbind();
+        binding = null;
         mistSdkManager.destroy();
     }
 
@@ -117,7 +107,7 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
     private void startSDK(String orgSecret) {
         Log.d(TAG, "SampleBlueDot startSdk called" + orgSecret);
         if (orgSecret != null) {
-            mistSdkManager.init(orgSecret, this, null);
+            mistSdkManager.init(orgSecret, this);
             mistSdkManager.startMistSDK();
         }
     }
@@ -136,14 +126,14 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
      */
 
     @Override
-    public void onRelativeLocationUpdated(MistPoint relativeLocation) {
+    public void onRelativeLocationUpdated(@Nullable MistPoint mistPoint) {
         /** Returns updated location of the mobile client (as a point (X, Y) measured in meters from the map origin, i.e., relative X, Y) */
         if (getActivity() != null) {
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     if (currentMap != null && addedMap) {
-                        renderBlueDot(relativeLocation);
+                        renderBlueDot(mistPoint);
                     }
                 }
             });
@@ -154,13 +144,13 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
      * Returns update map for the mobile client as a {@link}MSTMap object
      */
     @Override
-    public void onMapUpdated(MistMap map) {
+    public void onMapUpdated(@Nullable MistMap mistMap) {
         Log.d(TAG, "SampleBlueDot onMapUpdated called");
-        floorPlanImageUrl = map.getUrl();
+        floorPlanImageUrl = mistMap.getUrl();
         Log.d(TAG, "SampleBlueDot " + floorPlanImageUrl);
-        if (getActivity() != null && (floorPlanImage.getDrawable() == null || this.currentMap == null || !this.currentMap.getId().equals(map.getId()))) {
+        if (getActivity() != null && (binding.floorplanImage.getDrawable() == null || this.currentMap == null || !this.currentMap.getId().equals(mistMap.getId()))) {
             /** Set the current map*/
-            this.currentMap = map;
+            this.currentMap = mistMap;
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -174,15 +164,19 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
      * Notifies the host application about any errors encountered
      */
     @Override
-    public void onError(ErrorType errorType, String errorMessage) {
-        Log.d(TAG, "SampleBlueDot onError called" + errorMessage + "errorType " + errorType);
-        floorplanBluedotView.setVisibility(View.GONE);
-        floorPlanImage.setVisibility(View.GONE);
-        progressBar.setVisibility(View.GONE);
-        txtError.setVisibility(View.VISIBLE);
-        txtError.setText(errorMessage);
+    public void onError(@NonNull ErrorType error, @NonNull String message) {
+        Log.d(TAG, "SampleBlueDot onError called" + message + "errorType " + error);
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                binding.floorplanBluedot.setVisibility(View.GONE);
+                binding.floorplanImage.setVisibility(View.GONE);
+                binding.progressBar.setVisibility(View.GONE);
+                binding.txtError.setVisibility(View.VISIBLE);
+                binding.txtError.setText(message);
+            }
+        });
     }
-
     /**
      * Utility function for rendering bluedot and floor plan
      * renderImage
@@ -197,16 +191,16 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
      * from OnMapUpdated callback.
      */
     private void renderImage(final String floorPlanImageUrl) {
-        floorPlanImage.setVisibility(View.VISIBLE);
+        binding.floorplanImage.setVisibility(View.VISIBLE);
         Log.d(TAG, "in picasso");
         addedMap = false;
-        Picasso.with(getActivity()).load(floorPlanImageUrl).networkPolicy(NetworkPolicy.OFFLINE).into(floorPlanImage, new Callback() {
+        Picasso.with(getActivity()).load(floorPlanImageUrl).networkPolicy(NetworkPolicy.OFFLINE).into(binding.floorplanImage, new Callback() {
             @Override
             public void onSuccess() {
                 Log.d(TAG, "Image loaded successfully from the cached");
                 addedMap = true;
-                floorplanBluedotView.setVisibility(View.VISIBLE);
-                progressBar.setVisibility(View.GONE);
+                binding.floorplanBluedot.setVisibility(View.VISIBLE);
+                binding.progressBar.setVisibility(View.GONE);
                 if (!scaleFactorCalled) {
                     setupScaleFactorForFloorplan();
                 }
@@ -214,11 +208,11 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
 
             @Override
             public void onError() {
-                Picasso.with(getActivity()).load(floorPlanImageUrl).into(floorPlanImage, new Callback() {
+                Picasso.with(getActivity()).load(floorPlanImageUrl).into(binding.floorplanImage, new Callback() {
                     @Override
                     public void onSuccess() {
-                        progressBar.setVisibility(View.GONE);
-                        floorplanBluedotView.setVisibility(View.VISIBLE);
+                        binding.progressBar.setVisibility(View.GONE);
+                        binding.floorplanBluedot.setVisibility(View.VISIBLE);
                         addedMap = true;
                         if (!scaleFactorCalled) {
                             setupScaleFactorForFloorplan();
@@ -228,7 +222,7 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
 
                     @Override
                     public void onError() {
-                        progressBar.setVisibility(View.GONE);
+                        binding.progressBar.setVisibility(View.GONE);
                         Log.d(TAG, "Could not download the image from the server");
                     }
                 });
@@ -240,24 +234,24 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
      * Rendering bluedot on map using the location provided by location sdk.
      */
     public void renderBlueDot(final MistPoint point) {
-        floorPlanImage.setVisibility(View.VISIBLE);
+        binding.floorplanImage.setVisibility(View.VISIBLE);
         if (getActivity() != null) {
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (floorPlanImage != null && floorPlanImage.getDrawable() != null && point != null && addedMap) {
+                    if (binding.floorplanImage.getDrawable() != null && point != null && addedMap) {
                         /** When rendering bluedot hiding old error text*/
-                        txtError.setVisibility(View.GONE);
+                        binding.txtError.setVisibility(View.GONE);
                         float xPos = convertCloudPointToFloorplanXScale(point.getX());
                         float yPos = convertCloudPointToFloorplanYScale(point.getY());
                         /** If scaleX and scaleY are not defined, check again*/
                         if (!scaleFactorCalled && (scaleXFactor == 0 || scaleYFactor == 0)) {
                             setupScaleFactorForFloorplan();
                         }
-                        float leftMargin = floorImageLeftMargin + (xPos - (floorplanBluedotView.getWidth() / 2));
-                        float topMargin = floorImageTopMargin + (yPos - (floorplanBluedotView.getHeight() / 2));
-                        floorplanBluedotView.setX(leftMargin);
-                        floorplanBluedotView.setY(topMargin);
+                        float leftMargin = floorImageLeftMargin + (xPos - ((float) binding.floorplanBluedot.getWidth() / 2));
+                        float topMargin = floorImageTopMargin + (yPos - ((float) binding.floorplanBluedot.getHeight() / 2));
+                        binding.floorplanBluedot.setX(leftMargin);
+                        binding.floorplanBluedot.setY(topMargin);
                     }
                 }
             });
@@ -268,23 +262,19 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
      * Setting floor plan image.
      */
     private void setupScaleFactorForFloorplan() {
-        if (floorPlanImage != null) {
-            ViewTreeObserver vto = floorPlanImage.getViewTreeObserver();
-            vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override
-                public void onGlobalLayout() {
-                    if (floorPlanImage != null) {
-                        floorImageLeftMargin = floorPlanImage.getLeft();
-                        floorImageTopMargin = floorPlanImage.getTop();
-                        if (floorPlanImage.getDrawable() != null) {
-                            scaleXFactor = (floorPlanImage.getWidth() / (double) floorPlanImage.getDrawable().getIntrinsicWidth());
-                            scaleYFactor = (floorPlanImage.getHeight() / (double) floorPlanImage.getDrawable().getIntrinsicHeight());
-                            scaleFactorCalled = true;
-                        }
-                    }
+        ViewTreeObserver vto = binding.floorplanImage.getViewTreeObserver();
+        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                floorImageLeftMargin = binding.floorplanImage.getLeft();
+                floorImageTopMargin = binding.floorplanImage.getTop();
+                if (binding.floorplanImage.getDrawable() != null) {
+                    scaleXFactor = (binding.floorplanImage.getWidth() / (double) binding.floorplanImage.getDrawable().getIntrinsicWidth());
+                    scaleYFactor = (binding.floorplanImage.getHeight() / (double) binding.floorplanImage.getDrawable().getIntrinsicHeight());
+                    scaleFactorCalled = true;
                 }
-            });
-        }
+            }
+        });
     }
 
     /**

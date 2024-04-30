@@ -3,9 +3,13 @@ package com.mist.sample.samplelocationbackgroundandbluedot.initializer;
 import android.content.Context;
 import android.widget.Toast;
 
+import com.mist.android.BatteryUsage;
 import com.mist.android.IndoorLocationCallback;
 import com.mist.android.IndoorLocationManager;
 import com.mist.android.VirtualBeaconCallback;
+import com.mist.android.external.config.LogLevel;
+import com.mist.android.external.config.MistCallbacks;
+import com.mist.android.external.config.MistConfiguration;
 
 import java.lang.ref.WeakReference;
 
@@ -18,12 +22,11 @@ public class MistSdkManager {
      * VirtualBeaconCallback
      */
     private IndoorLocationManager indoorLocationManager;
-    private IndoorLocationCallback indoorLocationCallback;
-    private VirtualBeaconCallback virtualBeaconCallback;
     private static WeakReference<Context> contextWeakReference;
     private String envType, orgSecret;
     private static MistSdkManager mistSdkManager;
-
+    private MistConfiguration mistConfiguration;
+    private MistCallbacks mistCallbacks;
     private MistSdkManager() {
     }
 
@@ -35,23 +38,35 @@ public class MistSdkManager {
         return mistSdkManager;
     }
 
-    public void init(String orgSecret, IndoorLocationCallback indoorLocationCallback, VirtualBeaconCallback virtualBeaconCallback) {
+    public void init(String orgSecret, IndoorLocationCallback indoorLocationCallback) {
         if (orgSecret != null && !orgSecret.isEmpty()) {
             this.orgSecret = orgSecret;
             this.envType = String.valueOf(orgSecret.charAt(0));
-            this.indoorLocationCallback = indoorLocationCallback;
-            this.virtualBeaconCallback = virtualBeaconCallback;
-        } else {
-            Toast.makeText(contextWeakReference.get(), "Org Secret not present", Toast.LENGTH_SHORT).show();
+            this.mistCallbacks = new MistCallbacks(
+                    indoorLocationCallback,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            this.mistConfiguration = new MistConfiguration(
+                    contextWeakReference.get(),
+                    this.orgSecret,
+                    "",
+                    LogLevel.INFO,
+                    true,
+                    BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY
+            );
         }
     }
 
     public synchronized void startMistSDK() {
         if (indoorLocationManager == null) {
-            indoorLocationManager = IndoorLocationManager.getInstance(contextWeakReference.get(), orgSecret);
-            indoorLocationManager.setVirtualBeaconCallback(virtualBeaconCallback);
-            indoorLocationManager.start(indoorLocationCallback);
-        } else {
+            indoorLocationManager = IndoorLocationManager.INSTANCE;
+            indoorLocationManager.setMistCallbacks(mistCallbacks);
+            indoorLocationManager.start(mistConfiguration);
+        }
+        else {
             restartMistSDK();
         }
     }
@@ -65,15 +80,13 @@ public class MistSdkManager {
     public void destroy() {
         if (indoorLocationManager != null) {
             indoorLocationManager.stop();
-            indoorLocationManager = null;
         }
     }
 
     private synchronized void restartMistSDK() {
         if (indoorLocationManager != null) {
             stopMistSDK();
-            indoorLocationManager.setVirtualBeaconCallback(virtualBeaconCallback);
-            indoorLocationManager.start(indoorLocationCallback);
+            indoorLocationManager.start(mistConfiguration);
         }
     }
 }
