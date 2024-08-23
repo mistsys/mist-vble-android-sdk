@@ -114,7 +114,6 @@
 				14E861444039E52288BA0E7C /* Pods-SampleBlueDotExperience-SampleBlueDotExperienceTests.debug.xcconfig */,
 				0B8EBA6EFAF3B4B2A8E052CA /* Pods-SampleBlueDotExperience-SampleBlueDotExperienceTests.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -182,8 +181,8 @@
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
-				F90FBCDA8BF1EEF29A962C17 /* [CP] Embed Pods Frameworks */,
 				549A1B00845BFD43CBA3C515 /* [CP] Copy Pods Resources */,
+				F90FBCDA8BF1EEF29A962C17 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -307,7 +306,7 @@
 		};
 		549A1B00845BFD43CBA3C515 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 12;
 			files = (
 			);
 			inputFileListPaths = (
@@ -363,7 +362,7 @@
 		};
 		F90FBCDA8BF1EEF29A962C17 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 12;
 			files = (
 			);
 			inputFileListPaths = (
@@ -469,6 +468,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = S6W43QBW7N;
 				ENABLE_BITCODE = NO;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"${PODS_ROOT}/Headers/Public\"",
@@ -550,6 +550,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = S6W43QBW7N;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"${PODS_ROOT}/Headers/Public\"",

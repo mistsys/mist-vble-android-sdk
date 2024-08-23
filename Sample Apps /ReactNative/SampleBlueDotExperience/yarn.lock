@@ -1493,10 +1493,10 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@mistsys/react-native-mistsdk@0.1.0-beta.1":
-  version "0.1.0-beta.1"
-  resolved "https://registry.npmjs.org/@mistsys/react-native-mistsdk/-/react-native-mistsdk-0.1.0-beta.1.tgz"
-  integrity sha512-/AZq3bsuaXiKi2ffcd0vl5ADW3Ibx2MivcGisYYQEyjtBBowA2GefooDgISJLXhTOK1ixLeTuwiP7zkEQcFvoA==
+"@mistsys/react-native-mistsdk@0.1.0-beta.5":
+  version "0.1.0-beta.5"
+  resolved "https://registry.npmjs.org/@mistsys/react-native-mistsdk/-/react-native-mistsdk-0.1.0-beta.5.tgz"
+  integrity sha512-Zmgec/Vb4ReWhafgbvZ/lm0OAs7ReaVisArPLQCScXBxvH+K7ZmrxiRXcj7M6bA96dilwtppIUPJTFoJrA1QXw==
 
 "@nicolo-ribaudo/eslint-scope-5-internals@5.1.1-v1":
   version "5.1.1-v1"
