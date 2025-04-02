@@ -4,11 +4,7 @@
 The Mist Location SDK provide applications the indoor bluedot experience using Mist’s 16 vBLE antenna array Access point. This technology allows your application to provide indoor location information and proximity related notification using Mist patented *vBeacon technology*.
 
 ## Latest Release
-* Mist Location SDK Android is distributed via framework file:            
-
-  * latest version is 5.0.0* [[Download Link]](https://github.com/mistsys/mist-vble-android-sdk/releases/tag/5.0.0)  
-
-OR
+* Mist Location SDK Android is distributed via mavencentral:            
 
 * Add the following dependency with the latest version of the Mist SDK in the build.gradle file:
 ```gradle
