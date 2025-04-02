@@ -5,9 +5,7 @@ import android.widget.Toast
 import com.mist.android.BatteryUsage
 import com.mist.android.IndoorLocationCallback
 import com.mist.android.IndoorLocationManager
-import com.mist.android.VirtualBeaconCallback
 import com.mist.android.external.config.LogLevel
-import com.mist.android.external.config.MistCallbacks
 import com.mist.android.external.config.MistConfiguration
 import java.lang.ref.WeakReference
 
@@ -18,36 +16,36 @@ import java.lang.ref.WeakReference
 class MistSdkManager {
     /**
      * Required by Mist SDK for initialization IndoorLocationManager IndoorLocationCallback
-     * VirtualBeaconCallback
      */
     private var indoorLocationManager : IndoorLocationManager? = null
     private var mistConfiguration: MistConfiguration? = null
-    private var mistCallbacks : MistCallbacks? = null
     private lateinit var contextWeakReference : WeakReference<Context>
     private var envType: String?=null
     private var orgSecret : String?=null
-    private  lateinit var mistSdkManager : MistSdkManager
+    private var mistSdkManager : MistSdkManager? = null
+    private var indoorLocationCallback: IndoorLocationCallback? = null
 
 
-    fun getInstance(context: Context): MistSdkManager {
+    fun getInstance(context: Context): MistSdkManager? {
         contextWeakReference = WeakReference<Context>(context)
-        mistSdkManager = MistSdkManager()
+        mistSdkManager?: run {
+            mistSdkManager = MistSdkManager()
+        }
         return mistSdkManager
     }
 
-    fun init(orgSecret: String?, indoorLocationCallback: IndoorLocationCallback?) {
+    fun init(orgSecret: String?, indoorLocationCallback: IndoorLocationCallback?, orgId: String) {
+        this.indoorLocationCallback = indoorLocationCallback
         if (!orgSecret.isNullOrEmpty()) {
             this.orgSecret = orgSecret
-            envType = orgSecret[0].toString()
-            this.mistCallbacks = MistCallbacks(
-                indoorLocationCallback = indoorLocationCallback,
-            )
+            this.envType = orgSecret[0].toString()
             this.mistConfiguration = MistConfiguration(
                 context = contextWeakReference.get()!!,
                 token = orgSecret,
                 enableLog = true,
                 logLevel = LogLevel.INFO,
-                batteryUsage = BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY
+                batteryUsage = BatteryUsage.HIGH_BATTERY_USAGE_HIGH_ACCURACY,
+                orgId = orgId
             )
         }
         else{
@@ -57,35 +55,46 @@ class MistSdkManager {
 
     @Synchronized
     fun startMistSDK() {
-        if (indoorLocationManager == null) {
-            indoorLocationManager = IndoorLocationManager
-            indoorLocationManager?.mistCallbacks = mistCallbacks!!
-            mistConfiguration?.let { indoorLocationManager?.start(it)  }
-//            indoorLocationManager?.start(mistConfiguration!!)
-        }
-        else{
+        indoorLocationManager?.let {
             restartMistSDK()
+        }?:run {
+            indoorLocationManager = IndoorLocationManager
+            mistConfiguration?.let {mistconfiguration->
+                indoorLocationCallback?.let { indoorlocationcallback ->
+                    indoorLocationManager?.start(
+                        mistconfiguration,
+                        indoorLocationCallback = indoorlocationcallback
+                    )
+                }
+            }
         }
     }
 
     @Synchronized
     private fun stopMistSDK() {
-        if (indoorLocationManager!=null){
+        indoorLocationManager?.let{
             indoorLocationManager?.stop()
         }
     }
 
     fun destroy() {
-        if (indoorLocationManager!=null){
+        indoorLocationManager?.let{
             indoorLocationManager?.stop()
         }
     }
 
     @Synchronized
     fun restartMistSDK() {
-        if (indoorLocationManager != null) {
+        indoorLocationManager?.let {
             stopMistSDK()
-            indoorLocationManager?.start(mistConfiguration!!)
+            mistConfiguration?.let {mistconfiguration ->
+                indoorLocationCallback?.let { indoorlocationcallback ->
+                    indoorLocationManager?.start(
+                        mistconfiguration,
+                        indoorLocationCallback = indoorlocationcallback
+                    )
+                }
+            }
         }
     }
 }

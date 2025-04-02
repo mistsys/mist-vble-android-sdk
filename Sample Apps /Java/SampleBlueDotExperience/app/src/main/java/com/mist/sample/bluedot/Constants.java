@@ -6,4 +6,5 @@ public class Constants {
      * we can get org secret from MIST UI (Organization —> Mobile SDK)
      */
     public static final String ORG_SECRET = "";
+    public static final String ORG_ID = "";
 }

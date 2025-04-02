@@ -1,5 +1,6 @@
 package com.mist.samplelocationbackground.service;
 
+import static com.mist.samplelocationbackground.Constants.ORG_ID;
 import static com.mist.samplelocationbackground.Constants.ORG_SECRET;
 
 import android.app.Application;
@@ -51,7 +52,7 @@ public class LocationForegroundService extends Service {
             }
             Notification notification = new NotificationCompat.Builder(this, "ChannelId1").setContentTitle("Sample Mist Location App").setContentText("Location App  is running !!").setContentIntent(pendingIntent).build();
             startForeground(FG_SERVICE_NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
-            startSdk(ORG_SECRET);
+            startSdk(ORG_SECRET, ORG_ID);
         }
         /**
          * If the service is killed then system will try to recreate the service by calling onStartCommand with null intent
@@ -59,11 +60,11 @@ public class LocationForegroundService extends Service {
         return START_STICKY;
     }
 
-    private void startSdk(String orgSecret) {
+    private void startSdk(String orgSecret, String orgId) {
         if (orgSecret != null) {
             MistSdkManager mistSdkManager = MistSdkManager.getInstance(getApplicationContext());
             SDKCallbackHandler sdkCallbackHandler = new SDKCallbackHandler(getApplicationContext());
-            mistSdkManager.init(orgSecret, sdkCallbackHandler);
+            mistSdkManager.init(orgSecret, orgId, sdkCallbackHandler);
             if(!orgSecret.isEmpty()){
                 mistSdkManager.startMistSDK();
             }

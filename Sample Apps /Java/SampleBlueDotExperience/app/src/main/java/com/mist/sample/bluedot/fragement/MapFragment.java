@@ -22,6 +22,7 @@ import androidx.fragment.app.Fragment;
 
 import com.mist.android.IndoorLocationCallback;
 import com.mist.android.ErrorType;
+import com.mist.android.MistEvent;
 import com.mist.android.MistMap;
 import com.mist.android.MistPoint;
 import com.mist.sample.bluedot.databinding.MapFragmentBinding;
@@ -40,8 +41,9 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
     private static final int PERMISSION_REQUEST_BLUETOOTH_LOCATION = 1;
     private static final int REQUEST_ENABLE_BLUETOOTH = 1;
     private static final String SDK_TOKEN = "sdkToken";
+    private static final String ORG_ID = "orgId";
     private static Application mainApplication;
-    private String orgSecret;
+    private String orgSecret, orgId;
     // For Map rendering
     private String floorPlanImageUrl = "";
     private boolean addedMap = false;
@@ -54,9 +56,10 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
     // Stores the map information returned from mist SDK
     public MistMap currentMap;
 
-    public static MapFragment newInstance(String sdkToken) {
+    public static MapFragment newInstance(String sdkToken, String orgId) {
         Bundle bundle = new Bundle();
         bundle.putString(SDK_TOKEN, sdkToken);
+        bundle.putString(ORG_ID, orgId);
         MapFragment mapFragment = new MapFragment();
         mapFragment.setArguments(bundle);
         return mapFragment;
@@ -88,6 +91,7 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
         }
         if (getArguments() != null) {
             orgSecret = getArguments().getString(SDK_TOKEN);
+            orgId = getArguments().getString(ORG_ID);
         }
         mistSdkManager = MistSdkManager.getInstance(mainApplication.getApplicationContext());
     }
@@ -112,10 +116,10 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
         mistSdkManager.stopMistSDK();
     }
 
-    private void startSDK(String orgSecret) {
+    private void startSDK(String orgSecret, String orgId) {
         Log.d(TAG, "SampleBlueDot startSdk called" + orgSecret);
         if (orgSecret != null) {
-            mistSdkManager.init(orgSecret, this, null);
+            mistSdkManager.init(orgSecret, orgId, this);
             mistSdkManager.startMistSDK();
         }
     }
@@ -161,7 +165,7 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
                 Toast.makeText(getActivity(),"Empty Org Secret key!",Toast.LENGTH_LONG).show();
             }
             else{
-                startSDK(orgSecret);
+                startSDK(orgSecret, orgId);
             }
         }
     }
@@ -188,44 +192,50 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (getActivity() != null) {
-            switch (requestCode) {
-                case PERMISSION_REQUEST_BLUETOOTH_LOCATION:
-                    if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                        Log.d(TAG, "fine location permission granted !!");
-                        checkIfBluetoothEnabled();
-                        // Start the SDK when permissions are provided
-                        if(!orgSecret.isEmpty()){
-                            startSDK(orgSecret);
-                        }
-                        else {
-                            Toast.makeText(getActivity(),"Empty Org Secret key!",Toast.LENGTH_LONG).show();
-                        }
+            if (requestCode == PERMISSION_REQUEST_BLUETOOTH_LOCATION) {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d(TAG, "fine location permission granted !!");
+                    checkIfBluetoothEnabled();
+                    // Start the SDK when permissions are provided
+                    if (!orgSecret.isEmpty() && !orgId.isEmpty()) {
+                        startSDK(orgSecret, orgId);
                     } else {
-                        final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                        builder.setTitle("Functionality limited");
-                        builder.setMessage("Since location access has not been granted, this app will not be able to discover beacons when in the background.").setPositiveButton(android.R.string.ok, null).setOnDismissListener(new DialogInterface.OnDismissListener() {
-                            @Override
-                            public void onDismiss(DialogInterface dialog) {
-                            }
-                        }).show();
+                        Toast.makeText(getActivity(), "Empty Org Secret key!", Toast.LENGTH_LONG).show();
                     }
+                } else {
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                    builder.setTitle("Functionality limited");
+                    builder.setMessage("Since location access has not been granted, this app will not be able to discover beacons when in the background.").setPositiveButton(android.R.string.ok, null).setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override
+                        public void onDismiss(DialogInterface dialog) {
+                        }
+                    }).show();
+                }
             }
         }
     }
-    /** Implementation of Mist Location Sdk callback methods.
-     * onRelativeLocationUpdated
-     * onMapUpdated
-     * onError
-     * didRangeVirtualBeacon
-     * onVirtualBeaconListUpdated
-     */
+
+    @Override
+    public void onReceiveEvent(@NonNull MistEvent event) {
+        if (event instanceof MistEvent.OnRelativeLocationUpdate) {
+            onRelativeLocationUpdated(((MistEvent.OnRelativeLocationUpdate) event).getPoint());
+        } else if (event instanceof MistEvent.OnMapUpdate) {
+            onMapUpdated(((MistEvent.OnMapUpdate) event).getMap());
+        } else if (event instanceof MistEvent.OnError) {
+            ErrorType errorType = ((MistEvent.OnError) event).getError();
+            String errorMessage = errorType.toString();
+            onError(errorType, errorMessage);
+        } else {
+            System.out.println(event);
+        }
+    }
 
     /**
      * We need to implement this method as per our business logic. These methods will be called for
      * IndoorLocationCallback @param relativeLocation
      */
-    @Override
-    public void onRelativeLocationUpdated(@Nullable MistPoint mistPoint) {
+
+    private void onRelativeLocationUpdated(@Nullable MistPoint mistPoint) {
         /**
          * Returns updated location of the mobile client (as a point (X, Y) measured in meters from the map origin, i.e., relative X, Y)
          */
@@ -241,8 +251,7 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
         }
     }
 
-    @Override
-    public void onMapUpdated(@Nullable MistMap mistMap) {
+    private void onMapUpdated(@Nullable MistMap mistMap) {
         /**
          * Returns update map for the mobile client as a {@link}MSTMap object
          */
@@ -264,8 +273,7 @@ public class MapFragment extends Fragment implements IndoorLocationCallback {
     /**
      * Notifies the host application about any errors encountered
      */
-    @Override
-    public void onError(@NonNull ErrorType error, @NonNull String message) {
+    private void onError(@NonNull ErrorType error, @NonNull String message) {
         Log.d(TAG, "SampleBlueDot onError called" + message + "errorType " + error);
         getActivity().runOnUiThread(new Runnable() {
             @Override

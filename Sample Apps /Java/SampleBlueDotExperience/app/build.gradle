@@ -34,10 +34,11 @@ android {
 dependencies {
 
     //Mist SDK Maven Central  implementation
-    implementation 'com.mist:core-sdk:4.0.0'
+    implementation 'com.mist:core-sdk:5.0.0'
 
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.6.0'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation "com.google.guava:guava:33.0.0-android"
+    implementation 'com.google.android.material:material:1.7.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.4'
@@ -46,13 +47,6 @@ dependencies {
     //picasso
     // For image processing
     implementation 'com.squareup.picasso:picasso:2.5.2'
-    implementation 'com.squareup.okhttp3:okhttp:4.11.0'
     implementation 'com.jakewharton.picasso:picasso2-okhttp3-downloader:1.1.0'
-    implementation 'com.google.code.gson:gson:2.10.1'
-
-    implementation 'com.squareup.okhttp3:logging-interceptor:4.11.0'
-    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
-    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.google.firebase:firebase-inappmessaging-display:17.2.0'
-    implementation 'com.google.guava:guava:27.0.1-android'
 }

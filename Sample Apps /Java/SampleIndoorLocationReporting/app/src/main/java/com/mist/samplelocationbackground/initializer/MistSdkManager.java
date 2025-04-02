@@ -6,9 +6,7 @@ import android.widget.Toast;
 import com.mist.android.BatteryUsage;
 import com.mist.android.IndoorLocationCallback;
 import com.mist.android.IndoorLocationManager;
-import com.mist.android.VirtualBeaconCallback;
 import com.mist.android.external.config.LogLevel;
-import com.mist.android.external.config.MistCallbacks;
 import com.mist.android.external.config.MistConfiguration;
 
 import java.lang.ref.WeakReference;
@@ -23,10 +21,10 @@ public class MistSdkManager {
      */
     private IndoorLocationManager indoorLocationManager;
     private static WeakReference<Context> contextWeakReference;
-    private String envType, orgSecret;
+    private String envType, orgSecret, orgId;
     private static MistSdkManager mistSdkManager;
     private MistConfiguration mistConfiguration;
-    private MistCallbacks mistCallbacks;
+    private IndoorLocationCallback indoorLocationCallback;
 
     private MistSdkManager() {
     }
@@ -39,20 +37,16 @@ public class MistSdkManager {
         return mistSdkManager;
     }
 
-    public void init(String orgSecret, IndoorLocationCallback indoorLocationCallback) {
+    public void init(String orgSecret, String orgId, IndoorLocationCallback indoorLocationCallback) {
         if (orgSecret != null && !orgSecret.isEmpty()) {
             this.orgSecret = orgSecret;
+            this.orgId = orgId;
+            this.indoorLocationCallback = indoorLocationCallback;
             this.envType = String.valueOf(orgSecret.charAt(0));
-            this.mistCallbacks = new MistCallbacks(
-                    indoorLocationCallback,
-                    null,
-                    null,
-                    null,
-                    null
-            );
             this.mistConfiguration = new MistConfiguration(
                     contextWeakReference.get(),
                     this.orgSecret,
+                    this.orgId,
                     "",
                     LogLevel.INFO,
                     true,
@@ -65,11 +59,9 @@ public class MistSdkManager {
 
     public synchronized void startMistSDK() {
         if (indoorLocationManager == null) {
-           indoorLocationManager = IndoorLocationManager.INSTANCE;
-            indoorLocationManager.setMistCallbacks(mistCallbacks);
-            indoorLocationManager.start(mistConfiguration);
-        }
-        else {
+            indoorLocationManager = IndoorLocationManager.INSTANCE;
+            indoorLocationManager.start(mistConfiguration, indoorLocationCallback);
+        } else {
             restartMistSDK();
         }
     }
@@ -89,7 +81,7 @@ public class MistSdkManager {
     private synchronized void restartMistSDK() {
         if (indoorLocationManager != null) {
             stopMistSDK();
-            indoorLocationManager.start(mistConfiguration);
+            indoorLocationManager.start(mistConfiguration, indoorLocationCallback);
         }
     }
 }

@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace 'com.example.samplebluedotexperience'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId "com.example.samplebluedotexperience"
@@ -45,7 +45,8 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 
-    implementation 'com.mist:core-sdk:4.0.0'
+    implementation "androidx.work:work-runtime:2.10.0"
+    implementation 'com.mist:core-sdk:5.0.0'
 
     //picasso
     // For image processing

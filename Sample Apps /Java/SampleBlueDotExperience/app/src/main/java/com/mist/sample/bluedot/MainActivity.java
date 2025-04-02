@@ -1,5 +1,6 @@
 package com.mist.sample.bluedot;
 
+import static com.mist.sample.bluedot.Constants.ORG_ID;
 import static com.mist.sample.bluedot.Constants.ORG_SECRET;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,7 +19,7 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         // Load BlueDot Map screen in fragment, permissions are checked inside this fragment.
-        setUpMapFragment(ORG_SECRET);
+        setUpMapFragment(ORG_SECRET, ORG_ID);
     }
 
     /**
@@ -26,10 +27,10 @@ public class MainActivity extends AppCompatActivity {
      * to start working
      * @param orgSecret sdk token used for enrollment
      */
-    private void setUpMapFragment(String orgSecret) {
+    private void setUpMapFragment(String orgSecret, String orgId) {
         Fragment mapFragment = getSupportFragmentManager().findFragmentByTag(MapFragment.TAG);
         if (mapFragment == null) {
-            getSupportFragmentManager().beginTransaction().replace(R.id.frame_fragment, MapFragment.newInstance(orgSecret), MapFragment.TAG).addToBackStack(MapFragment.TAG).commit();
+            getSupportFragmentManager().beginTransaction().replace(R.id.frame_fragment, MapFragment.newInstance(orgSecret, orgId), MapFragment.TAG).addToBackStack(MapFragment.TAG).commit();
         }
     }
 }

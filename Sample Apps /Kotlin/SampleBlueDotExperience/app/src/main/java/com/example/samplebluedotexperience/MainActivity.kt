@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
     
     private fun setUPMapFragment(orgSecret:String) {
         val mapFragment = supportFragmentManager.findFragmentByTag(MapFragment().TAG)
-        if (mapFragment == null) {
+        mapFragment?: run {
             supportFragmentManager.beginTransaction().replace(R.id.frame_fragment, MapFragment().newInstance(orgSecret), MapFragment().TAG).addToBackStack(MapFragment().TAG).commit()
         }
     }

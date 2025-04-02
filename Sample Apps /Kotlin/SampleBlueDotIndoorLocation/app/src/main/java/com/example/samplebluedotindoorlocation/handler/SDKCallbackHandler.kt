@@ -10,9 +10,10 @@ import com.mist.android.MistEvent
 import com.mist.android.MistMap
 import com.mist.android.MistPoint
 import com.mist.android.MistVirtualBeacon
-import com.mist.android.VirtualBeaconCallback
 
 class SDKCallbackHandler(private var context: Context) : IndoorLocationCallback{
+    private val TAG : String ="SampleLocationApp"
+    private val notificationHandler=NotificationHandler()
     /**
      * We need to implement this method as per our business logic. These methods will be called for IndoorLocationCallback
      * @param relativeLocation
@@ -20,9 +21,7 @@ class SDKCallbackHandler(private var context: Context) : IndoorLocationCallback{
     /**
      * Returns updated location of the mobile client (as a point (X, Y) measured in meters from the map origin, i.e., relative X, Y)
      */
-    private val TAG : String ="SampleLocationApp"
-    private val notificationHandler=NotificationHandler()
-    override fun onRelativeLocationUpdated(relativeLocation: MistPoint?) {
+    private fun onRelativeLocationUpdated(relativeLocation: MistPoint?) {
         Log.v(TAG, "onRelativeLocationUpdated called")
         notificationHandler.sendNotification(context, relativeLocation.toString())
     }
@@ -30,7 +29,7 @@ class SDKCallbackHandler(private var context: Context) : IndoorLocationCallback{
     /**
      * Returns update map for the mobile client as a []MSTMap object
      */
-    override fun onMapUpdated(map: MistMap?) {
+    private fun onMapUpdated(map: MistMap?) {
         Log.v(TAG, "onMapUpdated called")
     }
 
@@ -41,11 +40,12 @@ class SDKCallbackHandler(private var context: Context) : IndoorLocationCallback{
                 notificationHandler.sendNotification(context,event.error.name)
             }
 
-            /**
-             * We need to implement this method as per our business logic.
-             * These methods will be called for VirtualBeaconCallback
-             * @param mistVirtualBeacon
-             */
+            is MistEvent.OnMapUpdate -> {
+                onMapUpdated(event.map)
+            }
+            is MistEvent.OnRelativeLocationUpdate -> {
+                onRelativeLocationUpdated(event.point)
+            }
 
             is MistEvent.OnRangeVirtualBeacon ->{
                 Log.v(TAG, "didRangeVirtualBeacon called")

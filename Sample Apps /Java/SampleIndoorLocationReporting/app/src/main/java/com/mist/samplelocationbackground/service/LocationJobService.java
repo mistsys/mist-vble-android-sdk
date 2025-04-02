@@ -1,5 +1,6 @@
 package com.mist.samplelocationbackground.service;
 
+import static com.mist.samplelocationbackground.Constants.ORG_ID;
 import static com.mist.samplelocationbackground.Constants.ORG_SECRET;
 
 import android.app.Application;
@@ -38,7 +39,7 @@ public class LocationJobService extends JobService {
     private void doWork() {
         MistSdkManager mistSdkManager = MistSdkManager.getInstance((Application) getApplication());
         SDKCallbackHandler sdkCallbackHandler = new SDKCallbackHandler(getApplicationContext());
-        mistSdkManager.init(ORG_SECRET, sdkCallbackHandler);
+        mistSdkManager.init(ORG_SECRET, ORG_ID, sdkCallbackHandler);
         mistSdkManager.startMistSDK();
         Log.d("TAG", "SampleLocationApp: doWork() ThreadName: " + Thread.currentThread().getName());
     }

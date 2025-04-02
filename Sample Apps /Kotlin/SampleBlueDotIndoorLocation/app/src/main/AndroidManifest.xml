@@ -15,6 +15,8 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -40,14 +42,12 @@
 
         <service
             android:name=".service.LocationForegroundService"
-            android:stopWithTask="false"
-            android:foregroundServiceType="dataSync"
-            android:permission="android.permission.FOREGROUND_SERVICE"
+            android:foregroundServiceType="location|dataSync"
+            android:permission="android.permission.FOREGROUND_SERVICE_LOCATION"
             android:enabled="true"
             android:exported="false"
             android:persistent="true"
-            android:directBootAware="true"
-            android:process=":LocationForegroundService">
+            android:directBootAware="true">
             <intent-filter>
                 <action android:name=".LocationForegroundService"/>
             </intent-filter>
