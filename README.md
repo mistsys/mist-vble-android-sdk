@@ -8,7 +8,7 @@ The Mist Location SDK provide applications the indoor bluedot experience using M
 
 * Add the following dependency with the latest version of the Mist SDK in the build.gradle file:
 ```gradle
-implementation 'com.mist:core-sdk:5.0.2'
+implementation 'com.mist:core-sdk:5.0.3'
 ```
   
 
