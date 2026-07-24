@@ -13,6 +13,7 @@
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		2F830795E730D0630EE7788F /* libPods-SampleBlueDotExperience-SampleBlueDotExperienceTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 11FAF0A349244EA9895472D9 /* libPods-SampleBlueDotExperience-SampleBlueDotExperienceTests.a */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		D367562B6164C45E05382E4A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5DDA6316DDCB69E680AB0152 /* PrivacyInfo.xcprivacy */; };
 		F1C48369E23C313EA124B19F /* libPods-SampleBlueDotExperience.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A548862E637AD3AE26F5577 /* libPods-SampleBlueDotExperience.a */; };
 /* End PBXBuildFile section */
 
@@ -40,6 +41,7 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = SampleBlueDotExperience/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = SampleBlueDotExperience/main.m; sourceTree = "<group>"; };
 		14E861444039E52288BA0E7C /* Pods-SampleBlueDotExperience-SampleBlueDotExperienceTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SampleBlueDotExperience-SampleBlueDotExperienceTests.debug.xcconfig"; path = "Target Support Files/Pods-SampleBlueDotExperience-SampleBlueDotExperienceTests/Pods-SampleBlueDotExperience-SampleBlueDotExperienceTests.debug.xcconfig"; sourceTree = "<group>"; };
+		5DDA6316DDCB69E680AB0152 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = SampleBlueDotExperience/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		65288C2219EE923E99A0C2C2 /* Pods-SampleBlueDotExperience.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SampleBlueDotExperience.debug.xcconfig"; path = "Target Support Files/Pods-SampleBlueDotExperience/Pods-SampleBlueDotExperience.debug.xcconfig"; sourceTree = "<group>"; };
 		7A548862E637AD3AE26F5577 /* libPods-SampleBlueDotExperience.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-SampleBlueDotExperience.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = SampleBlueDotExperience/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -92,6 +94,7 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB71A68108700A75B9A /* main.m */,
+				5DDA6316DDCB69E680AB0152 /* PrivacyInfo.xcprivacy */,
 			);
 			name = SampleBlueDotExperience;
 			sourceTree = "<group>";
@@ -243,6 +246,7 @@
 			files = (
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				D367562B6164C45E05382E4A /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -524,6 +528,7 @@
 					"\"$(PODS_TARGET_SRCROOT)/include/\"/**",
 				);
 				INFOPLIST_FILE = SampleBlueDotExperience/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -606,6 +611,7 @@
 					"\"$(PODS_TARGET_SRCROOT)/include/\"/**",
 				);
 				INFOPLIST_FILE = SampleBlueDotExperience/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -695,6 +701,7 @@
 				OTHER_LDFLAGS = "$(inherited)";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
 				USE_HERMES = true;
 			};
 			name = Debug;

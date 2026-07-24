@@ -1,21 +1,37 @@
 buildscript {
     ext {
-        buildToolsVersion = "34.0.0"
+        buildToolsVersion = "36.0.0"
         minSdkVersion = 26
-        compileSdkVersion = 34
-        targetSdkVersion = 34
-        ndkVersion = "25.1.8937393"
-        kotlinVersion = "1.8.0"
+        compileSdkVersion = 36
+        targetSdkVersion = 36
+        ndkVersion = "28.2.13676358"
+        kotlinVersion = "2.2.21"
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle")
+        classpath("com.android.tools.build:gradle:8.9.1")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
     }
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+subprojects { subproject ->
+    if (subproject.name == "mistsys_react-native-mistsdk") {
+        subproject.plugins.withId("com.android.library") {
+            subproject.pluginManager.apply("org.jetbrains.kotlin.android")
+            subproject.android {
+                kotlinOptions {
+                    jvmTarget = "17"
+                    freeCompilerArgs += ["-Xskip-metadata-version-check"]
+                }
+            }
+        }
+    }
+}
+
+

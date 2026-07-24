@@ -6,19 +6,8 @@ require Pod::Executable.execute_command('node', ['-p',
   )', __dir__]).strip
 
 #platform :ios, min_ios_version_supported
-platform :ios, '14.0'
+platform :ios, '15.6'
 prepare_react_native_project!
-
-# If you are using a `react-native-flipper` your iOS build will fail when `NO_FLIPPER=1` is set.
-# because `react-native-flipper` depends on (FlipperKit,...) that will be excluded
-#
-# To fix this you can also exclude `react-native-flipper` using a `react-native.config.js`
-# ```js
-# module.exports = {
-#   dependencies: {
-#     ...(process.env.NO_FLIPPER ? { 'react-native-flipper': { platforms: { ios: null } } } : {}),
-# ```
-flipper_config = FlipperConfiguration.disabled
 
 linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil
@@ -32,11 +21,6 @@ target 'SampleBlueDotExperience' do
 
   use_react_native!(
     :path => config[:reactNativePath],
-    # Enables Flipper.
-    #
-    # Note that if you have use_frameworks! enabled, Flipper will not work and
-    # you should disable the next line.
-    :flipper_configuration => flipper_config,
     # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
@@ -54,5 +38,35 @@ target 'SampleBlueDotExperience' do
       config[:reactNativePath],
       :mac_catalyst_enabled => false
     )
+
+    # Work around fmt's `consteval` FMT_STRING checks failing to compile under
+    # newer Xcode/clang. Forcing FMT_USE_CONSTEVAL=0 makes FMT_CONSTEVAL a no-op.
+    installer.pods_project.targets.each do |target|
+      if ['fmt', 'RCT-Folly'].include?(target.name)
+        target.build_configurations.each do |config|
+          config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+          unless config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'].include?('FMT_USE_CONSTEVAL=0')
+            config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FMT_USE_CONSTEVAL=0'
+          end
+        end
+      end
+    end
+
+    # Also patch the fmt header directly so the fix survives `pod install` and
+    # is picked up by the editor/IntelliSense (which ignores build settings).
+    fmt_base_header = File.join(__dir__, 'Pods', 'fmt', 'include', 'fmt', 'base.h')
+    if File.exist?(fmt_base_header)
+      contents = File.read(fmt_base_header)
+      guard = '/* fmt consteval workaround */'
+      unless contents.include?(guard)
+        patched = contents.sub(
+          "// Detect consteval, C++20 constexpr extensions and std::is_constant_evaluated.\n#if !defined(__cpp_lib_is_constant_evaluated)",
+          "// Detect consteval, C++20 constexpr extensions and std::is_constant_evaluated.\n#if 1 #{guard}\n#  define FMT_USE_CONSTEVAL 0\n#elif !defined(__cpp_lib_is_constant_evaluated)"
+        )
+        File.chmod(0644, fmt_base_header)
+        File.write(fmt_base_header, patched)
+        Pod::UI.puts 'Patched fmt/base.h to disable FMT_USE_CONSTEVAL'.green
+      end
+    end
   end
 end

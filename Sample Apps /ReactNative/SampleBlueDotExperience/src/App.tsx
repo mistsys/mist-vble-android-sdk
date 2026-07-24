@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Platform,
   View,
@@ -15,12 +15,12 @@ import { AppStyles } from './styles';
 import Loader from './components/loader';
 import Dialog_Box from './components/dialog';
 import requestPermissionsForAndroid from './services/permissions';
+import { MIST_SDK_TOKEN, MIST_SDK_ORGID } from '@env';
 
-const MIST_SDK_TOKEN = process.env.MIST_SDK_TOKEN;
 
 export default function App() {
   const MistSDK = NativeModules.RNMistsdk;
-  const MistSDKEvents = new NativeEventEmitter(MistSDK);
+  const MistSDKEvents = useRef(new NativeEventEmitter(MistSDK)).current;
 
   const [mapUrl, setMapUrl] = useState('');
   const [buttonText, setButtonText] = useState('Start');
@@ -64,60 +64,72 @@ export default function App() {
   useEffect(() => {
     setBlueDotX((xPosition / pixelRatio) * scalingFactor);
     setBlueDotY((yPosition / pixelRatio) * scalingFactor);
-  }, [xPosition, yPosition]);
+  }, [xPosition, yPosition, scalingFactor, pixelRatio]);
 
   const toggleDialogState = () => {
     setDialogState(!dialogState);
   };
 
-  MistSDKEvents.addListener('onMapUpdate', map => {
-    // console.log(map);
-    setMapUrl(map?.url);
-    setMapPPM(map?.ppm);
-    setMapName(map?.name);
-    setShowLoader(false);
-    setButtonText('Stop');
-  });
+  useEffect(() => {
+    const subscriptions = [
+      // Map Update event
+      MistSDKEvents.addListener('onMapUpdate', map => {
+        //console.log(map);
+        setMapUrl(map?.url);
+        setMapPPM(map?.ppm);
+        setMapName(map?.name);
+        setShowLoader(false);
+        setButtonText('Stop');
+      }),
 
-  MistSDKEvents.addListener('onRelativeLocationUpdate', relativeLocation => {
-    // console.log(relativeLocation);
-    setXPosition(relativeLocation?.x);
-    setYPosition(relativeLocation?.y);
-  });
+      // Location Update event
+      MistSDKEvents.addListener('onRelativeLocationUpdate', relativeLocation => {
+        //console.log(relativeLocation);
+        setXPosition(relativeLocation?.x);
+        setYPosition(relativeLocation?.y);
+      }),
 
-  // MapsListDelegate
-  MistSDKEvents.addListener('onReceivedAllMaps', maps => {
-    // console.log(maps);
-  });
+      // Get All Maps event
+      MistSDKEvents.addListener('onReceivedAllMaps', maps => {
+        //console.log(maps);
+      }),
 
-  // VirtualBeaconsDelegate
-  MistSDKEvents.addListener('onUpdateVirtualBeaconList', virtualBeacons => {
-    // console.log(virtualBeacons);
-  });
+      // Virtual Beacons List Update event
+      MistSDKEvents.addListener('onUpdateVirtualBeaconList', virtualBeacons => {
+        //console.log(virtualBeacons);
+      }),
 
-  MistSDKEvents.addListener('onRangeVirtualBeacon', virtualBeacon => {
-    setDialogTitle(
-      'Entered in the range of virtual Beacon:' + virtualBeacon?.name,
-    );
-    setDialogDescription('Message:' + virtualBeacon?.message);
-    setDialogState(true);
-    // console.log(virtualBeacon);
-  });
+      // Virtual Beacon Notification event
+      MistSDKEvents.addListener('onRangeVirtualBeacon', virtualBeacon => {
+        setDialogTitle(
+          'Entered in the range of virtual Beacon:' + virtualBeacon?.name,
+        );
+        setDialogDescription('Message:' + virtualBeacon?.message);
+        setDialogState(true);
+        //console.log(virtualBeacon);
+      }),
 
-  // ZonesDelegate
-  MistSDKEvents.addListener('onEnterZone', zone => {
-    setDialogTitle('Notification');
-    setDialogDescription('Entered the Zone: ' + zone?.name);
-    setDialogState(true);
-    // console.log(zone);
-  });
+      // Zone Notification event - Enter
+      MistSDKEvents.addListener('onEnterZone', zone => {
+        setDialogTitle('Notification');
+        setDialogDescription('Entered the Zone: ' + zone?.name);
+        setDialogState(true);
+        //console.log(zone);
+      }),
 
-  MistSDKEvents.addListener('onExitZone', zone => {
-    setDialogTitle('Notification');
-    setDialogDescription('Exited the Zone: ' + zone?.name);
-    setDialogState(true);
-    // console.log(zone);
-  });
+      // Zone Notification event - Exit
+      MistSDKEvents.addListener('onExitZone', zone => {
+        setDialogTitle('Notification');
+        setDialogDescription('Exited the Zone: ' + zone?.name);
+        setDialogState(true);
+        //console.log(zone);
+      }),
+    ];
+
+    return () => {
+      subscriptions.forEach(subscription => subscription.remove());
+    };
+  }, [MistSDKEvents]);
 
   // Start Button CallBack
   const onPress = () => {
@@ -127,8 +139,15 @@ export default function App() {
         console.log('Please set MIST_SDK_TOKEN as env variable');
         setShowLoader(false);
         return;
+      } else if (!MIST_SDK_ORGID) {
+        console.log('Please set MIST_SDK_ORGID as env variable');
+        setShowLoader(false);
+        return;
       } else {
-        MistSDK.startWithToken(MIST_SDK_TOKEN);
+        // Start With DR
+        MistSDK.startWithToken(MIST_SDK_TOKEN, MIST_SDK_ORGID);
+        // Start Without DR
+        //MistSDK.startWithTokenAndDisableDR(MIST_SDK_TOKEN, MIST_SDK_ORGID, true);
         setIsSdkActive(true);
         setButtonText('Cancel');
       }
